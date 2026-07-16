@@ -1,32 +1,66 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import { PublicLayout } from "@/shared/components/layouts/PublicLayout";
 import { AuthLayout } from "@/shared/components/layouts/AuthLayout";
 import { DashboardLayout } from "@/student/layouts/DashboardLayout";
-import { AdminLayout } from "@/admin/layouts/AdminLayout";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { PublicRoute } from "./PublicRoute";
 import { useAuthStore } from "@/shared/store/authStore";
+import { isManager, isSuperAdmin } from "@/types";
+import { PageLoader } from "@/shared/components/feedback/LoadingSpinner";
 
-// Pages - Public
+// ── Lazy-load role-specific layouts ───────────────────────────────────────────
+const ManagerLayout = lazy(() =>
+  import("@/manager/layouts/ManagerLayout").then((m) => ({ default: m.ManagerLayout }))
+);
+const AdminLayout = lazy(() =>
+  import("@/admin/layouts/AdminLayout").then((m) => ({ default: m.AdminLayout }))
+);
+
+// ── Lazy-load Manager pages ───────────────────────────────────────────────────
+const ManagerDashboardPage = lazy(() => import("@/manager/pages/dashboard/ManagerDashboardPage"));
+const ManagerLearningPage = lazy(() => import("@/manager/pages/learning/ManagerLearningPage"));
+const ManagerCodingPage = lazy(() => import("@/manager/pages/coding/ManagerCodingPage"));
+const ManagerProjectsPage = lazy(() => import("@/manager/pages/projects/ManagerProjectsPage"));
+const ManagerPlacementsPage = lazy(() => import("@/manager/pages/placements/ManagerPlacementsPage"));
+const ManagerEventsPage = lazy(() => import("@/manager/pages/events/ManagerEventsPage"));
+const ManagerNotificationsPage = lazy(() => import("@/manager/pages/notifications/ManagerNotificationsPage"));
+const ManagerReportsPage = lazy(() => import("@/manager/pages/reports/ManagerReportsPage"));
+const ManagerProfilePage = lazy(() => import("@/manager/pages/profile/ManagerProfilePage"));
+const ManagerSettingsPage = lazy(() => import("@/manager/pages/settings/ManagerSettingsPage"));
+
+// ── Lazy-load Admin pages ─────────────────────────────────────────────────────
+const AdminDashboardPage = lazy(() => import("@/admin/pages/dashboard/AdminDashboardPage"));
+const AdminUsersPage = lazy(() => import("@/admin/pages/users/AdminUsersPage"));
+const AdminManagersPage = lazy(() => import("@/admin/pages/managers/AdminManagersPage"));
+const AdminPermissionsPage = lazy(() => import("@/admin/pages/permissions/AdminPermissionsPage"));
+const AdminAnalyticsPage = lazy(() => import("@/admin/pages/analytics/AdminAnalyticsPage"));
+const AdminPlatformPage = lazy(() => import("@/admin/pages/platform/AdminPlatformPage"));
+const AdminAuditPage = lazy(() => import("@/admin/pages/audit/AdminAuditPage"));
+const AdminSystemPage = lazy(() => import("@/admin/pages/system/AdminSystemPage"));
+const AdminSettingsPage = lazy(() => import("@/admin/pages/settings/AdminSettingsPage"));
+const AdminProfilePage = lazy(() => import("@/admin/pages/profile/AdminProfilePage"));
+
+// ── Pages - Public ────────────────────────────────────────────────────────────
 import { LandingPage } from "@/shared/pages/LandingPage";
 import { AboutPage } from "@/shared/pages/AboutPage";
 import { ContactPage } from "@/shared/pages/ContactPage";
 import { FaqPage } from "@/shared/pages/FaqPage";
 
-// Pages - Auth
+// ── Pages - Auth ──────────────────────────────────────────────────────────────
 import { LoginPage } from "@/student/features/auth/pages/LoginPage";
 import { RegisterPage } from "@/student/features/auth/pages/RegisterPage";
 import { ForgotPasswordPage } from "@/student/features/auth/pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "@/student/features/auth/pages/ResetPasswordPage";
 import { VerifyEmailPage } from "@/student/features/auth/pages/VerifyEmailPage";
 
-// Pages - Dashboard (Student)
+// ── Pages - Dashboard (Student) ───────────────────────────────────────────────
 import { DashboardPage } from "@/student/features/dashboard/pages/DashboardPage";
 import { ProfilePage } from "@/student/features/profile/pages/ProfilePage";
 import { EditProfilePage } from "@/student/features/profile/pages/EditProfilePage";
 import { SettingsPage } from "@/shared/pages/SettingsPage";
 
-// Pages - Learning (FPRD-02)
+// ── Pages - Learning ──────────────────────────────────────────────────────────
 import { LearningHomePage } from "@/student/features/learning/pages/LearningHomePage";
 import { CategoriesPage } from "@/student/features/learning/pages/CategoriesPage";
 import { RoadmapsPage } from "@/student/features/learning/pages/RoadmapsPage";
@@ -38,7 +72,7 @@ import { BookmarksPage } from "@/student/features/learning/pages/BookmarksPage";
 import { RecentlyViewedPage } from "@/student/features/learning/pages/RecentlyViewedPage";
 import { SearchResultsPage } from "@/student/features/learning/pages/SearchResultsPage";
 
-// Pages - Coding (FPRD-03)
+// ── Pages - Coding ────────────────────────────────────────────────────────────
 import { CodingHomePage } from "@/student/features/coding/pages/CodingHomePage";
 import { ProblemsListPage } from "@/student/features/coding/pages/ProblemsListPage";
 import { ProblemDetailPage } from "@/student/features/coding/pages/ProblemDetailPage";
@@ -49,7 +83,7 @@ import { FavoritesPage } from "@/student/features/coding/pages/FavoritesPage";
 import { DiscussionsPage } from "@/student/features/coding/pages/DiscussionsPage";
 import { CodingAnalyticsPage } from "@/student/features/coding/pages/CodingAnalyticsPage";
 
-// Pages - Project Hub (FPRD-04)
+// ── Pages - Projects ──────────────────────────────────────────────────────────
 import { ProjectHubHomePage } from "@/student/features/projects/pages/ProjectHubHomePage";
 import { ProjectsExplorePage } from "@/student/features/projects/pages/ProjectsExplorePage";
 import { ProjectDetailPage } from "@/student/features/projects/pages/ProjectDetailPage";
@@ -62,7 +96,7 @@ import { MilestonesPage } from "@/student/features/projects/pages/MilestonesPage
 import { ProjectFilesPage } from "@/student/features/projects/pages/ProjectFilesPage";
 import { ActivityTimelinePage } from "@/student/features/projects/pages/ActivityTimelinePage";
 
-// Pages - Placement Ecosystem (FPRD-05)
+// ── Pages - Placement ─────────────────────────────────────────────────────────
 import { PlacementDashboardPage } from "@/student/features/placement/pages/PlacementDashboardPage";
 import { CompaniesPage } from "@/student/features/placement/pages/CompaniesPage";
 import { CompanyDetailPage } from "@/student/features/placement/pages/CompanyDetailPage";
@@ -70,44 +104,49 @@ import { JobsPage } from "@/student/features/placement/pages/JobsPage";
 import { JobDetailPage } from "@/student/features/placement/pages/JobDetailPage";
 import { ApplicationsPage } from "@/student/features/placement/pages/ApplicationsPage";
 
-// Pages - Resume (FPRD-05)
+// ── Pages - Resume ────────────────────────────────────────────────────────────
 import { ResumeBuilderPage } from "@/student/features/resume/pages/ResumeBuilderPage";
 import { ResumeTemplatesPage } from "@/student/features/resume/pages/ResumeTemplatesPage";
 
-// Pages - Events (FPRD-05)
+// ── Pages - Events ────────────────────────────────────────────────────────────
 import { EventsPage } from "@/student/features/events/pages/EventsPage";
 import { EventDetailPage } from "@/student/features/events/pages/EventDetailPage";
 
-// Pages - Notifications (FPRD-05)
+// ── Pages - Notifications ─────────────────────────────────────────────────────
 import { NotificationsPage } from "@/student/features/notifications/pages/NotificationsPage";
 
-// Pages - Analytics (FPRD-05)
+// ── Pages - Analytics ─────────────────────────────────────────────────────────
 import { AnalyticsDashboardPage } from "@/student/features/analytics/pages/AnalyticsDashboardPage";
 
-// Admin Pages
-import AdminDashboardPage from "@/admin/pages/dashboard/DashboardPage";
-import AdminLearningPage from "@/admin/pages/learning/LearningPage";
-import AdminProjectsPage from "@/admin/pages/projects/ProjectsPage";
-import AdminPlacementsPage from "@/admin/pages/placements/PlacementsPage";
-import AdminEventsPage from "@/admin/pages/events/EventsPage";
-import AdminAnalyticsPage from "@/admin/pages/analytics/AnalyticsPage";
-import AdminNotificationsPage from "@/admin/pages/notifications/NotificationsPage";
-import AdminUsersPage from "@/admin/pages/users/UsersPage";
-import AdminProfilePage from "@/admin/pages/profile/ProfilePage";
-import AdminSettingsPage from "@/admin/pages/settings/SettingsPage";
-
-// Error pages
+// ── Error pages ───────────────────────────────────────────────────────────────
 import { NotFoundPage } from "@/shared/pages/errors/NotFoundPage";
 import { ForbiddenPage } from "@/shared/pages/errors/ForbiddenPage";
 import { ServerErrorPage } from "@/shared/pages/errors/ServerErrorPage";
 
-// Role-based redirect component
+// ── Suspense wrapper ──────────────────────────────────────────────────────────
+function LazyPage({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
+}
+
+// ── Role-based redirect after login ──────────────────────────────────────────
 function RoleBasedRedirect() {
   const user = useAuthStore((state) => state.user);
-  if (user?.role === "Admin" || user?.role === "admin") {
-    return <Navigate to="/administrator" replace />;
-  }
+  if (!user) return <Navigate to="/auth/login" replace />;
+  if (isSuperAdmin(user.role)) return <Navigate to="/admin/dashboard" replace />;
+  if (isManager(user.role)) return <Navigate to="/manager/dashboard" replace />;
   return <Navigate to="/dashboard" replace />;
+}
+
+// ── Updated PublicRoute: redirect authenticated users to their role dashboard ─
+function SmartPublicRoute({ children }: { children: React.ReactNode }) {
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  if (isAuthenticated && user) {
+    if (isSuperAdmin(user.role)) return <Navigate to="/admin/dashboard" replace />;
+    if (isManager(user.role)) return <Navigate to="/manager/dashboard" replace />;
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <>{children}</>;
 }
 
 export const router = createBrowserRouter([
@@ -125,9 +164,9 @@ export const router = createBrowserRouter([
   // ── Auth routes ────────────────────────────────────────────────────────────
   {
     element: (
-      <PublicRoute>
+      <SmartPublicRoute>
         <AuthLayout />
-      </PublicRoute>
+      </SmartPublicRoute>
     ),
     children: [
       { path: "/auth/login", element: <LoginPage /> },
@@ -138,9 +177,9 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // ── Role-based redirect for authenticated users ────────────────────────────
+  // ── Role-based redirect ────────────────────────────────────────────────────
   {
-    path: "/",
+    path: "/redirect",
     element: (
       <ProtectedRoute>
         <RoleBasedRedirect />
@@ -148,7 +187,7 @@ export const router = createBrowserRouter([
     ),
   },
 
-  // ── Protected student dashboard routes ─────────────────────────────────────
+  // ── Student dashboard routes (/dashboard/*) ────────────────────────────────
   {
     path: "/dashboard",
     element: (
@@ -186,7 +225,7 @@ export const router = createBrowserRouter([
       { path: "coding/favorites", element: <FavoritesPage /> },
       { path: "coding/analytics", element: <CodingAnalyticsPage /> },
 
-      // Project Hub
+      // Projects
       { path: "projects", element: <ProjectHubHomePage /> },
       { path: "projects/explore", element: <ProjectsExplorePage /> },
       { path: "projects/invitations", element: <TeamInvitationsPage /> },
@@ -220,29 +259,67 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // ── Protected admin routes ─────────────────────────────────────────────────
+  // ── Manager Console routes (/manager/*) ────────────────────────────────────
   {
-    path: "/administrator",
+    path: "/manager",
     element: (
       <ProtectedRoute>
-        <AdminLayout />
+        <LazyPage>
+          <ManagerLayout />
+        </LazyPage>
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <AdminDashboardPage /> },
-      { path: "learning", element: <AdminLearningPage /> },
-      { path: "projects", element: <AdminProjectsPage /> },
-      { path: "placements", element: <AdminPlacementsPage /> },
-      { path: "events", element: <AdminEventsPage /> },
-      { path: "analytics", element: <AdminAnalyticsPage /> },
-      { path: "notifications", element: <AdminNotificationsPage /> },
-      { path: "users", element: <AdminUsersPage /> },
-      { path: "profile", element: <AdminProfilePage /> },
-      { path: "settings", element: <AdminSettingsPage /> },
+      { index: true, element: <Navigate to="/manager/dashboard" replace /> },
+      { path: "dashboard", element: <LazyPage><ManagerDashboardPage /></LazyPage> },
+      { path: "learning", element: <LazyPage><ManagerLearningPage /></LazyPage> },
+      { path: "coding", element: <LazyPage><ManagerCodingPage /></LazyPage> },
+      { path: "projects", element: <LazyPage><ManagerProjectsPage /></LazyPage> },
+      { path: "placements", element: <LazyPage><ManagerPlacementsPage /></LazyPage> },
+      { path: "events", element: <LazyPage><ManagerEventsPage /></LazyPage> },
+      { path: "notifications", element: <LazyPage><ManagerNotificationsPage /></LazyPage> },
+      { path: "reports", element: <LazyPage><ManagerReportsPage /></LazyPage> },
+      { path: "profile", element: <LazyPage><ManagerProfilePage /></LazyPage> },
+      { path: "settings", element: <LazyPage><ManagerSettingsPage /></LazyPage> },
     ],
   },
 
-  // ── Error pages ────────────────────────────────────────────────────────────
+  // ── Super Admin Console routes (/admin/*) ──────────────────────────────────
+  {
+    path: "/admin",
+    element: (
+      <ProtectedRoute>
+        <LazyPage>
+          <AdminLayout />
+        </LazyPage>
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <Navigate to="/admin/dashboard" replace /> },
+      { path: "dashboard", element: <LazyPage><AdminDashboardPage /></LazyPage> },
+      { path: "users", element: <LazyPage><AdminUsersPage /></LazyPage> },
+      { path: "managers", element: <LazyPage><AdminManagersPage /></LazyPage> },
+      { path: "permissions", element: <LazyPage><AdminPermissionsPage /></LazyPage> },
+      { path: "analytics", element: <LazyPage><AdminAnalyticsPage /></LazyPage> },
+      { path: "platform", element: <LazyPage><AdminPlatformPage /></LazyPage> },
+      { path: "audit", element: <LazyPage><AdminAuditPage /></LazyPage> },
+      { path: "system", element: <LazyPage><AdminSystemPage /></LazyPage> },
+      { path: "settings", element: <LazyPage><AdminSettingsPage /></LazyPage> },
+      { path: "profile", element: <LazyPage><AdminProfilePage /></LazyPage> },
+    ],
+  },
+
+  // ── Legacy /administrator redirect ────────────────────────────────────────
+  {
+    path: "/administrator",
+    element: <Navigate to="/admin/dashboard" replace />,
+  },
+  {
+    path: "/administrator/*",
+    element: <Navigate to="/admin/dashboard" replace />,
+  },
+
+  // ── Error pages ───────────────────────────────────────────────────────────
   { path: "/403", element: <ForbiddenPage /> },
   { path: "/500", element: <ServerErrorPage /> },
   { path: "*", element: <NotFoundPage /> },

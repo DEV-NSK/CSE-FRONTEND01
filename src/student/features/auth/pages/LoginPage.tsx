@@ -17,6 +17,7 @@ import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Label } from "@/shared/components/ui/label";
 import { authService } from "@/shared/services/auth.service";
 import { useAuthStore } from "@/shared/store/authStore";
+import { isManager, isSuperAdmin } from "@/types";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -58,11 +59,12 @@ export function LoginPage() {
       });
       const { user, accessToken, refreshToken } = response.data.data;
       login(user, { accessToken, refreshToken });
-      const redirectPath =
-        from ||
-        (user?.role === "Admin" || user?.role === "admin"
-          ? "/administrator"
-          : "/dashboard");
+      const defaultRedirect = isSuperAdmin(user?.role)
+        ? "/admin/dashboard"
+        : isManager(user?.role)
+        ? "/manager/dashboard"
+        : "/dashboard";
+      const redirectPath = from || defaultRedirect;
       navigate(redirectPath, { replace: true });
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };
@@ -184,9 +186,19 @@ export function LoginPage() {
                   setValue("email", "admin@cse.dev");
                   setValue("password", "Admin@123");
                 }}
-                className="text-xs px-2.5 py-1 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors font-medium"
+                className="text-xs px-2.5 py-1 rounded bg-red-500/10 text-red-600 hover:bg-red-500/20 transition-colors font-medium"
               >
-                Admin
+                Super Admin
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setValue("email", "manager@cse.dev");
+                  setValue("password", "Manager@123");
+                }}
+                className="text-xs px-2.5 py-1 rounded bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-colors font-medium"
+              >
+                Manager
               </button>
               <button
                 type="button"
@@ -194,15 +206,15 @@ export function LoginPage() {
                   setValue("email", "student@cse.dev");
                   setValue("password", "Student@123");
                 }}
-                className="text-xs px-2.5 py-1 rounded bg-secondary/10 text-secondary hover:bg-secondary/20 transition-colors font-medium"
+                className="text-xs px-2.5 py-1 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors font-medium"
               >
                 Student
               </button>
             </div>
             <p className="text-[10px] text-muted-foreground/70 mt-2">
-              Admin panel is accessible at{" "}
-              <code className="font-mono">/dashboard/admin</code> for admin
-              accounts
+              Roles redirect: Student → <code className="font-mono">/dashboard</code> ·
+              Manager → <code className="font-mono">/manager</code> ·
+              Admin → <code className="font-mono">/admin</code>
             </p>
           </div>
         )}

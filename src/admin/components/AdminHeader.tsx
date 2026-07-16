@@ -1,38 +1,107 @@
-import React from 'react'
-import { Bell, Search, Plus, UserCircle } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { Bell, ChevronRight, LogOut, Search } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
-import { Input } from '@/shared/components/ui/input'
+import { useAuthStore } from '@/shared/store/authStore'
+import { authService } from '@/shared/services/auth.service'
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/shared/components/ui/dropdown-menu'
+
+const ROUTE_LABELS: Record<string, string> = {
+  '/admin': 'Admin',
+  '/admin/dashboard': 'Dashboard',
+  '/admin/users': 'User Management',
+  '/admin/managers': 'Manager Management',
+  '/admin/permissions': 'Permission Management',
+  '/admin/analytics': 'Platform Analytics',
+  '/admin/platform': 'Platform Settings',
+  '/admin/audit': 'Audit Logs',
+  '/admin/system': 'System Monitor',
+  '/admin/settings': 'Settings',
+  '/admin/profile': 'Profile',
+}
+
+function getBreadcrumbs(pathname: string) {
+  const crumbs: { label: string; href: string }[] = [{ label: 'Admin', href: '/admin/dashboard' }]
+  const label = ROUTE_LABELS[pathname]
+  if (label && pathname !== '/admin' && pathname !== '/admin/dashboard') {
+    crumbs.push({ label, href: pathname })
+  }
+  return crumbs
+}
 
 export function AdminHeader() {
+  const location = useLocation()
+  const { user, logout } = useAuthStore()
+  const navigate = useNavigate()
+  const breadcrumbs = getBreadcrumbs(location.pathname)
+
+  const initials = user?.fullName
+    ? user.fullName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+    : 'SA'
+
+  const handleLogout = async () => {
+    try { await authService.logout() } catch { /* ignore */ }
+    logout()
+    navigate('/auth/login')
+  }
+
   return (
-    <header className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white">
-      <div className="flex items-center gap-4 flex-1">
-        <div className="relative w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <Input 
-            placeholder="Search..." 
-            className="pl-9 bg-slate-50 border-slate-200 focus-visible:ring-slate-500"
-          />
-        </div>
+    <header className="h-13 border-b border-slate-800 bg-slate-900 flex items-center justify-between px-5 flex-shrink-0" style={{ height: '52px' }}>
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-1.5 text-sm">
+        {breadcrumbs.map((crumb, i) => (
+          <div key={crumb.href} className="flex items-center gap-1.5">
+            {i > 0 && <ChevronRight className="w-3.5 h-3.5 text-slate-600" />}
+            <span className={i === breadcrumbs.length - 1 ? 'text-slate-200 font-medium' : 'text-slate-500'}>
+              {crumb.label}
+            </span>
+          </div>
+        ))}
       </div>
-      <div className="flex items-center gap-4">
-        <Button size="sm" variant="default">
-          <Plus className="h-4 w-4 mr-2" />
-          Create
+
+      {/* Right */}
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-500 hover:text-slate-200 hover:bg-slate-800" aria-label="Search">
+          <Search className="w-4 h-4" />
         </Button>
-        <Button size="icon" variant="ghost" className="relative">
-          <Bell className="h-5 w-5 text-slate-600" />
-          <span className="absolute -top-1 -right-1 h-4 w-4 bg-rose-500 rounded-full text-xs text-white flex items-center justify-center">
-            3
-          </span>
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-500 hover:text-slate-200 hover:bg-slate-800 relative" aria-label="Notifications">
+          <Bell className="w-4 h-4" />
+          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full" aria-hidden="true" />
         </Button>
-        <div className="flex items-center gap-3 border-l border-slate-200 pl-4">
-          <Avatar className="h-9 w-9">
-            <AvatarImage src="" alt="Admin" />
-            <AvatarFallback className="bg-blue-600 text-white">AD</AvatarFallback>
-          </Avatar>
-        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              aria-label="User menu"
+            >
+              <Avatar className="w-7 h-7">
+                <AvatarImage src={user?.avatar} />
+                <AvatarFallback className="bg-blue-700 text-white text-xs font-bold">{initials}</AvatarFallback>
+              </Avatar>
+              <span className="text-sm font-medium text-slate-300 hidden sm:block">{user?.fullName?.split(' ')[0] || 'Admin'}</span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48 bg-slate-900 border-slate-700 text-slate-200">
+            <div className="px-3 py-2 border-b border-slate-700">
+              <p className="text-sm font-medium text-slate-200 truncate">{user?.fullName}</p>
+              <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+            </div>
+            <DropdownMenuItem className="focus:bg-slate-800 focus:text-slate-200" onClick={() => navigate('/admin/profile')}>Profile</DropdownMenuItem>
+            <DropdownMenuItem className="focus:bg-slate-800 focus:text-slate-200" onClick={() => navigate('/admin/settings')}>Settings</DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-slate-700" />
+            <DropdownMenuItem onClick={handleLogout} className="text-red-400 focus:text-red-400 focus:bg-slate-800">
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   )
