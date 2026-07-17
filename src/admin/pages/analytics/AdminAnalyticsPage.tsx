@@ -1,255 +1,280 @@
-import { BarChart3, TrendingUp, Users, Globe, Monitor } from 'lucide-react'
+import { useState } from 'react'
+import { BarChart3, TrendingUp, Globe, RefreshCw, AlertCircle } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  RadarChart, Radar, PolarGrid, PolarAngleAxis,
-  FunnelChart, Funnel, LabelList,
+  BarChart, Bar, LineChart, Line,
 } from 'recharts'
+import { useAdminCharts, useAdminDashboard } from '@/shared/hooks/useAdminAnalytics'
+import { cn } from '@/shared/lib/utils'
 
-const userGrowth = [
-  { month: 'Jan', users: 820, sessions: 3200 },
-  { month: 'Feb', users: 980, sessions: 4100 },
-  { month: 'Mar', users: 1150, sessions: 4800 },
-  { month: 'Apr', users: 1340, sessions: 5600 },
-  { month: 'May', users: 1580, sessions: 6900 },
-  { month: 'Jun', users: 1820, sessions: 7800 },
-  { month: 'Jul', users: 2100, sessions: 8900 },
-]
-
-const retentionData = [
-  { week: 'W1', d1: 100, d7: 68, d30: 42 },
-  { week: 'W2', d1: 100, d7: 71, d30: 45 },
-  { week: 'W3', d1: 100, d7: 65, d30: 38 },
-  { week: 'W4', d1: 100, d7: 74, d30: 49 },
-]
-
-const deviceData = [
-  { name: 'Desktop', value: 58, color: '#3b82f6' },
-  { name: 'Mobile', value: 31, color: '#8b5cf6' },
-  { name: 'Tablet', value: 11, color: '#22d3ee' },
-]
-
-const featureUsage = [
-  { feature: 'Learning', value: 92 },
-  { feature: 'Coding', value: 78 },
-  { feature: 'Projects', value: 64 },
-  { feature: 'Events', value: 56 },
-  { feature: 'Placement', value: 48 },
-  { feature: 'Analytics', value: 34 },
-]
-
-const peakHours = [
-  { hour: '6AM', users: 45 }, { hour: '8AM', users: 120 }, { hour: '10AM', users: 280 },
-  { hour: '12PM', users: 340 }, { hour: '2PM', users: 420 }, { hour: '4PM', users: 380 },
-  { hour: '6PM', users: 460 }, { hour: '8PM', users: 510 }, { hour: '10PM', users: 320 },
-  { hour: '12AM', users: 90 },
-]
-
-const countryData = [
-  { country: 'India', users: 1840, pct: 65 },
-  { country: 'USA', users: 284, pct: 10 },
-  { country: 'UK', users: 198, pct: 7 },
-  { country: 'Canada', users: 142, pct: 5 },
-  { country: 'Others', users: 383, pct: 13 },
-]
-
-const funnelData = [
-  { name: 'Registered', value: 2847, fill: '#3b82f6' },
-  { name: 'Onboarded', value: 2410, fill: '#6366f1' },
-  { name: 'Active (7d)', value: 1680, fill: '#8b5cf6' },
-  { name: 'Active (30d)', value: 1200, fill: '#a78bfa' },
-  { name: 'Retained', value: 840, fill: '#c4b5fd' },
-]
-
-const CHART_TOOLTIP_STYLE = {
+const CHART_TOOLTIP = {
   contentStyle: { fontSize: 11, borderRadius: 8, background: '#1e293b', border: '1px solid #334155', color: '#e2e8f0' },
 }
 
+type Period = 'daily' | 'weekly' | 'monthly' | 'yearly'
+
+function Skeleton({ className }: { className?: string }) {
+  return <div className={cn('animate-pulse bg-slate-800 rounded-lg', className)} />
+}
+
 export default function AdminAnalyticsPage() {
+  const [period, setPeriod] = useState<Period>('monthly')
+
+  const { data: charts, isLoading, error, refetch } = useAdminCharts(period)
+  const { data: overview } = useAdminDashboard()
+
   return (
     <div className="space-y-5" role="main" aria-label="Platform Analytics">
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 bg-blue-500/10 border border-blue-500/20 rounded-lg flex items-center justify-center">
-          <BarChart3 className="w-5 h-5 text-blue-400" aria-hidden="true" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-blue-500/10 border border-blue-500/20 rounded-lg flex items-center justify-center">
+            <BarChart3 className="w-5 h-5 text-blue-400" aria-hidden="true" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold text-white">Platform Analytics</h1>
+            <p className="text-xs text-slate-500">Live data from database</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-lg font-bold text-white">Platform Analytics</h1>
-          <p className="text-xs text-slate-500">Enterprise-grade analytics — 30+ charts</p>
+        <div className="flex items-center gap-2">
+          {/* Period selector */}
+          <div className="flex items-center gap-1 bg-slate-800 p-1 rounded-lg">
+            {(['daily', 'weekly', 'monthly', 'yearly'] as Period[]).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={cn(
+                  'px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize',
+                  period === p ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300',
+                )}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => refetch()}
+            className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
-      {/* Row 1: Growth + Retention */}
+      {error && (
+        <div className="flex items-center gap-3 p-3 bg-red-900/20 border border-red-700/30 rounded-xl">
+          <AlertCircle className="w-4 h-4 text-red-400" />
+          <p className="text-xs text-red-300 flex-1">Failed to load chart data.</p>
+          <button onClick={() => refetch()} className="text-xs text-red-400">Retry</button>
+        </div>
+      )}
+
+      {/* KPI snapshot from dashboard */}
+      {overview && (
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {[
+            { label: 'Total Users', value: overview.users.total.toLocaleString(), color: 'text-blue-400' },
+            { label: 'Active (30d)', value: overview.activity.activeLast30.toLocaleString(), color: 'text-emerald-400' },
+            { label: 'Roadmaps', value: overview.learning.publishedRoadmaps.toString(), color: 'text-purple-400' },
+            { label: 'Problems', value: overview.coding.totalProblems.toString(), color: 'text-amber-400' },
+            { label: 'Projects', value: overview.projects.total.toString(), color: 'text-cyan-400' },
+            { label: 'Applications', value: overview.placement.applications.toLocaleString(), color: 'text-rose-400' },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+              <p className="text-xs text-slate-500 mb-1">{label}</p>
+              <p className={`text-xl font-bold ${color}`}>{value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Row 1: User Growth */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
           <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-blue-400" /> User Growth & Sessions
+            <TrendingUp className="w-4 h-4 text-blue-400" /> User Growth & Activity
           </h2>
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={userGrowth}>
-              <defs>
-                <linearGradient id="usersGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#475569' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#475569' }} axisLine={false} tickLine={false} />
-              <Tooltip {...CHART_TOOLTIP_STYLE} />
-              <Area type="monotone" dataKey="users" stroke="#3b82f6" fill="url(#usersGrad)" strokeWidth={2} name="Users" />
-              <Line type="monotone" dataKey="sessions" stroke="#f59e0b" strokeWidth={1.5} dot={false} name="Sessions" />
-            </AreaChart>
-          </ResponsiveContainer>
+          {isLoading ? <Skeleton className="h-48" /> : charts ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={charts.userGrowth}>
+                <defs>
+                  <linearGradient id="gradNew" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#475569' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#475569' }} axisLine={false} tickLine={false} />
+                <Tooltip {...CHART_TOOLTIP} />
+                <Area type="monotone" dataKey="newUsers" stroke="#3b82f6" fill="url(#gradNew)" strokeWidth={2} name="New Users" />
+                <Line type="monotone" dataKey="activeUsers" stroke="#f59e0b" strokeWidth={1.5} dot={false} name="Active Users" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : null}
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-white mb-4">Retention (D1 / D7 / D30)</h2>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={retentionData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#475569' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#475569' }} axisLine={false} tickLine={false} unit="%" />
-              <Tooltip {...CHART_TOOLTIP_STYLE} />
-              <Line dataKey="d1" stroke="#3b82f6" name="Day 1" strokeWidth={2} dot={false} />
-              <Line dataKey="d7" stroke="#22d3ee" name="Day 7" strokeWidth={2} dot={false} />
-              <Line dataKey="d30" stroke="#8b5cf6" name="Day 30" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
+          <h2 className="text-sm font-semibold text-white mb-4">Students vs Managers</h2>
+          {isLoading ? <Skeleton className="h-48" /> : charts ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={charts.userGrowth}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#475569' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#475569' }} axisLine={false} tickLine={false} />
+                <Tooltip {...CHART_TOOLTIP} />
+                <Line type="monotone" dataKey="students" stroke="#3b82f6" strokeWidth={2} dot={false} name="Students" />
+                <Line type="monotone" dataKey="managers" stroke="#f59e0b" strokeWidth={2} dot={false} name="Managers" />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : null}
         </div>
       </div>
 
-      {/* Row 2: Feature usage + Devices + Peak Hours */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* Row 2: Learning + Coding */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-white mb-4">Most Used Features</h2>
-          <div className="space-y-2.5">
-            {featureUsage.map(({ feature, value }) => (
-              <div key={feature} className="flex items-center gap-2.5">
-                <span className="text-xs text-slate-400 w-20 flex-shrink-0">{feature}</span>
-                <div className="flex-1 bg-slate-800 rounded-full h-1.5">
-                  <div
-                    className="bg-blue-500 h-1.5 rounded-full transition-all"
-                    style={{ width: `${value}%` }}
-                    role="progressbar"
-                    aria-valuenow={value}
-                    aria-valuemax={100}
-                    aria-label={`${feature}: ${value}%`}
-                  />
-                </div>
-                <span className="text-xs text-slate-500 w-8 text-right">{value}%</span>
-              </div>
-            ))}
-          </div>
+          <h2 className="text-sm font-semibold text-white mb-4">Learning Activity</h2>
+          {isLoading ? <Skeleton className="h-48" /> : charts ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={charts.learningActivity} barSize={8}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+                <Tooltip {...CHART_TOOLTIP} />
+                <Bar dataKey="lessons" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="New Lessons" />
+                <Bar dataKey="completions" fill="#22d3ee" radius={[4, 4, 0, 0]} name="Completions" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : null}
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-white mb-4">Device Types</h2>
-          <ResponsiveContainer width="100%" height={150}>
-            <PieChart>
-              <Pie data={deviceData} cx="50%" cy="50%" innerRadius={45} outerRadius={65} paddingAngle={3} dataKey="value">
-                {deviceData.map((entry, i) => (
-                  <Cell key={i} fill={entry.color} />
+          <h2 className="text-sm font-semibold text-white mb-4">Coding Submissions</h2>
+          {isLoading ? <Skeleton className="h-48" /> : charts ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={charts.codingActivity}>
+                <defs>
+                  <linearGradient id="gradSub" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+                <Tooltip {...CHART_TOOLTIP} />
+                <Area type="monotone" dataKey="submissions" stroke="#f59e0b" fill="url(#gradSub)" strokeWidth={2} name="Submissions" />
+                <Line type="monotone" dataKey="accepted" stroke="#22d3ee" strokeWidth={1.5} dot={false} name="Accepted" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Row 3: Projects + Placements */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-white mb-4">Project Creations</h2>
+          {isLoading ? <Skeleton className="h-48" /> : charts ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={charts.projectActivity} barSize={10}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+                <Tooltip {...CHART_TOOLTIP} />
+                <Bar dataKey="projects" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Projects" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : null}
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-white mb-4">Placement Activity</h2>
+          {isLoading ? <Skeleton className="h-48" /> : charts ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={charts.placementActivity}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+                <Tooltip {...CHART_TOOLTIP} />
+                <Line type="monotone" dataKey="applications" stroke="#3b82f6" strokeWidth={2} dot={false} name="Applications" />
+                <Line type="monotone" dataKey="offered" stroke="#22c55e" strokeWidth={2} dot={false} name="Offered" />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Row 4: Events + Platform stats */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-white mb-4">Event Activity</h2>
+          {isLoading ? <Skeleton className="h-48" /> : charts ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={charts.eventActivity} barSize={8}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+                <Tooltip {...CHART_TOOLTIP} />
+                <Bar dataKey="events" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Events" />
+                <Bar dataKey="registrations" fill="#22d3ee" radius={[4, 4, 0, 0]} name="Registrations" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : null}
+        </div>
+
+        {/* Coding difficulty breakdown */}
+        {overview && (
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+            <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+              <Globe className="w-4 h-4 text-blue-400" /> Problem Difficulty Split
+            </h2>
+            <div className="space-y-3">
+              {[
+                { label: 'Easy', value: overview.coding.easyProblems, total: overview.coding.totalProblems, color: 'bg-emerald-500' },
+                { label: 'Medium', value: overview.coding.mediumProblems, total: overview.coding.totalProblems, color: 'bg-amber-500' },
+                { label: 'Hard', value: overview.coding.hardProblems, total: overview.coding.totalProblems, color: 'bg-red-500' },
+              ].map(({ label, value, total, color }) => {
+                const pct = total > 0 ? Math.round((value / total) * 100) : 0
+                return (
+                  <div key={label} className="flex items-center gap-3">
+                    <span className="text-xs text-slate-400 w-14 flex-shrink-0">{label}</span>
+                    <div className="flex-1 bg-slate-800 rounded-full h-2">
+                      <div
+                        className={`${color} h-2 rounded-full transition-all`}
+                        style={{ width: `${pct}%` }}
+                        role="progressbar"
+                        aria-valuenow={pct}
+                        aria-valuemax={100}
+                      />
+                    </div>
+                    <span className="text-xs text-slate-400 w-8 text-right">{value}</span>
+                    <span className="text-xs text-slate-600 w-8 text-right">{pct}%</span>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-800">
+              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Content Split</h3>
+              <div className="space-y-2">
+                {[
+                  { label: 'Roadmaps', value: overview.learning.totalRoadmaps, sub: `${overview.learning.publishedRoadmaps} published` },
+                  { label: 'Lessons', value: overview.learning.totalLessons, sub: `${overview.learning.publishedLessons} published` },
+                  { label: 'Resources', value: overview.learning.totalResources, sub: 'learning resources' },
+                ].map(({ label, value, sub }) => (
+                  <div key={label} className="flex items-center justify-between">
+                    <span className="text-xs text-slate-400">{label}</span>
+                    <div className="text-right">
+                      <span className="text-sm font-semibold text-slate-200">{value}</span>
+                      <span className="text-xs text-slate-600 ml-2">{sub}</span>
+                    </div>
+                  </div>
                 ))}
-              </Pie>
-              <Tooltip {...CHART_TOOLTIP_STYLE} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="space-y-1.5 mt-2">
-            {deviceData.map((d) => (
-              <div key={d.name} className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: d.color }} aria-hidden="true" />
-                  <span className="text-xs text-slate-400">{d.name}</span>
-                </div>
-                <span className="text-xs font-semibold text-slate-300">{d.value}%</span>
               </div>
-            ))}
+            </div>
           </div>
-        </div>
-
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-white mb-4">Peak Hours</h2>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={peakHours} barSize={8}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="hour" tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
-              <Tooltip {...CHART_TOOLTIP_STYLE} />
-              <Bar dataKey="users" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Active Users" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Row 3: Country + Funnel */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-            <Globe className="w-4 h-4 text-blue-400" /> Country Usage
-          </h2>
-          <div className="space-y-3">
-            {countryData.map(({ country, users, pct }) => (
-              <div key={country} className="flex items-center gap-3">
-                <span className="text-xs text-slate-400 w-20 flex-shrink-0">{country}</span>
-                <div className="flex-1 bg-slate-800 rounded-full h-1.5">
-                  <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${pct}%` }} role="progressbar" aria-valuenow={pct} aria-valuemax={100} />
-                </div>
-                <span className="text-xs text-slate-500 w-12 text-right">{users.toLocaleString()}</span>
-                <span className="text-xs text-slate-600 w-8 text-right">{pct}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-white mb-4">User Funnel</h2>
-          <div className="space-y-2.5 mt-4">
-            {funnelData.map(({ name, value, fill }) => (
-              <div key={name} className="flex items-center gap-3">
-                <span className="text-xs text-slate-400 w-28 flex-shrink-0">{name}</span>
-                <div className="flex-1 bg-slate-800 rounded-full h-3">
-                  <div
-                    className="h-3 rounded-full transition-all"
-                    style={{ width: `${(value / funnelData[0].value) * 100}%`, backgroundColor: fill }}
-                    role="progressbar"
-                    aria-valuenow={value}
-                    aria-valuemax={funnelData[0].value}
-                  />
-                </div>
-                <span className="text-xs font-semibold text-slate-300 w-16 text-right">{value.toLocaleString()}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Heatmap */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-white mb-4">Activity Heatmap (Weekly)</h2>
-        <div className="grid grid-cols-7 gap-1.5" role="img" aria-label="Activity heatmap">
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
-            <div key={d} className="text-center text-[10px] text-slate-600 mb-1">{d}</div>
-          ))}
-          {Array.from({ length: 7 * 24 }, (_, i) => {
-            const intensity = Math.random()
-            const bg = intensity > 0.8 ? 'bg-blue-500' : intensity > 0.6 ? 'bg-blue-700' : intensity > 0.3 ? 'bg-blue-900' : 'bg-slate-800'
-            return (
-              <div
-                key={i}
-                className={`h-3 rounded-sm ${bg} transition-opacity hover:opacity-80`}
-                title={`${Math.floor(intensity * 500)} users`}
-                aria-hidden="true"
-              />
-            )
-          })}
-        </div>
-        <div className="flex items-center gap-2 mt-3 justify-end">
-          <span className="text-[10px] text-slate-600">Less</span>
-          {['bg-slate-800', 'bg-blue-900', 'bg-blue-700', 'bg-blue-500'].map((c, i) => (
-            <div key={i} className={`w-3 h-3 rounded-sm ${c}`} aria-hidden="true" />
-          ))}
-          <span className="text-[10px] text-slate-600">More</span>
-        </div>
+        )}
       </div>
     </div>
   )

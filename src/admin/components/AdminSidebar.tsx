@@ -20,6 +20,7 @@ import { cn } from '@/shared/lib/utils'
 import { useAdminStore } from '@/admin/store/adminStore'
 import { useAuthStore } from '@/shared/store/authStore'
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar'
+import { useAdminDashboard } from '@/shared/hooks/useAdminAnalytics'
 
 const navItems = [
   { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
@@ -41,6 +42,8 @@ export function AdminSidebar() {
   const { sidebarCollapsed, toggleSidebar } = useAdminStore()
   const { user } = useAuthStore()
   const location = useLocation()
+  // Live dashboard data for badge counters
+  const { data: overview } = useAdminDashboard()
 
   const initials = user?.fullName
     ? user.fullName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -80,6 +83,11 @@ export function AdminSidebar() {
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
         {navItems.map(({ label, href, icon: Icon }) => {
           const isActive = location.pathname === href || (href !== '/admin/dashboard' && location.pathname.startsWith(href))
+          // Live badge counts
+          const badge =
+            href === '/admin/users' && overview ? overview.users.newToday > 0 ? overview.users.newToday : undefined
+            : href === '/admin/managers' && overview ? overview.users.managers.pendingInvitations > 0 ? overview.users.managers.pendingInvitations : undefined
+            : undefined
           return (
             <NavLink
               key={href}
@@ -100,12 +108,21 @@ export function AdminSidebar() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.1 }}
-                    className="whitespace-nowrap font-medium text-sm"
+                    className="whitespace-nowrap font-medium text-sm flex-1"
                   >
                     {label}
                   </motion.span>
                 )}
               </AnimatePresence>
+              {/* Live badge */}
+              {!sidebarCollapsed && badge !== undefined && (
+                <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-600 text-white min-w-[18px] text-center leading-none">
+                  {badge > 99 ? '99+' : badge}
+                </span>
+              )}
+              {sidebarCollapsed && badge !== undefined && (
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-blue-500" aria-hidden="true" />
+              )}
               {isActive && (
                 <motion.div
                   layoutId="admin-active-indicator"
@@ -171,7 +188,7 @@ export function AdminSidebar() {
                 <p className="text-xs font-medium text-slate-300 truncate">{user?.fullName || 'Super Admin'}</p>
                 <p className="text-[10px] text-slate-600 flex items-center gap-1">
                   <Activity className="w-2.5 h-2.5 text-emerald-500" aria-hidden="true" />
-                  Online
+                  Online · {overview ? `${overview.users.total.toLocaleString()} users` : '…'}
                 </p>
               </motion.div>
             )}

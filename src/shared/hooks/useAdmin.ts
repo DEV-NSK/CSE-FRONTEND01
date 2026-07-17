@@ -8,9 +8,13 @@ export const adminKeys = {
   all: ['admin'] as const,
   stats: () => [...adminKeys.all, 'stats'] as const,
   users: (params?: object) => [...adminKeys.all, 'users', params] as const,
+  userById: (id: string) => [...adminKeys.all, 'user', id] as const,
+  managers: (params?: object) => [...adminKeys.all, 'managers', params] as const,
   resource: (name: string, params?: object) => [...adminKeys.all, name, params] as const,
   reports: (params?: object) => [...adminKeys.all, 'reports', params] as const,
   settings: () => [...adminKeys.all, 'settings'] as const,
+  auditLogs: (params?: object) => [...adminKeys.all, 'auditLogs', params] as const,
+  systemLogs: (params?: object) => [...adminKeys.all, 'systemLogs', params] as const,
 }
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -26,7 +30,25 @@ export function useAdminStats() {
 export function useAdminUsers(params?: { search?: string; role?: string; page?: number; limit?: number }) {
   return useQuery({
     queryKey: adminKeys.users(params),
-    queryFn: () => adminService.getUsers(params).then((r) => r.data.data),
+    queryFn: () => adminService.getSuperAdminUsers(params).then((r) => r.data.data),
+    staleTime: 1000 * 60 * 2,
+    placeholderData: (prev) => prev,
+  })
+}
+
+export function useAdminUserById(id: string) {
+  return useQuery({
+    queryKey: adminKeys.userById(id),
+    queryFn: () => adminService.getSuperAdminUserById(id).then((r) => r.data.data),
+    staleTime: 1000 * 60 * 2,
+    enabled: !!id,
+  })
+}
+
+export function useAdminManagers(params?: { page?: number; limit?: number }) {
+  return useQuery({
+    queryKey: adminKeys.managers(params),
+    queryFn: () => adminService.getManagers(params).then((r) => r.data.data),
     staleTime: 1000 * 60 * 2,
     placeholderData: (prev) => prev,
   })
@@ -58,6 +80,43 @@ export function usePlatformSettings() {
   })
 }
 
+export function useAdminAuditLogs(params?: {
+  role?: string; action?: string; module?: string;
+  userId?: string; startDate?: string; endDate?: string;
+  page?: number; limit?: number
+}) {
+  return useQuery({
+    queryKey: adminKeys.auditLogs(params),
+    queryFn: () => adminService.getAuditLogs(params).then((r) => r.data.data) as Promise<{
+      data: {
+        id: string; action: string; role: string; module: string | null;
+        entity: string | null; ipAddress: string | null; createdAt: string;
+        performer?: { id: string; fullName: string; email: string; role: string }
+      }[];
+      total: number; page: number; limit: number
+    }>,
+    staleTime: 1000 * 30,
+    refetchInterval: 1000 * 30,
+    placeholderData: (prev) => prev,
+  })
+}
+
+export function useAdminSystemLogs(params?: {
+  level?: string; module?: string; startDate?: string; endDate?: string;
+  page?: number; limit?: number
+}) {
+  return useQuery({
+    queryKey: adminKeys.systemLogs(params),
+    queryFn: () => adminService.getSystemLogs(params).then((r) => r.data.data) as Promise<{
+      data: { id: string; level: string; module: string; message: string; createdAt: string }[];
+      total: number; page: number; limit: number
+    }>,
+    staleTime: 1000 * 30,
+    refetchInterval: 1000 * 30,
+    placeholderData: (prev) => prev,
+  })
+}
+
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 export function useUpdateUserRole() {
@@ -71,13 +130,48 @@ export function useUpdateUserRole() {
   })
 }
 
+export function usePromoteUser() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, reason, modules }: { id: string; reason?: string; modules?: Record<string, boolean> }) =>
+      adminService.promoteUser(id, reason, modules),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.users() })
+      queryClient.invalidateQueries({ queryKey: adminKeys.managers() })
+    },
+  })
+}
+
+export function useDemoteUser() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
+      adminService.demoteUser(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.users() })
+      queryClient.invalidateQueries({ queryKey: adminKeys.managers() })
+    },
+  })
+}
+
 export function useDeleteUser() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => adminService.deleteUser(id),
+    mutationFn: (id: string) => adminService.deleteSuperAdminUser(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.users() })
       queryClient.invalidateQueries({ queryKey: adminKeys.stats() })
+    },
+  })
+}
+
+export function useUpdateManagerPermissions() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, permissions }: { id: string; permissions: Record<string, boolean> }) =>
+      adminService.updateManagerPermissions(id, permissions),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.managers() })
     },
   })
 }
@@ -144,6 +238,16 @@ export function useUpdatePlatformSettings() {
       adminService.updatePlatformSettings(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.settings() })
+    },
+  })
+}
+
+export function useSendManagerInvitation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (email: string) => adminService.sendManagerInvitation(email),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.managers() })
     },
   })
 }
