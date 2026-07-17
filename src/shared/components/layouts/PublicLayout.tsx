@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ThemeToggle } from '@/shared/components/common/ThemeToggle'
 import { Button } from '@/shared/components/ui/button'
 import { useAuthStore } from '@/shared/store/authStore'
+import { getDashboardPath } from '@/types'
 import { cn } from '@/shared/lib/utils'
 
 const navLinks = [
@@ -15,9 +16,11 @@ const navLinks = [
 ]
 
 export function PublicLayout() {
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, user } = useAuthStore()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+
+  const dashPath = getDashboardPath(user?.role)
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -51,7 +54,7 @@ export function PublicLayout() {
               <ThemeToggle />
               <div className="hidden md:flex items-center gap-2">
                 {isAuthenticated ? (
-                  <Button onClick={() => navigate('/dashboard')}>Dashboard</Button>
+                  <Button onClick={() => navigate(dashPath)}>Dashboard</Button>
                 ) : (
                   <>
                     <Button variant="ghost" onClick={() => navigate('/auth/login')}>
@@ -96,7 +99,7 @@ export function PublicLayout() {
                 ))}
                 <div className="pt-2 border-t border-border space-y-2">
                   {isAuthenticated ? (
-                    <Button className="w-full" onClick={() => { navigate('/dashboard'); setMenuOpen(false) }}>
+                    <Button className="w-full" onClick={() => { navigate(dashPath); setMenuOpen(false) }}>
                       Dashboard
                     </Button>
                   ) : (

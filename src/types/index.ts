@@ -1,30 +1,32 @@
 export type Theme = 'light' | 'dark' | 'system'
 
-export type UserRole = 'student' | 'admin' | 'instructor' | 'manager' | 'super_admin' | 'Admin' | 'Manager' | 'SuperAdmin'
+/**
+ * PRD-08: Role enum matches backend exactly (UPPERCASE).
+ * The backend Role enum is: STUDENT | MENTOR | MANAGER | SUPER_ADMIN
+ * ADMIN role is removed — SUPER_ADMIN is the single platform owner.
+ */
+export type UserRole = 'STUDENT' | 'MANAGER' | 'SUPER_ADMIN' | 'MENTOR'
 
 export interface User {
   id: string
   fullName: string
   email: string
   role: UserRole
-  avatar?: string
   profileImage?: string
   bio?: string
-  college?: string
+  collegeName?: string
   branch?: string
-  year?: number
-  phone?: string
+  currentYear?: number
   phoneNumber?: string
-  github?: string
-  linkedin?: string
-  website?: string
-  department?: string
-  designation?: string
-  experience?: number
+  githubUrl?: string
+  linkedinUrl?: string
+  portfolioUrl?: string
+  isVerified: boolean
+  profileCompletion?: number
+  lastLoginAt?: string
   createdAt: string
   updatedAt: string
-  isVerified: boolean
-  isActive?: boolean
+  /** PRD-08: Module-level permissions for MANAGER role, included in JWT and /me response */
   permissions?: string[]
 }
 
@@ -76,15 +78,43 @@ export interface NavItem {
   children?: NavItem[]
 }
 
-// Helper to check roles
-export function isStudent(role?: UserRole): boolean {
-  return role === 'student'
+// ── PRD-08: Role helpers — always use these, never raw string comparison ───────
+
+/**
+ * Returns true if the user is a STUDENT.
+ */
+export function isStudent(role?: UserRole | string): boolean {
+  return role === 'STUDENT'
 }
 
-export function isManager(role?: UserRole): boolean {
-  return role === 'manager' || role === 'Manager'
+/**
+ * Returns true if the user is a MANAGER.
+ */
+export function isManager(role?: UserRole | string): boolean {
+  return role === 'MANAGER'
 }
 
-export function isSuperAdmin(role?: UserRole): boolean {
-  return role === 'admin' || role === 'Admin' || role === 'super_admin' || role === 'SuperAdmin'
+/**
+ * Returns true if the user is a SUPER_ADMIN (the single platform owner).
+ */
+export function isSuperAdmin(role?: UserRole | string): boolean {
+  return role === 'SUPER_ADMIN'
+}
+
+/**
+ * Returns true if the user is a MENTOR (read-only dashboard, future implementation).
+ */
+export function isMentor(role?: UserRole | string): boolean {
+  return role === 'MENTOR'
+}
+
+/**
+ * Returns the correct dashboard path for a given role.
+ * PRD-08: Backend decides the role, frontend just routes accordingly.
+ */
+export function getDashboardPath(role?: UserRole | string): string {
+  if (isSuperAdmin(role)) return '/admin/dashboard'
+  if (isManager(role)) return '/manager/dashboard'
+  if (isMentor(role)) return '/mentor/dashboard'
+  return '/dashboard'
 }

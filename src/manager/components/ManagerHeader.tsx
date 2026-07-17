@@ -3,6 +3,7 @@ import { Bell, Search, LogOut, ChevronRight } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { useAuthStore } from '@/shared/store/authStore'
 import { authService } from '@/shared/services/auth.service'
+import { queryClient } from '@/shared/lib/queryClient'
 import { useNavigate } from 'react-router-dom'
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar'
 import {
@@ -52,7 +53,8 @@ export function ManagerHeader() {
   const handleLogout = async () => {
     try { await authService.logout() } catch { /* ignore */ }
     logout()
-    navigate('/auth/login')
+    queryClient.clear()
+    navigate('/auth/login', { replace: true })
   }
 
   return (

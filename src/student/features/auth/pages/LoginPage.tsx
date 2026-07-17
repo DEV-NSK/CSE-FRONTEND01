@@ -17,7 +17,7 @@ import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Label } from "@/shared/components/ui/label";
 import { authService } from "@/shared/services/auth.service";
 import { useAuthStore } from "@/shared/store/authStore";
-import { isManager, isSuperAdmin } from "@/types";
+import { getDashboardPath } from "@/types";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -34,8 +34,7 @@ export function LoginPage() {
   const location = useLocation();
   const { login } = useAuthStore();
 
-  const from = (location.state as { from?: { pathname: string } })?.from
-    ?.pathname;
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
 
   const {
     register,
@@ -58,14 +57,13 @@ export function LoginPage() {
         password: data.password,
       });
       const { user, accessToken, refreshToken } = response.data.data;
+
+      // PRD-08: Store user + tokens — role comes from backend, never from request
       login(user, { accessToken, refreshToken });
-      const defaultRedirect = isSuperAdmin(user?.role)
-        ? "/admin/dashboard"
-        : isManager(user?.role)
-        ? "/manager/dashboard"
-        : "/dashboard";
-      const redirectPath = from || defaultRedirect;
-      navigate(redirectPath, { replace: true });
+
+      // PRD-08: Backend decided the role — frontend just routes accordingly
+      const defaultRedirect = getDashboardPath(user.role);
+      navigate(from || defaultRedirect, { replace: true });
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };
       setError(
@@ -173,7 +171,7 @@ export function LoginPage() {
           </Link>
         </div>
 
-        {/* Dev-mode credentials hint */}
+        {/* Dev-mode quick-login credentials */}
         {import.meta.env.DEV && (
           <div className="mt-5 p-3 rounded-lg border border-dashed border-border bg-muted/30">
             <p className="text-xs font-medium text-muted-foreground mb-2">
@@ -213,8 +211,8 @@ export function LoginPage() {
             </div>
             <p className="text-[10px] text-muted-foreground/70 mt-2">
               Roles redirect: Student → <code className="font-mono">/dashboard</code> ·
-              Manager → <code className="font-mono">/manager</code> ·
-              Admin → <code className="font-mono">/admin</code>
+              Manager → <code className="font-mono">/manager/dashboard</code> ·
+              Admin → <code className="font-mono">/admin/dashboard</code>
             </p>
           </div>
         )}

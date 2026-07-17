@@ -6,7 +6,7 @@ import { DashboardLayout } from "@/student/layouts/DashboardLayout";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { PublicRoute } from "./PublicRoute";
 import { useAuthStore } from "@/shared/store/authStore";
-import { isManager, isSuperAdmin } from "@/types";
+import { getDashboardPath } from "@/types";
 import { PageLoader } from "@/shared/components/feedback/LoadingSpinner";
 
 // ── Lazy-load role-specific layouts ───────────────────────────────────────────
@@ -128,25 +128,15 @@ function LazyPage({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
 }
 
-// ── Role-based redirect after login ──────────────────────────────────────────
+/**
+ * PRD-08: Role-based redirect.
+ * Backend decides the role — this component just reads it and routes accordingly.
+ * No frontend role calculation.
+ */
 function RoleBasedRedirect() {
   const user = useAuthStore((state) => state.user);
   if (!user) return <Navigate to="/auth/login" replace />;
-  if (isSuperAdmin(user.role)) return <Navigate to="/admin/dashboard" replace />;
-  if (isManager(user.role)) return <Navigate to="/manager/dashboard" replace />;
-  return <Navigate to="/dashboard" replace />;
-}
-
-// ── Updated PublicRoute: redirect authenticated users to their role dashboard ─
-function SmartPublicRoute({ children }: { children: React.ReactNode }) {
-  const user = useAuthStore((state) => state.user);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  if (isAuthenticated && user) {
-    if (isSuperAdmin(user.role)) return <Navigate to="/admin/dashboard" replace />;
-    if (isManager(user.role)) return <Navigate to="/manager/dashboard" replace />;
-    return <Navigate to="/dashboard" replace />;
-  }
-  return <>{children}</>;
+  return <Navigate to={getDashboardPath(user.role)} replace />;
 }
 
 export const router = createBrowserRouter([
@@ -161,12 +151,12 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // ── Auth routes ────────────────────────────────────────────────────────────
+  // ── Auth routes — authenticated users are redirected to their dashboard ────
   {
     element: (
-      <SmartPublicRoute>
+      <PublicRoute>
         <AuthLayout />
-      </SmartPublicRoute>
+      </PublicRoute>
     ),
     children: [
       { path: "/auth/login", element: <LoginPage /> },
@@ -177,7 +167,7 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // ── Role-based redirect ────────────────────────────────────────────────────
+  // ── Role-based redirect after login ───────────────────────────────────────
   {
     path: "/redirect",
     element: (
@@ -188,10 +178,11 @@ export const router = createBrowserRouter([
   },
 
   // ── Student dashboard routes (/dashboard/*) ────────────────────────────────
+  // PRD-08: allowedRoles enforced — STUDENT and MENTOR can access /dashboard
   {
     path: "/dashboard",
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={["STUDENT", "MENTOR"]}>
         <DashboardLayout />
       </ProtectedRoute>
     ),
@@ -260,10 +251,11 @@ export const router = createBrowserRouter([
   },
 
   // ── Manager Console routes (/manager/*) ────────────────────────────────────
+  // PRD-08: allowedRoles enforced — only MANAGER and SUPER_ADMIN can access
   {
     path: "/manager",
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={["MANAGER", "SUPER_ADMIN"]}>
         <LazyPage>
           <ManagerLayout />
         </LazyPage>
@@ -285,10 +277,11 @@ export const router = createBrowserRouter([
   },
 
   // ── Super Admin Console routes (/admin/*) ──────────────────────────────────
+  // PRD-08: allowedRoles enforced — only SUPER_ADMIN can access
   {
     path: "/admin",
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={["SUPER_ADMIN"]}>
         <LazyPage>
           <AdminLayout />
         </LazyPage>

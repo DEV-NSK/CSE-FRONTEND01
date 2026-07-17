@@ -1,18 +1,21 @@
 import { Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/shared/store/authStore'
-import { isManager, isSuperAdmin } from '@/types'
+import { getDashboardPath } from '@/types'
 
 interface PublicRouteProps {
   children: React.ReactNode
 }
 
+/**
+ * PRD-08: PublicRoute
+ * Authenticated users cannot visit login/register pages.
+ * Redirects to the correct dashboard based on their role.
+ */
 export function PublicRoute({ children }: PublicRouteProps) {
   const { isAuthenticated, user } = useAuthStore()
 
   if (isAuthenticated && user) {
-    if (isSuperAdmin(user.role)) return <Navigate to="/admin/dashboard" replace />
-    if (isManager(user.role)) return <Navigate to="/manager/dashboard" replace />
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to={getDashboardPath(user.role)} replace />
   }
 
   return <>{children}</>

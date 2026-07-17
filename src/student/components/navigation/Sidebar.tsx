@@ -37,9 +37,9 @@ function SidebarContent({ collapsed }: SidebarContentProps) {
   const { user } = useAuthStore()
   const { unreadCount } = useNotificationStore()
 
-  const navItems = user?.role === 'admin'
-    ? [...baseNavItems, { label: 'Admin Panel', href: '/dashboard/admin', icon: Shield, badge: false }]
-    : baseNavItems
+  // PRD-08: Sidebar shows only student pages — role-gated routes are enforced at the router level
+  // Admin panel link removed: SUPER_ADMIN uses /admin/* layout, not /dashboard/admin
+  const navItems = baseNavItems
 
   return (
     <div className="flex flex-col h-full">

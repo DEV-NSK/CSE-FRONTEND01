@@ -9,6 +9,7 @@ import { Input } from '@/shared/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card'
 import { authService } from '@/shared/services/auth.service'
 import { useAuthStore } from '@/shared/store/authStore'
+import { getDashboardPath } from '@/types'
 
 const registerSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters').max(100),
@@ -21,14 +22,12 @@ const registerSchema = z.object({
     .regex(/[0-9]/, 'Must contain at least one number')
     .regex(/[@$!%*?&]/, 'Must contain at least one special character (@$!%*?&)'),
   confirmPassword: z.string(),
-  college: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ['confirmPassword'],
 })
 
 type RegisterFormValues = z.infer<typeof registerSchema>
-
 
 export function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -50,11 +49,14 @@ export function RegisterPage() {
         fullName: data.fullName,
         email: data.email,
         password: data.password,
-        college: data.college,
       })
       const { user, accessToken, refreshToken } = response.data.data
+
+      // PRD-08: Store user + tokens — role comes from backend
       login(user, { accessToken, refreshToken })
-      navigate('/dashboard', { replace: true })
+
+      // PRD-08: Redirect by role returned from backend (new users are STUDENT by default)
+      navigate(getDashboardPath(user.role), { replace: true })
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } }
       setError(axiosError?.response?.data?.message || 'Registration failed. Please try again.')
@@ -98,23 +100,20 @@ export function RegisterPage() {
           />
 
           <Input
-            label="College (Optional)"
-            type="text"
-            placeholder="Your college name"
-            error={errors.college?.message}
-            {...register('college')}
-          />
-
-          <Input
             label="Password"
             type={showPassword ? 'text' : 'password'}
             placeholder="••••••••"
             leftIcon={<Lock className="h-4 w-4" />}
             autoComplete="new-password"
             error={errors.password?.message}
-            helperText="At least 8 characters, one uppercase, one number"
+            helperText="At least 8 characters, one uppercase, one number, one special character"
             rightIcon={
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-muted-foreground hover:text-foreground transition-colors" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             }
@@ -129,7 +128,12 @@ export function RegisterPage() {
             autoComplete="new-password"
             error={errors.confirmPassword?.message}
             rightIcon={
-              <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="text-muted-foreground hover:text-foreground transition-colors" aria-label={showConfirm ? 'Hide password' : 'Show password'}>
+              <button
+                type="button"
+                onClick={() => setShowConfirm(!showConfirm)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={showConfirm ? 'Hide password' : 'Show password'}
+              >
                 {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             }

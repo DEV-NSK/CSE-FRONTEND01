@@ -10,7 +10,7 @@ export const axiosInstance = axios.create({
   },
 })
 
-// Track whether we're currently refreshing
+// Track whether a token refresh is in progress
 let isRefreshing = false
 let failedQueue: Array<{
   resolve: (token: string) => void
@@ -28,7 +28,10 @@ function processQueue(error: unknown, token: string | null = null) {
   failedQueue = []
 }
 
-// Request interceptor — attach JWT
+/**
+ * PRD-08 Request interceptor — attach JWT from auth store.
+ * Always reads from the persisted auth-storage key.
+ */
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const stored = localStorage.getItem('auth-storage')
@@ -45,10 +48,14 @@ axiosInstance.interceptors.request.use(
     }
     return config
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 )
 
-// Response interceptor — handle 401 and token refresh
+/**
+ * PRD-08 Response interceptor — handle 401 with token refresh.
+ * On expired access token: rotate using refresh token.
+ * On refresh failure: clear all auth state and redirect to login.
+ */
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -56,6 +63,7 @@ axiosInstance.interceptors.response.use(
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
+        // Queue concurrent requests while refresh is in progress
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject })
         })
@@ -69,12 +77,13 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true
       isRefreshing = true
 
+      // Read refresh token from persisted auth storage
       const stored = localStorage.getItem('auth-storage')
       let refreshToken: string | null = null
       if (stored) {
         try {
           const parsed = JSON.parse(stored)
-          refreshToken = parsed?.state?.tokens?.refreshToken
+          refreshToken = parsed?.state?.tokens?.refreshToken ?? null
         } catch {
           // ignore
         }
@@ -82,23 +91,22 @@ axiosInstance.interceptors.response.use(
 
       if (!refreshToken) {
         isRefreshing = false
-        // Clear auth and redirect
+        // No refresh token — clear auth and redirect to login
         localStorage.removeItem('auth-storage')
         window.location.href = '/auth/login'
         return Promise.reject(error)
       }
 
       try {
-        const response = await axios.post(`${BASE_URL}/auth/refresh`, {
-          refreshToken,
-        })
-        const { accessToken } = response.data.data
+        // Use plain axios to avoid the interceptor loop
+        const response = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken })
+        const { accessToken, refreshToken: newRefreshToken } = response.data.data
 
-        // Update stored tokens
-        const stored = localStorage.getItem('auth-storage')
-        if (stored) {
-          const parsed = JSON.parse(stored)
-          parsed.state.tokens.accessToken = accessToken
+        // Update stored tokens in localStorage
+        const storedRaw = localStorage.getItem('auth-storage')
+        if (storedRaw) {
+          const parsed = JSON.parse(storedRaw)
+          parsed.state.tokens = { accessToken, refreshToken: newRefreshToken }
           localStorage.setItem('auth-storage', JSON.stringify(parsed))
         }
 
@@ -107,6 +115,7 @@ axiosInstance.interceptors.response.use(
         return axiosInstance(originalRequest)
       } catch (refreshError) {
         processQueue(refreshError, null)
+        // PRD-08: Refresh fails → logout completely
         localStorage.removeItem('auth-storage')
         window.location.href = '/auth/login'
         return Promise.reject(refreshError)
@@ -116,7 +125,7 @@ axiosInstance.interceptors.response.use(
     }
 
     return Promise.reject(error)
-  }
+  },
 )
 
 export default axiosInstance

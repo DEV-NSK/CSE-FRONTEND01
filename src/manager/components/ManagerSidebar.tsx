@@ -159,7 +159,7 @@ export function ManagerSidebar() {
           sidebarCollapsed ? 'justify-center' : ''
         )}>
           <Avatar className="w-7 h-7 flex-shrink-0">
-            <AvatarImage src={user?.avatar} />
+            <AvatarImage src={user?.profileImage ?? undefined} />
             <AvatarFallback className="bg-violet-700 text-white text-xs font-semibold">{initials}</AvatarFallback>
           </Avatar>
           <AnimatePresence>
