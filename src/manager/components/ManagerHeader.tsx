@@ -15,16 +15,22 @@ import {
 } from '@/shared/components/ui/dropdown-menu'
 
 const ROUTE_LABELS: Record<string, string> = {
-  '/manager/dashboard': 'Dashboard',
-  '/manager/learning': 'Learning Management',
-  '/manager/coding': 'Coding Management',
-  '/manager/projects': 'Project Management',
-  '/manager/placements': 'Placement Management',
-  '/manager/events': 'Event Management',
-  '/manager/notifications': 'Notifications',
-  '/manager/reports': 'Reports',
-  '/manager/profile': 'Profile',
-  '/manager/settings': 'Settings',
+  '/manager/dashboard':    'Dashboard',
+  '/manager/learning':     'Learning CMS',
+  '/manager/coding':       'Coding CMS',
+  '/manager/projects':     'Projects CMS',
+  '/manager/placements':   'Placements CMS',
+  '/manager/events':       'Events CMS',
+  '/manager/notifications':'Notifications',
+  '/manager/reports':      'Reports',
+  '/manager/banners':      'Banner Management',
+  '/manager/faq':          'FAQ CMS',
+  '/manager/testimonials': 'Testimonials',
+  '/manager/media':        'Media Library',
+  '/manager/search':       'Global Search',
+  '/manager/activity':     'Activity Timeline',
+  '/manager/profile':      'Profile',
+  '/manager/settings':     'Settings',
 }
 
 function getBreadcrumbs(pathname: string) {
@@ -73,7 +79,7 @@ export function ManagerHeader() {
 
       {/* Right side */}
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-500 hover:text-slate-800" aria-label="Search">
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-500 hover:text-slate-800" aria-label="Search" onClick={() => navigate('/manager/search')}>
           <Search className="w-4 h-4" />
         </Button>
         <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-500 hover:text-slate-800 relative" aria-label="Notifications">

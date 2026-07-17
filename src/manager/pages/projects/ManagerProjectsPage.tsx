@@ -1,86 +1,179 @@
+/**
+ * FPRD-10: Projects CMS — Module 3
+ */
 import { useState } from 'react'
-import { FolderKanban, Tag, Cpu, LayoutTemplate } from 'lucide-react'
-import { ContentTable, ContentRow } from '@/manager/components/ContentTable'
-
-const mockProjects: ContentRow[] = [
-  { id: '1', title: 'E-Commerce Platform (React + Node)', status: 'published', category: 'Full Stack', updatedAt: 'Jul 17, 2026', extra: 'Advanced' },
-  { id: '2', title: 'Real-time Chat Application', status: 'published', category: 'Backend', updatedAt: 'Jul 16, 2026', extra: 'Intermediate' },
-  { id: '3', title: 'ML Image Classifier', status: 'draft', category: 'AI/ML', updatedAt: 'Jul 15, 2026', extra: 'Advanced' },
-  { id: '4', title: 'Portfolio Website', status: 'published', category: 'Frontend', updatedAt: 'Jul 14, 2026', extra: 'Beginner' },
-  { id: '5', title: 'Microservices with Docker', status: 'draft', category: 'DevOps', updatedAt: 'Jul 13, 2026', extra: 'Advanced' },
-  { id: '6', title: 'Todo App with Authentication', status: 'published', category: 'Full Stack', updatedAt: 'Jul 12, 2026', extra: 'Beginner' },
-  { id: '7', title: 'Blockchain Voting System', status: 'archived', category: 'Blockchain', updatedAt: 'Jul 10, 2026', extra: 'Advanced' },
-]
-
-const mockCategories: ContentRow[] = [
-  { id: '1', title: 'Full Stack', status: 'published', updatedAt: 'Jul 10, 2026' },
-  { id: '2', title: 'Frontend', status: 'published', updatedAt: 'Jul 9, 2026' },
-  { id: '3', title: 'Backend', status: 'published', updatedAt: 'Jul 8, 2026' },
-  { id: '4', title: 'AI/ML', status: 'draft', updatedAt: 'Jul 7, 2026' },
-]
-
-const mockTech: ContentRow[] = [
-  { id: '1', title: 'React', status: 'published', updatedAt: 'Jul 10, 2026' },
-  { id: '2', title: 'Node.js', status: 'published', updatedAt: 'Jul 9, 2026' },
-  { id: '3', title: 'Python', status: 'published', updatedAt: 'Jul 8, 2026' },
-  { id: '4', title: 'Docker', status: 'draft', updatedAt: 'Jul 7, 2026' },
-]
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { FolderKanban, Tag, Cpu } from 'lucide-react'
+import { CMSTable, type CMSRow } from '@/manager/components/CMSTable'
+import { CMSFormModal } from '@/manager/components/CMSFormModal'
+import { managerService, type Project, type ProjectCategory } from '@/shared/services/manager.service'
+import { useToast } from '@/shared/hooks/useToast'
+import { ManagerMetricCard } from '@/manager/components/ManagerMetricCard'
 
 const TABS = [
   { id: 'projects', label: 'Projects', icon: FolderKanban },
   { id: 'categories', label: 'Categories', icon: Tag },
-  { id: 'technologies', label: 'Technologies', icon: Cpu },
-  { id: 'templates', label: 'Templates', icon: LayoutTemplate },
 ]
 
-const dataMap: Record<string, ContentRow[]> = {
-  projects: mockProjects,
-  categories: mockCategories,
-  technologies: mockTech,
-  templates: [],
+function ProjectsTab() {
+  const qc = useQueryClient()
+  const { toast } = useToast()
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('all')
+  const [page, setPage] = useState(1)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editItem, setEditItem] = useState<Project | null>(null)
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['manager', 'projects', search, status, page],
+    queryFn: () => managerService.getProjects({ search, status: status !== 'all' ? status as 'published' | 'draft' : undefined, page }).then((r) => r.data.data),
+    staleTime: 30_000,
+  })
+
+  const { data: cats } = useQuery({
+    queryKey: ['manager', 'project-categories'],
+    queryFn: () => managerService.getProjectCategories({ limit: 100 }).then((r) => r.data.data?.data ?? []),
+    staleTime: 60_000,
+  })
+
+  const createMut = useMutation({
+    mutationFn: (d: Partial<Project>) => managerService.createProject(d),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['manager', 'projects'] }); toast({ title: 'Project created' }); setModalOpen(false) },
+    onError: () => toast({ title: 'Failed to create', variant: 'destructive' }),
+  })
+  const updateMut = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Project> }) => managerService.updateProject(id, data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['manager', 'projects'] }); toast({ title: 'Project updated' }); setModalOpen(false) },
+    onError: () => toast({ title: 'Failed to update', variant: 'destructive' }),
+  })
+  const deleteMut = useMutation({ mutationFn: managerService.deleteProject, onSuccess: () => qc.invalidateQueries({ queryKey: ['manager', 'projects'] }) })
+  const publishMut = useMutation({ mutationFn: managerService.publishProject, onSuccess: () => qc.invalidateQueries({ queryKey: ['manager', 'projects'] }) })
+  const archiveMut = useMutation({ mutationFn: managerService.archiveProject, onSuccess: () => qc.invalidateQueries({ queryKey: ['manager', 'projects'] }) })
+  const bulkPublishMut = useMutation({ mutationFn: (ids: string[]) => managerService.bulkPublish('projects', ids), onSuccess: () => qc.invalidateQueries({ queryKey: ['manager', 'projects'] }) })
+  const bulkArchiveMut = useMutation({ mutationFn: (ids: string[]) => managerService.bulkArchive('projects', ids), onSuccess: () => qc.invalidateQueries({ queryKey: ['manager', 'projects'] }) })
+  const bulkDeleteMut = useMutation({ mutationFn: (ids: string[]) => managerService.bulkDelete('projects', ids), onSuccess: () => qc.invalidateQueries({ queryKey: ['manager', 'projects'] }) })
+
+  const rows: CMSRow[] = (data?.data ?? []).map((p: Project) => ({
+    id: p.id, title: p.title,
+    isPublished: p.isPublished,
+    subtitle: p.category?.name,
+    badge: p.difficulty,
+    badgeColor: p.difficulty === 'BEGINNER' ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+      : p.difficulty === 'INTERMEDIATE' ? 'bg-amber-50 text-amber-700 border-amber-200'
+      : p.difficulty === 'ADVANCED' ? 'bg-orange-50 text-orange-700 border-orange-200'
+      : 'bg-red-50 text-red-700 border-red-200',
+    extra: p.estimatedDuration ?? undefined,
+    updatedAt: p.updatedAt,
+  }))
+
+  const categoryOptions = (cats as ProjectCategory[] ?? []).map((c: ProjectCategory) => ({ value: c.id, label: c.name }))
+
+  return (
+    <>
+      <CMSTable
+        title="Projects" rows={rows} total={data?.total} page={page} pageSize={20}
+        loading={isLoading} search={search} statusFilter={status}
+        onSearchChange={(v) => { setSearch(v); setPage(1) }}
+        onStatusChange={(v) => { setStatus(v); setPage(1) }}
+        onPageChange={setPage}
+        onCreateNew={() => { setEditItem(null); setModalOpen(true) }}
+        createLabel="New Project"
+        onEdit={(row) => { const p = data?.data.find((x: Project) => x.id === row.id); if (p) { setEditItem(p); setModalOpen(true) } }}
+        onDelete={(id) => deleteMut.mutate(id)}
+        onPublish={(id) => publishMut.mutate(id)}
+        onArchive={(id) => archiveMut.mutate(id)}
+        onBulkPublish={(ids) => bulkPublishMut.mutate(ids)}
+        onBulkArchive={(ids) => bulkArchiveMut.mutate(ids)}
+        onBulkDelete={(ids) => bulkDeleteMut.mutate(ids)}
+        actions={{ edit: true, delete: true, publish: true, archive: true }}
+      />
+      <CMSFormModal<Partial<Project>>
+        open={modalOpen} onClose={() => setModalOpen(false)}
+        onSubmit={(d) => editItem ? updateMut.mutateAsync({ id: editItem.id, data: d }) : createMut.mutateAsync(d)}
+        title={editItem ? 'Edit Project' : 'New Project'}
+        editValues={editItem ?? undefined}
+        isLoading={createMut.isPending || updateMut.isPending}
+        size="lg"
+        fields={[
+          { name: 'title', label: 'Project Name', placeholder: 'E-Commerce Platform', rules: { required: 'Title is required' } },
+          { name: 'slug', label: 'Slug', placeholder: 'ecommerce-platform' },
+          { name: 'categoryId', label: 'Category', type: 'select', options: categoryOptions, rules: { required: 'Category is required' } },
+          { name: 'description', label: 'Description', type: 'textarea', placeholder: 'Brief project description...' },
+          { name: 'overview', label: 'Full Overview', type: 'textarea', placeholder: 'Detailed project overview...' },
+          { name: 'difficulty', label: 'Difficulty', type: 'select', options: [
+            { value: 'BEGINNER', label: 'Beginner' }, { value: 'INTERMEDIATE', label: 'Intermediate' },
+            { value: 'ADVANCED', label: 'Advanced' }, { value: 'EXPERT', label: 'Expert' },
+          ] },
+          { name: 'estimatedDuration', label: 'Estimated Duration', placeholder: '4-6 weeks' },
+          { name: 'githubRepository', label: 'GitHub Repository URL', type: 'url', placeholder: 'https://github.com/...' },
+          { name: 'liveDemo', label: 'Live Demo URL', type: 'url', placeholder: 'https://...' },
+          { name: 'requirements', label: 'Requirements', type: 'textarea', placeholder: 'What do students need to complete this?' },
+          { name: 'learningOutcomes', label: 'Learning Outcomes', type: 'textarea', placeholder: 'What will students learn?' },
+          { name: 'thumbnail', label: 'Thumbnail URL', type: 'url', placeholder: 'https://...' },
+        ]}
+      />
+    </>
+  )
+}
+
+function ProjectCategoriesTab() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['manager', 'project-categories-list'],
+    queryFn: () => managerService.getProjectCategories({ limit: 100 }).then((r) => r.data.data),
+    staleTime: 60_000,
+  })
+
+  const rows: CMSRow[] = (data?.data ?? []).map((c: ProjectCategory) => ({
+    id: c.id, title: c.name,
+    status: c.isActive ? 'published' : 'draft',
+    extra: c.description ?? undefined,
+  }))
+
+  return <CMSTable title="Project Categories" rows={rows} loading={isLoading} actions={{ edit: false, delete: false }} />
 }
 
 export default function ManagerProjectsPage() {
   const [activeTab, setActiveTab] = useState('projects')
 
+  const { data: stats } = useQuery({
+    queryKey: ['manager', 'cms', 'dashboard'],
+    queryFn: () => managerService.getCMSDashboard().then((r) => r.data.data as Record<string, Record<string, number>>),
+    staleTime: 60_000,
+  })
+  const projects = (stats as Record<string, Record<string, number>> | undefined)?.projects ?? {}
+
   return (
-    <div className="space-y-5" role="main" aria-label="Project Management">
+    <div className="space-y-5" role="main" aria-label="Projects Management CMS">
       <div className="flex items-center gap-3">
         <div className="w-9 h-9 bg-orange-100 rounded-lg flex items-center justify-center">
-          <FolderKanban className="w-5 h-5 text-orange-600" aria-hidden="true" />
+          <FolderKanban className="w-5 h-5 text-orange-600" />
         </div>
         <div>
-          <h1 className="text-lg font-bold text-slate-900">Project Management</h1>
-          <p className="text-xs text-slate-500">Manage projects, categories, technologies and templates</p>
+          <h1 className="text-lg font-bold text-slate-900">Projects CMS</h1>
+          <p className="text-xs text-slate-500">Manage projects, categories and technologies</p>
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <ManagerMetricCard title="Total Projects" value={projects.totalProjects ?? '—'} icon={FolderKanban} iconColor="text-orange-600" iconBg="bg-orange-50" />
+        <ManagerMetricCard title="Published" value={projects.publishedProjects ?? '—'} icon={Cpu} iconColor="text-emerald-600" iconBg="bg-emerald-50" />
       </div>
 
       <div className="flex items-center gap-1 border-b border-slate-200" role="tablist">
         {TABS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            role="tab"
-            aria-selected={activeTab === id}
-            onClick={() => setActiveTab(id)}
+          <button key={id} role="tab" aria-selected={activeTab === id} onClick={() => setActiveTab(id)}
             className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
-              activeTab === id
-                ? 'border-orange-500 text-orange-700'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+              activeTab === id ? 'border-orange-500 text-orange-700' : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}>
+            <Icon className="w-3.5 h-3.5" />
             {label}
           </button>
         ))}
       </div>
 
       <div role="tabpanel">
-        <ContentTable
-          title={TABS.find((t) => t.id === activeTab)?.label || ''}
-          rows={dataMap[activeTab] || []}
-          onCreateNew={() => {}}
-          createLabel={`New ${TABS.find((t) => t.id === activeTab)?.label?.replace(/s$/, '')}`}
-        />
+        {activeTab === 'projects' && <ProjectsTab />}
+        {activeTab === 'categories' && <ProjectCategoriesTab />}
       </div>
     </div>
   )

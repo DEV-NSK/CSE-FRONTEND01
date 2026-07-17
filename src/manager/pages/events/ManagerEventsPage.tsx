@@ -1,111 +1,121 @@
+/**
+ * FPRD-10: Events CMS — Module 5
+ */
 import { useState } from 'react'
-import { CalendarDays, Users, CheckSquare, Archive } from 'lucide-react'
-import { ContentTable, ContentRow } from '@/manager/components/ContentTable'
-
-const mockEvents: ContentRow[] = [
-  { id: '1', title: 'Google Hiring Drive 2026', status: 'published', category: 'Hiring', updatedAt: 'Jul 20, 2026', author: 'Manager' },
-  { id: '2', title: 'React Conference Workshop', status: 'published', category: 'Workshop', updatedAt: 'Jul 18, 2026', author: 'Manager' },
-  { id: '3', title: 'Competitive Programming Contest', status: 'draft', category: 'Contest', updatedAt: 'Jul 15, 2026', author: 'Manager' },
-  { id: '4', title: 'Placement Orientation', status: 'published', category: 'Orientation', updatedAt: 'Jul 12, 2026', author: 'Manager' },
-  { id: '5', title: 'Open Source Hackathon', status: 'draft', category: 'Hackathon', updatedAt: 'Jul 10, 2026', author: 'Manager' },
-  { id: '6', title: 'Alumni Tech Talk', status: 'archived', category: 'Talk', updatedAt: 'Jul 5, 2026', author: 'Manager' },
-]
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { CalendarDays, Users } from 'lucide-react'
+import { CMSTable, type CMSRow } from '@/manager/components/CMSTable'
+import { CMSFormModal } from '@/manager/components/CMSFormModal'
+import { managerService, type CMSEvent } from '@/shared/services/manager.service'
+import { useToast } from '@/shared/hooks/useToast'
+import { ManagerMetricCard } from '@/manager/components/ManagerMetricCard'
 
 export default function ManagerEventsPage() {
-  const [view, setView] = useState<'table' | 'calendar'>('table')
+  const qc = useQueryClient()
+  const { toast } = useToast()
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('all')
+  const [page, setPage] = useState(1)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editItem, setEditItem] = useState<CMSEvent | null>(null)
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['manager', 'events', search, status, page],
+    queryFn: () => managerService.getEvents({ search, status: status !== 'all' ? status as 'published' | 'draft' : undefined, page }).then((r) => r.data.data),
+    staleTime: 30_000,
+  })
+
+  const { data: stats } = useQuery({
+    queryKey: ['manager', 'cms', 'dashboard'],
+    queryFn: () => managerService.getCMSDashboard().then((r) => r.data.data as Record<string, Record<string, number>>),
+    staleTime: 60_000,
+  })
+  const events = (stats as Record<string, Record<string, number>> | undefined)?.events ?? {}
+
+  const createMut = useMutation({
+    mutationFn: (d: Partial<CMSEvent>) => managerService.createEvent(d),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['manager', 'events'] }); toast({ title: 'Event created' }); setModalOpen(false) },
+    onError: () => toast({ title: 'Failed to create', variant: 'destructive' }),
+  })
+  const updateMut = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<CMSEvent> }) => managerService.updateEvent(id, data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['manager', 'events'] }); toast({ title: 'Event updated' }); setModalOpen(false) },
+    onError: () => toast({ title: 'Failed to update', variant: 'destructive' }),
+  })
+  const deleteMut = useMutation({ mutationFn: managerService.deleteEvent, onSuccess: () => qc.invalidateQueries({ queryKey: ['manager', 'events'] }) })
+  const publishMut = useMutation({ mutationFn: managerService.publishEvent, onSuccess: () => qc.invalidateQueries({ queryKey: ['manager', 'events'] }) })
+  const archiveMut = useMutation({ mutationFn: managerService.archiveEvent, onSuccess: () => qc.invalidateQueries({ queryKey: ['manager', 'events'] }) })
+  const bulkDeleteMut = useMutation({ mutationFn: (ids: string[]) => managerService.bulkDelete('events', ids), onSuccess: () => qc.invalidateQueries({ queryKey: ['manager', 'events'] }) })
+
+  const formatEventDate = (d: string) => {
+    try { return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) } catch { return d }
+  }
+
+  const rows: CMSRow[] = (data?.data ?? []).map((e: CMSEvent) => ({
+    id: e.id, title: e.title,
+    isPublished: e.isPublished,
+    subtitle: e.organizer ?? undefined,
+    badge: e.type,
+    extra: formatEventDate(e.startTime),
+    updatedAt: e.updatedAt,
+  }))
 
   return (
-    <div className="space-y-5" role="main" aria-label="Event Management">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-cyan-100 rounded-lg flex items-center justify-center">
-            <CalendarDays className="w-5 h-5 text-cyan-600" aria-hidden="true" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-slate-900">Event Management</h1>
-            <p className="text-xs text-slate-500">Manage events, registrations and attendance</p>
-          </div>
+    <div className="space-y-5" role="main" aria-label="Events Management CMS">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 bg-cyan-100 rounded-lg flex items-center justify-center">
+          <CalendarDays className="w-5 h-5 text-cyan-600" />
         </div>
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
-          <button
-            onClick={() => setView('table')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${view === 'table' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'}`}
-            aria-pressed={view === 'table'}
-          >
-            Table
-          </button>
-          <button
-            onClick={() => setView('calendar')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${view === 'calendar' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'}`}
-            aria-pressed={view === 'calendar'}
-          >
-            Calendar
-          </button>
+        <div>
+          <h1 className="text-lg font-bold text-slate-900">Events CMS</h1>
+          <p className="text-xs text-slate-500">Manage workshops, hackathons, webinars and more</p>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: 'Total Events', value: '24', icon: CalendarDays, color: 'text-cyan-600 bg-cyan-50' },
-          { label: 'Registrations', value: '648', icon: Users, color: 'text-blue-600 bg-blue-50' },
-          { label: 'Attendance Rate', value: '72%', icon: CheckSquare, color: 'text-emerald-600 bg-emerald-50' },
-          { label: 'Archived', value: '8', icon: Archive, color: 'text-slate-600 bg-slate-50' },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-3">
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${color}`}>
-              <Icon className="w-4 h-4" aria-hidden="true" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500">{label}</p>
-              <p className="text-xl font-bold text-slate-900">{value}</p>
-            </div>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 gap-3">
+        <ManagerMetricCard title="Total Events" value={events.totalEvents ?? '—'} icon={CalendarDays} iconColor="text-cyan-600" iconBg="bg-cyan-50" />
+        <ManagerMetricCard title="Published" value={events.publishedEvents ?? '—'} icon={Users} iconColor="text-emerald-600" iconBg="bg-emerald-50" />
       </div>
 
-      {view === 'table' ? (
-        <ContentTable
-          title="Events"
-          rows={mockEvents}
-          onCreateNew={() => {}}
-          createLabel="New Event"
-        />
-      ) : (
-        <div className="bg-white border border-slate-200 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-slate-800">July 2026</h2>
-            <div className="flex gap-2">
-              <button className="px-3 py-1 text-xs bg-slate-100 rounded-md hover:bg-slate-200">Prev</button>
-              <button className="px-3 py-1 text-xs bg-slate-100 rounded-md hover:bg-slate-200">Next</button>
-            </div>
-          </div>
-          <div className="grid grid-cols-7 gap-1 text-xs">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-              <div key={d} className="text-center text-slate-400 font-medium py-1">{d}</div>
-            ))}
-            {Array.from({ length: 35 }, (_, i) => {
-              const day = i - 1
-              const hasEvent = [18, 20, 25, 28].includes(day)
-              return (
-                <div
-                  key={i}
-                  className={`aspect-square flex flex-col items-center justify-start pt-1 rounded-lg text-xs cursor-pointer transition-colors ${
-                    day > 0 && day <= 31 ? 'hover:bg-slate-50' : 'opacity-0'
-                  }`}
-                >
-                  {day > 0 && day <= 31 && (
-                    <>
-                      <span className={`text-xs ${day === 17 ? 'w-5 h-5 bg-cyan-600 text-white rounded-full flex items-center justify-center' : 'text-slate-700'}`}>{day}</span>
-                      {hasEvent && <span className="w-1 h-1 bg-cyan-400 rounded-full mt-0.5" aria-hidden="true" />}
-                    </>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
+      <CMSTable
+        title="Events" rows={rows} total={data?.total} page={page} pageSize={20}
+        loading={isLoading} search={search} statusFilter={status}
+        onSearchChange={(v) => { setSearch(v); setPage(1) }}
+        onStatusChange={(v) => { setStatus(v); setPage(1) }}
+        onPageChange={setPage}
+        onCreateNew={() => { setEditItem(null); setModalOpen(true) }}
+        createLabel="New Event"
+        onEdit={(row) => { const e = data?.data.find((x: CMSEvent) => x.id === row.id); if (e) { setEditItem(e); setModalOpen(true) } }}
+        onDelete={(id) => deleteMut.mutate(id)}
+        onPublish={(id) => publishMut.mutate(id)}
+        onArchive={(id) => archiveMut.mutate(id)}
+        onBulkDelete={(ids) => bulkDeleteMut.mutate(ids)}
+        actions={{ edit: true, delete: true, publish: true, archive: true }}
+      />
+
+      <CMSFormModal<Partial<CMSEvent>>
+        open={modalOpen} onClose={() => setModalOpen(false)}
+        onSubmit={(d) => editItem ? updateMut.mutateAsync({ id: editItem.id, data: d }) : createMut.mutateAsync(d)}
+        title={editItem ? 'Edit Event' : 'New Event'}
+        editValues={editItem ?? undefined}
+        isLoading={createMut.isPending || updateMut.isPending}
+        size="lg"
+        fields={[
+          { name: 'title', label: 'Event Title', placeholder: 'Google Hiring Drive 2026', rules: { required: 'Title is required' } },
+          { name: 'type', label: 'Type', type: 'select', rules: { required: 'Type is required' }, options: [
+            { value: 'HACKATHON', label: 'Hackathon' }, { value: 'WEBINAR', label: 'Webinar' },
+            { value: 'WORKSHOP', label: 'Workshop' }, { value: 'CONTEST', label: 'Contest' },
+            { value: 'BOOTCAMP', label: 'Bootcamp' }, { value: 'MEETUP', label: 'Meetup' },
+          ] },
+          { name: 'description', label: 'Description', type: 'textarea', placeholder: 'Event description...' },
+          { name: 'organizer', label: 'Organizer', placeholder: 'Google' },
+          { name: 'location', label: 'Location / Venue', placeholder: 'Online or address...' },
+          { name: 'startTime', label: 'Start Time', type: 'datetime-local', rules: { required: 'Start time is required' } },
+          { name: 'endTime', label: 'End Time', type: 'datetime-local', rules: { required: 'End time is required' } },
+          { name: 'registrationUrl', label: 'Registration URL', type: 'url', placeholder: 'https://...' },
+          { name: 'maxParticipants', label: 'Max Participants', type: 'number', placeholder: '100' },
+        ]}
+      />
     </div>
   )
 }

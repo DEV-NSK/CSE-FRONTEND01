@@ -28,6 +28,13 @@ const ManagerNotificationsPage = lazy(() => import("@/manager/pages/notification
 const ManagerReportsPage = lazy(() => import("@/manager/pages/reports/ManagerReportsPage"));
 const ManagerProfilePage = lazy(() => import("@/manager/pages/profile/ManagerProfilePage"));
 const ManagerSettingsPage = lazy(() => import("@/manager/pages/settings/ManagerSettingsPage"));
+// FPRD-10 new pages
+const ManagerBannersPage = lazy(() => import("@/manager/pages/banners/ManagerBannersPage"));
+const ManagerFaqPage = lazy(() => import("@/manager/pages/faq/ManagerFaqPage"));
+const ManagerTestimonialsPage = lazy(() => import("@/manager/pages/testimonials/ManagerTestimonialsPage"));
+const ManagerMediaPage = lazy(() => import("@/manager/pages/media/ManagerMediaPage"));
+const ManagerSearchPage = lazy(() => import("@/manager/pages/search/ManagerSearchPage"));
+const ManagerActivityPage = lazy(() => import("@/manager/pages/activity/ManagerActivityPage"));
 
 // ── Lazy-load Admin pages ─────────────────────────────────────────────────────
 const AdminDashboardPage = lazy(() => import("@/admin/pages/dashboard/AdminDashboardPage"));
@@ -273,6 +280,13 @@ export const router = createBrowserRouter([
       { path: "reports", element: <LazyPage><ManagerReportsPage /></LazyPage> },
       { path: "profile", element: <LazyPage><ManagerProfilePage /></LazyPage> },
       { path: "settings", element: <LazyPage><ManagerSettingsPage /></LazyPage> },
+      // FPRD-10 new routes
+      { path: "banners", element: <LazyPage><ManagerBannersPage /></LazyPage> },
+      { path: "faq", element: <LazyPage><ManagerFaqPage /></LazyPage> },
+      { path: "testimonials", element: <LazyPage><ManagerTestimonialsPage /></LazyPage> },
+      { path: "media", element: <LazyPage><ManagerMediaPage /></LazyPage> },
+      { path: "search", element: <LazyPage><ManagerSearchPage /></LazyPage> },
+      { path: "activity", element: <LazyPage><ManagerActivityPage /></LazyPage> },
     ],
   },
 
