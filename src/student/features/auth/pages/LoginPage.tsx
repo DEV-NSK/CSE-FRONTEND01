@@ -181,8 +181,8 @@ export function LoginPage() {
               <button
                 type="button"
                 onClick={() => {
-                  setValue("email", "admin@cse.dev");
-                  setValue("password", "Admin@123");
+                  setValue("email", "bathulasaikiran2k2@gmail.com");
+                  setValue("password", "bathulasaikiran2k2");
                 }}
                 className="text-xs px-2.5 py-1 rounded bg-red-500/10 text-red-600 hover:bg-red-500/20 transition-colors font-medium"
               >
