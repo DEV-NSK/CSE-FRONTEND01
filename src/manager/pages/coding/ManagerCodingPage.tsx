@@ -120,10 +120,33 @@ function ProblemsTab() {
 
 // ── Problem Categories Tab ─────────────────────────────────────────────────────
 function ProblemCategoriesTab() {
+  const qc = useQueryClient()
+  const { toast } = useToast()
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editItem, setEditItem] = useState<ProblemCategory | null>(null)
+
   const { data, isLoading } = useQuery({
-    queryKey: ['manager', 'problem-categories-list'],
-    queryFn: () => managerService.getProblemCategories({ limit: 100 }).then((r) => r.data.data),
-    staleTime: 60_000,
+    queryKey: ['manager', 'problem-categories-list', search, page],
+    queryFn: () => managerService.getProblemCategories({ search: search || undefined, page, limit: 20 }).then((r) => r.data.data),
+    staleTime: 30_000,
+  })
+
+  const createMut = useMutation({
+    mutationFn: (d: Partial<ProblemCategory>) => managerService.createProblemCategory(d as { name: string; slug: string; description?: string }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['manager', 'problem-categories'] }); qc.invalidateQueries({ queryKey: ['manager', 'problem-categories-list'] }); toast({ title: 'Category created' }); setModalOpen(false) },
+    onError: (e: Error) => toast({ title: e.message, variant: 'destructive' }),
+  })
+  const updateMut = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<ProblemCategory> }) => managerService.updateProblemCategory(id, data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['manager', 'problem-categories-list'] }); toast({ title: 'Category updated' }); setModalOpen(false) },
+    onError: (e: Error) => toast({ title: e.message, variant: 'destructive' }),
+  })
+  const deleteMut = useMutation({
+    mutationFn: managerService.deleteProblemCategory,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['manager', 'problem-categories-list'] }); toast({ title: 'Category deleted' }) },
+    onError: (e: Error) => toast({ title: e.message, variant: 'destructive' }),
   })
 
   const rows: CMSRow[] = (data?.data ?? []).map((c: ProblemCategory) => ({
@@ -134,10 +157,33 @@ function ProblemCategoriesTab() {
   }))
 
   return (
-    <CMSTable
-      title="Problem Categories" rows={rows} loading={isLoading}
-      actions={{ edit: false, delete: false }}
-    />
+    <>
+      <CMSTable
+        title="Problem Categories" rows={rows} total={data?.total} page={page} pageSize={20}
+        loading={isLoading} search={search}
+        onSearchChange={(v) => { setSearch(v); setPage(1) }}
+        onPageChange={setPage}
+        onCreateNew={() => { setEditItem(null); setModalOpen(true) }}
+        createLabel="New Category"
+        onEdit={(row) => { const c = data?.data.find((x: ProblemCategory) => x.id === row.id); if (c) { setEditItem(c); setModalOpen(true) } }}
+        onDelete={(id) => deleteMut.mutate(id)}
+        actions={{ edit: true, delete: true }}
+      />
+      <CMSFormModal<Partial<ProblemCategory>>
+        open={modalOpen} onClose={() => setModalOpen(false)}
+        onSubmit={(d) => editItem ? updateMut.mutateAsync({ id: editItem.id, data: d }) : createMut.mutateAsync(d)}
+        title={editItem ? 'Edit Category' : 'New Problem Category'}
+        editValues={editItem ?? undefined}
+        isLoading={createMut.isPending || updateMut.isPending}
+        fields={[
+          { name: 'name', label: 'Category Name', placeholder: 'Arrays & Strings', rules: { required: 'Name is required' } },
+          { name: 'slug', label: 'Slug', placeholder: 'arrays-strings', hint: 'URL-friendly identifier' },
+          { name: 'description', label: 'Description', type: 'textarea', placeholder: 'Short description...' },
+          { name: 'displayOrder', label: 'Display Order', type: 'number', placeholder: '0' },
+          { name: 'isActive', label: 'Active', type: 'switch' },
+        ]}
+      />
+    </>
   )
 }
 

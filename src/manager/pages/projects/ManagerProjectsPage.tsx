@@ -117,10 +117,33 @@ function ProjectsTab() {
 }
 
 function ProjectCategoriesTab() {
+  const qc = useQueryClient()
+  const { toast } = useToast()
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editItem, setEditItem] = useState<ProjectCategory | null>(null)
+
   const { data, isLoading } = useQuery({
-    queryKey: ['manager', 'project-categories-list'],
-    queryFn: () => managerService.getProjectCategories({ limit: 100 }).then((r) => r.data.data),
-    staleTime: 60_000,
+    queryKey: ['manager', 'project-categories-list', search, page],
+    queryFn: () => managerService.getProjectCategories({ search: search || undefined, page, limit: 20 }).then((r) => r.data.data),
+    staleTime: 30_000,
+  })
+
+  const createMut = useMutation({
+    mutationFn: (d: Partial<ProjectCategory>) => managerService.createProjectCategory(d as { name: string; slug: string; description?: string; icon?: string }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['manager', 'project-categories'] }); qc.invalidateQueries({ queryKey: ['manager', 'project-categories-list'] }); toast({ title: 'Category created' }); setModalOpen(false) },
+    onError: (e: Error) => toast({ title: e.message, variant: 'destructive' }),
+  })
+  const updateMut = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<ProjectCategory> }) => managerService.updateProjectCategory(id, data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['manager', 'project-categories-list'] }); toast({ title: 'Category updated' }); setModalOpen(false) },
+    onError: (e: Error) => toast({ title: e.message, variant: 'destructive' }),
+  })
+  const deleteMut = useMutation({
+    mutationFn: managerService.deleteProjectCategory,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['manager', 'project-categories-list'] }); toast({ title: 'Category deleted' }) },
+    onError: (e: Error) => toast({ title: e.message, variant: 'destructive' }),
   })
 
   const rows: CMSRow[] = (data?.data ?? []).map((c: ProjectCategory) => ({
@@ -129,7 +152,36 @@ function ProjectCategoriesTab() {
     extra: c.description ?? undefined,
   }))
 
-  return <CMSTable title="Project Categories" rows={rows} loading={isLoading} actions={{ edit: false, delete: false }} />
+  return (
+    <>
+      <CMSTable
+        title="Project Categories" rows={rows} total={data?.total} page={page} pageSize={20}
+        loading={isLoading} search={search}
+        onSearchChange={(v) => { setSearch(v); setPage(1) }}
+        onPageChange={setPage}
+        onCreateNew={() => { setEditItem(null); setModalOpen(true) }}
+        createLabel="New Category"
+        onEdit={(row) => { const c = data?.data.find((x: ProjectCategory) => x.id === row.id); if (c) { setEditItem(c); setModalOpen(true) } }}
+        onDelete={(id) => deleteMut.mutate(id)}
+        actions={{ edit: true, delete: true }}
+      />
+      <CMSFormModal<Partial<ProjectCategory>>
+        open={modalOpen} onClose={() => setModalOpen(false)}
+        onSubmit={(d) => editItem ? updateMut.mutateAsync({ id: editItem.id, data: d }) : createMut.mutateAsync(d)}
+        title={editItem ? 'Edit Category' : 'New Project Category'}
+        editValues={editItem ?? undefined}
+        isLoading={createMut.isPending || updateMut.isPending}
+        fields={[
+          { name: 'name', label: 'Category Name', placeholder: 'Web Development', rules: { required: 'Name is required' } },
+          { name: 'slug', label: 'Slug', placeholder: 'web-development', hint: 'URL-friendly identifier' },
+          { name: 'description', label: 'Description', type: 'textarea', placeholder: 'Short description...' },
+          { name: 'icon', label: 'Icon URL or emoji', placeholder: '🌐 or https://…' },
+          { name: 'displayOrder', label: 'Display Order', type: 'number', placeholder: '0' },
+          { name: 'isActive', label: 'Active', type: 'switch' },
+        ]}
+      />
+    </>
+  )
 }
 
 export default function ManagerProjectsPage() {

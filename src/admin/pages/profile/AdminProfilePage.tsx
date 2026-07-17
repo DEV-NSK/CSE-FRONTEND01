@@ -36,7 +36,7 @@ export default function AdminProfilePage() {
         {/* Profile card */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 text-center">
           <Avatar className="w-20 h-20 mx-auto mb-3">
-            <AvatarImage src={user?.avatar} />
+            <AvatarImage src={user?.profileImage ?? undefined} />
             <AvatarFallback className="bg-blue-800 text-white text-2xl font-bold">{initials}</AvatarFallback>
           </Avatar>
           <h2 className="text-base font-bold text-white">{user?.fullName || 'Super Admin'}</h2>

@@ -120,6 +120,15 @@ const deleteResource = (id: string) =>
 const getProblemCategories = (params?: ListParams) =>
   axiosInstance.get<ApiResponse<ListResponse<ProblemCategory>>>(`${BASE}/problem-categories`, { params })
 
+const createProblemCategory = (data: { name: string; slug: string; description?: string }) =>
+  axiosInstance.post<ApiResponse<ProblemCategory>>(`${BASE}/problem-categories`, data)
+
+const updateProblemCategory = (id: string, data: Partial<ProblemCategory>) =>
+  axiosInstance.patch<ApiResponse<ProblemCategory>>(`${BASE}/problem-categories/${id}`, data)
+
+const deleteProblemCategory = (id: string) =>
+  axiosInstance.delete<ApiResponse<void>>(`${BASE}/problem-categories/${id}`)
+
 // ── Coding: Problems ───────────────────────────────────────────────────────────
 const getProblems = (params?: ListParams) =>
   axiosInstance.get<ApiResponse<ListResponse<CodingProblem>>>(`${BASE}/problems`, { params })
@@ -148,6 +157,15 @@ const duplicateProblem = (id: string) =>
 // ── Projects: Categories ───────────────────────────────────────────────────────
 const getProjectCategories = (params?: ListParams) =>
   axiosInstance.get<ApiResponse<ListResponse<ProjectCategory>>>(`${BASE}/project-categories`, { params })
+
+const createProjectCategory = (data: { name: string; slug: string; description?: string; icon?: string }) =>
+  axiosInstance.post<ApiResponse<ProjectCategory>>(`${BASE}/project-categories`, data)
+
+const updateProjectCategory = (id: string, data: Partial<ProjectCategory>) =>
+  axiosInstance.patch<ApiResponse<ProjectCategory>>(`${BASE}/project-categories/${id}`, data)
+
+const deleteProjectCategory = (id: string) =>
+  axiosInstance.delete<ApiResponse<void>>(`${BASE}/project-categories/${id}`)
 
 // ── Projects ───────────────────────────────────────────────────────────────────
 const getProjects = (params?: ListParams) =>
@@ -266,6 +284,10 @@ const bulkRestore = (entity: string, ids: string[]) =>
 const exportContent = (entity: string, format: 'json' | 'csv' = 'json') =>
   axiosInstance.get<ApiResponse<unknown>>(`${BASE}/export`, { params: { entity, format } })
 
+// ── Global CMS Search ─────────────────────────────────────────────────────────
+const globalCMSSearch = (q: string, limit = 30) =>
+  axiosInstance.get<ApiResponse<{ results: unknown[]; total: number; query: string }>>(`${BASE}/search`, { params: { q, limit } })
+
 // ── Banners (Module 7) ────────────────────────────────────────────────────────
 const getBanners = (params?: Record<string, unknown>) =>
   axiosInstance.get<ApiResponse<{ data: unknown[]; total: number }>>(`${BASE}/banners`, { params })
@@ -279,6 +301,12 @@ const deleteBanner = (id: string) =>
 // ── FAQ (Module 8) ────────────────────────────────────────────────────────────
 const getFaqCategories = () =>
   axiosInstance.get<ApiResponse<unknown[]>>(`${BASE}/faq/categories`)
+const createFaqCategory = (data: { name: string; slug: string; displayOrder?: number }) =>
+  axiosInstance.post<ApiResponse<unknown>>(`${BASE}/faq/categories`, data)
+const updateFaqCategory = (id: string, data: Record<string, unknown>) =>
+  axiosInstance.patch<ApiResponse<unknown>>(`${BASE}/faq/categories/${id}`, data)
+const deleteFaqCategory = (id: string) =>
+  axiosInstance.delete<ApiResponse<void>>(`${BASE}/faq/categories/${id}`)
 const getFaqs = (params?: Record<string, unknown>) =>
   axiosInstance.get<ApiResponse<{ data: unknown[]; total: number }>>(`${BASE}/faq`, { params })
 const createFaq = (data: Record<string, unknown>) =>
@@ -326,10 +354,10 @@ export const managerService = {
   getLessons, getLessonById, createLesson, updateLesson, deleteLesson,
   getResources, createResource, updateResource, deleteResource,
   // Coding
-  getProblemCategories,
+  getProblemCategories, createProblemCategory, updateProblemCategory, deleteProblemCategory,
   getProblems, getProblemById, createProblem, updateProblem, deleteProblem, publishProblem, archiveProblem, duplicateProblem,
   // Projects
-  getProjectCategories,
+  getProjectCategories, createProjectCategory, updateProjectCategory, deleteProjectCategory,
   getProjects, getProjectById, createProject, updateProject, deleteProject, publishProject, archiveProject,
   // Placements
   getCompanies, createCompany, updateCompany, deleteCompany,
@@ -344,10 +372,13 @@ export const managerService = {
   bulkPublish, bulkArchive, bulkDelete, bulkRestore,
   // Export
   exportContent,
+  // Global Search
+  globalCMSSearch,
   // Banners
   getBanners, createBanner, updateBanner, deleteBanner,
   // FAQ
-  getFaqCategories, getFaqs, createFaq, updateFaq, deleteFaq,
+  getFaqCategories, createFaqCategory, updateFaqCategory, deleteFaqCategory,
+  getFaqs, createFaq, updateFaq, deleteFaq,
   // Testimonials
   getTestimonials, createTestimonial, updateTestimonial, deleteTestimonial,
   // Media

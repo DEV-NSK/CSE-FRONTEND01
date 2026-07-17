@@ -94,7 +94,7 @@ export function ManagerHeader() {
               aria-label="User menu"
             >
               <Avatar className="w-7 h-7">
-                <AvatarImage src={user?.avatar} />
+                <AvatarImage src={user?.profileImage ?? undefined} />
                 <AvatarFallback className="bg-violet-600 text-white text-xs font-semibold">{initials}</AvatarFallback>
               </Avatar>
               <span className="text-sm font-medium text-slate-700 hidden sm:block">{user?.fullName?.split(' ')[0] || 'Manager'}</span>

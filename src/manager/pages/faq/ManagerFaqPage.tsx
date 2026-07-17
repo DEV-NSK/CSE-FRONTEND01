@@ -113,17 +113,64 @@ function FaqsTab() {
 }
 
 function CategoriesTab() {
+  const qc = useQueryClient()
+  const { toast } = useToast()
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editItem, setEditItem] = useState<FaqCategory | null>(null)
+
   const { data, isLoading } = useQuery({
     queryKey: ['manager', 'faq-categories'],
     queryFn: () => managerService.getFaqCategories().then((r) => r.data.data as FaqCategory[] ?? []),
-    staleTime: 60_000,
+    staleTime: 30_000,
   })
+
+  const createMut = useMutation({
+    mutationFn: (d: Partial<FaqCategory>) => managerService.createFaqCategory(d as { name: string; slug: string; displayOrder?: number }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['manager', 'faq-categories'] }); toast({ title: 'Category created' }); setModalOpen(false) },
+    onError: (e: Error) => toast({ title: e.message, variant: 'destructive' }),
+  })
+  const updateMut = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<FaqCategory> }) => managerService.updateFaqCategory(id, data as Record<string, unknown>),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['manager', 'faq-categories'] }); toast({ title: 'Category updated' }); setModalOpen(false) },
+    onError: (e: Error) => toast({ title: e.message, variant: 'destructive' }),
+  })
+  const deleteMut = useMutation({
+    mutationFn: managerService.deleteFaqCategory,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['manager', 'faq-categories'] }); toast({ title: 'Category deleted' }) },
+    onError: (e: Error) => toast({ title: e.message, variant: 'destructive' }),
+  })
+
   const rows: CMSRow[] = (data ?? []).map((c: FaqCategory) => ({
     id: c.id, title: c.name,
     status: c.isActive ? 'published' : 'draft',
     extra: `Order: ${c.displayOrder}`,
   }))
-  return <CMSTable title="FAQ Categories" rows={rows} loading={isLoading} actions={{ edit: false, delete: false }} />
+
+  return (
+    <>
+      <CMSTable
+        title="FAQ Categories" rows={rows} loading={isLoading}
+        onCreateNew={() => { setEditItem(null); setModalOpen(true) }}
+        createLabel="New Category"
+        onEdit={(row) => { const c = data?.find((x: FaqCategory) => x.id === row.id); if (c) { setEditItem(c); setModalOpen(true) } }}
+        onDelete={(id) => deleteMut.mutate(id)}
+        actions={{ edit: true, delete: true }}
+      />
+      <CMSFormModal<Partial<FaqCategory>>
+        open={modalOpen} onClose={() => setModalOpen(false)}
+        onSubmit={(d) => editItem ? updateMut.mutateAsync({ id: editItem.id, data: d }) : createMut.mutateAsync(d)}
+        title={editItem ? 'Edit FAQ Category' : 'New FAQ Category'}
+        editValues={editItem ?? undefined}
+        isLoading={createMut.isPending || updateMut.isPending}
+        fields={[
+          { name: 'name', label: 'Category Name', placeholder: 'General Questions', rules: { required: 'Name is required' } },
+          { name: 'slug', label: 'Slug', placeholder: 'general-questions', hint: 'URL-friendly identifier' },
+          { name: 'displayOrder', label: 'Display Order', type: 'number', placeholder: '0' },
+          { name: 'isActive', label: 'Active', type: 'switch' },
+        ]}
+      />
+    </>
+  )
 }
 
 export default function ManagerFaqPage() {

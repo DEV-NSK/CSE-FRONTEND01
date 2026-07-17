@@ -5,9 +5,15 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api
 export const axiosInstance = axios.create({
   baseURL: BASE_URL,
   timeout: 15000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
+})
+
+// ── Module 15: Offline detection ──────────────────────────────────────────────
+axiosInstance.interceptors.request.use((config) => {
+  if (!navigator.onLine) {
+    return Promise.reject(new Error('You are offline. Please check your internet connection.')) as never
+  }
+  return config
 })
 
 // Track whether a token refresh is in progress
@@ -19,11 +25,7 @@ let failedQueue: Array<{
 
 function processQueue(error: unknown, token: string | null = null) {
   failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error)
-    } else {
-      prom.resolve(token!)
-    }
+    if (error) { prom.reject(error) } else { prom.resolve(token!) }
   })
   failedQueue = []
 }
