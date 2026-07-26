@@ -36,16 +36,57 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   loading?: boolean
+  asChild?: boolean
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, loading, children, disabled, ...props }, ref) => {
+  ({ className, variant, size, loading, children, disabled, asChild, ...props }, ref) => {
+    const baseClassName = cn(buttonVariants({ variant, size, className }))
+    const isDisabled = disabled || loading
+
+    if (asChild && React.isValidElement(children)) {
+      const child = children as React.ReactElement
+      const mergedProps: Record<string, unknown> = {
+        className: cn(baseClassName, child.props.className),
+        ref,
+        disabled: isDisabled,
+        'aria-disabled': isDisabled,
+        ...props,
+        ...child.props,
+      }
+      const childContent = loading ? (
+        <>
+          <svg
+            className="animate-spin -ml-1 mr-2 h-4 w-4"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+            />
+          </svg>
+          {child.props.children}
+        </>
+      ) : child.props.children
+
+      return React.cloneElement(child, {
+        ...mergedProps,
+        className: cn(baseClassName, child.props.className),
+        children: childContent,
+      })
+    }
+
     return (
       <button
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={baseClassName}
         ref={ref}
-        disabled={disabled || loading}
-        aria-disabled={disabled || loading}
+        disabled={isDisabled}
+        aria-disabled={isDisabled}
         {...props}
       >
         {loading && (

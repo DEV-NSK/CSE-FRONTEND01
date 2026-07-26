@@ -1,30 +1,67 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
-import { notificationsService } from '@/shared/services/notifications.service'
-import type { NotificationFilters } from '@/shared/types/notifications'
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+  type UseQueryOptions,
+} from "@tanstack/react-query";
+import { notificationsService } from "@/shared/services/notifications.service";
+import type {
+  NotificationFilters,
+  AppNotification,
+} from "@/shared/types/notifications";
+import type { PaginatedResponse } from "@/types";
 
 // ─── Query Keys ───────────────────────────────────────────────────────────────
 
 export const notificationKeys = {
-  all: ['notifications'] as const,
+  all: ["notifications"] as const,
   list: (filters?: Partial<NotificationFilters>) =>
-    [...notificationKeys.all, 'list', filters] as const,
+    [...notificationKeys.all, "list", filters] as const,
   infinite: (filters?: Partial<NotificationFilters>) =>
-    [...notificationKeys.all, 'infinite', filters] as const,
-  unreadCount: () => [...notificationKeys.all, 'unreadCount'] as const,
-}
+    [...notificationKeys.all, "infinite", filters] as const,
+  unreadCount: () => [...notificationKeys.all, "unreadCount"] as const,
+};
+
+type ListData = PaginatedResponse<AppNotification>;
+type ListOptions = Omit<
+  UseQueryOptions<ListData, Error, ListData, readonly unknown[]>,
+  "queryKey" | "queryFn"
+>;
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
-export function useNotificationList(filters?: Partial<NotificationFilters>) {
+export function useNotificationList(
+  filters?: Partial<NotificationFilters>,
+  options?: ListOptions,
+) {
   return useQuery({
     queryKey: notificationKeys.list(filters),
-    queryFn: () => notificationsService.getNotifications(filters).then((r) => r.data.data),
+    queryFn: () =>
+      notificationsService.getNotifications(filters).then((r) => r.data.data),
     staleTime: 1000 * 60 * 1,
     placeholderData: (prev) => prev,
-  })
+    ...options,
+  });
 }
 
-export function useInfiniteNotifications(filters?: Omit<NotificationFilters, 'page'>) {
+type InfiniteOptions = Omit<
+  Parameters<
+    typeof useInfiniteQuery<
+      ListData,
+      Error,
+      ListData,
+      readonly unknown[],
+      number
+    >
+  >[0],
+  "queryKey" | "queryFn" | "getNextPageParam" | "initialPageParam"
+>;
+
+export function useInfiniteNotifications(
+  filters?: Omit<NotificationFilters, "page">,
+  options?: InfiniteOptions,
+) {
   return useInfiniteQuery({
     queryKey: notificationKeys.infinite(filters),
     queryFn: ({ pageParam = 1 }) =>
@@ -32,61 +69,69 @@ export function useInfiniteNotifications(filters?: Omit<NotificationFilters, 'pa
         .getNotifications({ ...filters, page: pageParam as number, limit: 20 })
         .then((r) => r.data.data),
     getNextPageParam: (lastPage) => {
-      if (lastPage.page < lastPage.totalPages) return lastPage.page + 1
-      return undefined
+      if (lastPage.page < lastPage.totalPages) return lastPage.page + 1;
+      return undefined;
     },
     initialPageParam: 1,
     staleTime: 1000 * 30,
-  })
+    ...options,
+  });
 }
 
-export function useUnreadCount() {
+export function useUnreadCount(
+  options?: Omit<
+    UseQueryOptions<number, Error, number, readonly unknown[]>,
+    "queryKey" | "queryFn"
+  >,
+) {
   return useQuery({
     queryKey: notificationKeys.unreadCount(),
-    queryFn: () => notificationsService.getUnreadCount().then((r) => r.data.data.count),
+    queryFn: () =>
+      notificationsService.getUnreadCount().then((r) => r.data.data.count),
     staleTime: 1000 * 30,
-    refetchInterval: 1000 * 60, // poll every minute
-  })
+    refetchInterval: 1000 * 60,
+    ...options,
+  });
 }
 
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 export function useMarkNotificationRead() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => notificationsService.markAsRead(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.all })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
-  })
+  });
 }
 
 export function useMarkAllNotificationsRead() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () => notificationsService.markAllAsRead(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.all })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
-  })
+  });
 }
 
 export function useDeleteNotification() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => notificationsService.deleteNotification(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.all })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
-  })
+  });
 }
 
 export function useDeleteAllReadNotifications() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () => notificationsService.deleteAllRead(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.all })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
-  })
+  });
 }
