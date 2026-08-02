@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom'
-import { CheckCircle2, Circle, PlayCircle, ChevronDown, ChevronLeft } from 'lucide-react'
+import {
+  CheckCircle2, Circle, PlayCircle, ChevronDown,
+  ChevronLeft, Lock, Search, Clock,
+} from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
@@ -23,18 +26,16 @@ export function LessonSidebar({
   roadmapSlug,
   className,
 }: LessonSidebarProps) {
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    () => {
-      // Auto-expand section containing current lesson
-      const initial = new Set<string>()
-      sections.forEach((s) => {
-        if (s.lessons.some((l) => l.id === currentLessonId)) {
-          initial.add(s.id)
-        }
-      })
-      return initial
-    }
-  )
+  // Default: expand the section containing the current lesson
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
+    const initial = new Set<string>()
+    sections.forEach((s) => {
+      if (s.lessons.some((l) => l.id === currentLessonId)) initial.add(s.id)
+    })
+    return initial
+  })
+
+  const [search, setSearch] = useState('')
 
   const toggle = (id: string) => {
     setExpandedSections((prev) => {
@@ -45,124 +46,238 @@ export function LessonSidebar({
     })
   }
 
+  // Overall progress
   const totalLessons = sections.reduce((acc, s) => acc + s.lessons.length, 0)
   const completedLessons = sections.reduce(
     (acc, s) => acc + s.lessons.filter((l) => l.status === 'completed').length,
-    0
+    0,
   )
+  const progressPct = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
+
+  // Filter sections/lessons by search query
+  const filteredSections = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return sections
+    return sections
+      .map((s) => ({
+        ...s,
+        lessons: s.lessons.filter((l) => l.title.toLowerCase().includes(q)),
+      }))
+      .filter((s) => s.lessons.length > 0 || s.title.toLowerCase().includes(q))
+  }, [sections, search])
+
+  // Auto-expand matched sections when searching
+  const sectionsToExpand = useMemo(() => {
+    if (!search.trim()) return expandedSections
+    const s = new Set(expandedSections)
+    filteredSections.forEach((sec) => s.add(sec.id))
+    return s
+  }, [search, filteredSections, expandedSections])
 
   return (
-    <div className={cn('flex flex-col h-full', className)}>
-      {/* Header */}
-      <div className="p-4 border-b border-border shrink-0">
-        <Button variant="ghost" size="sm" asChild className="mb-3 -ml-1 h-7 text-xs gap-1 text-muted-foreground">
+    <div className={cn('flex flex-col h-full bg-card border-r border-border', className)}>
+      {/* ── Header ── */}
+      <div className="p-4 border-b border-border shrink-0 space-y-3">
+        {/* Back to roadmap */}
+        <Button
+          variant="ghost"
+          size="sm"
+          asChild
+          className="-ml-1 h-7 text-xs gap-1 text-muted-foreground hover:text-foreground"
+        >
           <Link to={`/dashboard/learning/roadmaps/${roadmapSlug}`}>
             <ChevronLeft className="h-3.5 w-3.5" />
             Back to Roadmap
           </Link>
         </Button>
-        <h2 className="font-semibold text-sm text-foreground line-clamp-2 mb-2">{roadmapTitle}</h2>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
+
+        {/* Roadmap title */}
+        <h2 className="font-semibold text-sm text-foreground line-clamp-2 leading-snug">
+          {roadmapTitle}
+        </h2>
+
+        {/* Overall progress bar */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Progress</span>
+            <span className="font-medium text-foreground tabular-nums">
+              {completedLessons}/{totalLessons}
+            </span>
+          </div>
+          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
             <motion.div
               className="h-full bg-primary rounded-full"
               initial={{ width: 0 }}
-              animate={{ width: `${totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0}%` }}
-              transition={{ duration: 0.5 }}
+              animate={{ width: `${progressPct}%` }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
             />
           </div>
-          <span className="text-xs text-muted-foreground shrink-0">
-            {completedLessons}/{totalLessons}
-          </span>
+          <p className="text-xs text-muted-foreground">{progressPct}% complete</p>
+        </div>
+
+        {/* Search box */}
+        <div className="relative">
+          <Search
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none"
+            aria-hidden="true"
+          />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search lessons..."
+            aria-label="Search lessons"
+            className={cn(
+              'w-full pl-8 pr-3 py-1.5 text-xs rounded-md',
+              'bg-muted/60 border border-border',
+              'text-foreground placeholder:text-muted-foreground',
+              'focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent',
+              'transition-colors duration-150',
+            )}
+          />
         </div>
       </div>
 
-      {/* Sections */}
+      {/* ── Lesson list ── */}
       <ScrollArea className="flex-1">
         <nav aria-label="Lesson navigation" className="p-2">
-          {sections.map((section) => {
-            const isExpanded = expandedSections.has(section.id)
-            const completedInSection = section.lessons.filter((l) => l.status === 'completed').length
-            const sectionDone = completedInSection === section.lessons.length
+          {filteredSections.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-8 px-4">
+              No lessons match &ldquo;{search}&rdquo;
+            </p>
+          ) : (
+            filteredSections.map((section) => {
+              const isExpanded = sectionsToExpand.has(section.id)
+              const completedInSection = section.lessons.filter(
+                (l) => l.status === 'completed',
+              ).length
+              const sectionDone = completedInSection === section.lessons.length && section.lessons.length > 0
 
-            return (
-              <div key={section.id} className="mb-1">
-                <button
-                  onClick={() => toggle(section.id)}
-                  className={cn(
-                    'w-full flex items-center gap-2 px-3 py-2 rounded-md text-left transition-colors',
-                    'hover:bg-accent/10 group'
-                  )}
-                  aria-expanded={isExpanded}
-                >
-                  <motion.div
-                    animate={{ rotate: isExpanded ? 0 : -90 }}
-                    transition={{ duration: 0.2 }}
+              return (
+                <div key={section.id} className="mb-1">
+                  {/* Section header */}
+                  <button
+                    type="button"
+                    onClick={() => toggle(section.id)}
+                    className={cn(
+                      'w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left',
+                      'transition-colors duration-150 hover:bg-accent/10 group',
+                    )}
+                    aria-expanded={isExpanded}
                   >
-                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                  </motion.div>
-                  <span className={cn(
-                    'flex-1 text-xs font-semibold uppercase tracking-wide truncate',
-                    sectionDone ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'
-                  )}>
-                    {section.title}
-                  </span>
-                  <Badge variant="outline" className="text-xs shrink-0 h-4 px-1">
-                    {completedInSection}/{section.lessons.length}
-                  </Badge>
-                </button>
-
-                <AnimatePresence initial={false}>
-                  {isExpanded && (
                     <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
+                      animate={{ rotate: isExpanded ? 0 : -90 }}
                       transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
+                      className="shrink-0"
                     >
-                      <ul className="pl-2">
-                        {section.lessons.map((lesson) => {
-                          const isCurrent = lesson.id === currentLessonId
-                          const status = lesson.status ?? 'not_started'
-
-                          return (
-                            <li key={lesson.id}>
-                              <Link
-                                to={`/dashboard/learning/lesson/${lesson.id}`}
-                                className={cn(
-                                  'flex items-center gap-2 px-3 py-2 rounded-md text-xs transition-all group',
-                                  isCurrent
-                                    ? 'bg-primary/10 text-primary font-medium'
-                                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/10',
-                                  status === 'completed' && !isCurrent && 'opacity-60'
-                                )}
-                                aria-current={isCurrent ? 'page' : undefined}
-                              >
-                                {status === 'completed' ? (
-                                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
-                                ) : isCurrent ? (
-                                  <PlayCircle className="h-3.5 w-3.5 text-primary shrink-0" />
-                                ) : (
-                                  <Circle className="h-3.5 w-3.5 shrink-0" />
-                                )}
-                                <span className={cn(
-                                  'flex-1 truncate',
-                                  status === 'completed' && 'line-through decoration-muted-foreground/40'
-                                )}>
-                                  {lesson.title}
-                                </span>
-                              </Link>
-                            </li>
-                          )
-                        })}
-                      </ul>
+                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                     </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )
-          })}
+                    <span
+                      className={cn(
+                        'flex-1 text-[11px] font-semibold uppercase tracking-widest truncate',
+                        sectionDone
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-muted-foreground',
+                      )}
+                    >
+                      {section.title}
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] shrink-0 h-4 px-1.5 font-medium"
+                    >
+                      {completedInSection}/{section.lessons.length}
+                    </Badge>
+                  </button>
+
+                  {/* Lesson items */}
+                  <AnimatePresence initial={false}>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: 'easeInOut' }}
+                        className="overflow-hidden"
+                      >
+                        <ul className="pl-2 pb-1">
+                          {section.lessons.map((lesson) => {
+                            const isCurrent = lesson.id === currentLessonId
+                            const status = lesson.status ?? 'not_started'
+                            const isCompleted = status === 'completed'
+                            const isInProgress = status === 'in_progress'
+                            const isLocked = false // extend if locking logic is needed
+
+                            return (
+                              <li key={lesson.id}>
+                                <Link
+                                  to={`/dashboard/learning/lesson/${lesson.id}`}
+                                  className={cn(
+                                    'flex items-center gap-2.5 px-3 py-2 rounded-md text-xs',
+                                    'transition-all duration-200 group',
+                                    isCurrent
+                                      ? 'bg-primary/10 text-primary font-semibold border-l-2 border-primary pl-[10px] sidebar-active-glow'
+                                      : isCompleted
+                                      ? 'text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950/20'
+                                      : isLocked
+                                      ? 'text-muted-foreground/50 cursor-not-allowed pointer-events-none'
+                                      : 'text-muted-foreground hover:text-foreground hover:bg-accent/10 border-l-2 border-transparent pl-[10px]',
+                                  )}
+                                  aria-current={isCurrent ? 'page' : undefined}
+                                  aria-disabled={isLocked}
+                                  tabIndex={isLocked ? -1 : undefined}
+                                >
+                                  {/* Status icon */}
+                                  <span className="shrink-0">
+                                    {isLocked ? (
+                                      <Lock className="h-3.5 w-3.5 text-muted-foreground/40" />
+                                    ) : isCompleted ? (
+                                      <CheckCircle2 className="h-3.5 w-3.5 text-green-500 dark:text-green-400" />
+                                    ) : isCurrent ? (
+                                      <PlayCircle className="h-3.5 w-3.5 text-primary" />
+                                    ) : isInProgress ? (
+                                      <span className="flex h-3.5 w-3.5 items-center justify-center">
+                                        <span className="h-2 w-2 rounded-full bg-amber-500" />
+                                      </span>
+                                    ) : (
+                                      <Circle className="h-3.5 w-3.5 text-muted-foreground/50" />
+                                    )}
+                                  </span>
+
+                                  {/* Title */}
+                                  <span
+                                    className={cn(
+                                      'flex-1 truncate leading-snug',
+                                      isCompleted && !isCurrent && 'opacity-70',
+                                    )}
+                                  >
+                                    {lesson.title}
+                                  </span>
+
+                                  {/* Duration */}
+                                  {lesson.estimatedMinutes > 0 && (
+                                    <span
+                                      className={cn(
+                                        'shrink-0 flex items-center gap-0.5 tabular-nums',
+                                        'text-[10px] text-muted-foreground/70',
+                                      )}
+                                    >
+                                      <Clock className="h-2.5 w-2.5" aria-hidden="true" />
+                                      {lesson.estimatedMinutes}m
+                                    </span>
+                                  )}
+                                </Link>
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )
+            })
+          )}
         </nav>
       </ScrollArea>
     </div>

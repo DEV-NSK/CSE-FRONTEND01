@@ -18,29 +18,31 @@ import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip'
 import { getInitials } from '@/shared/lib/utils'
 
-// ─── FPRD-16: Coding sub-nav (Phase 1) ────────────────────────────────────────
+// ─── Coding sub-nav (FPRD-16) ─────────────────────────────────────────────────
 const codingSubItems = [
   { label: 'Home',            href: '/dashboard/coding',               exact: true },
-  { label: 'Question Bank',   href: '/dashboard/coding/question-bank',             icon: Library },
-  { label: 'Daily Challenge', href: '/dashboard/coding/daily',                     icon: Calendar },
-  { label: 'Contests',        href: '/dashboard/coding/contests',                  icon: Trophy },
-  { label: 'Favorites',       href: '/dashboard/coding/favorites',                 icon: Star },
-  { label: 'Discussions',     href: '/dashboard/coding/discussions',               icon: MessageSquare },
-  { label: 'Analytics',       href: '/dashboard/coding/analytics',                 icon: BarChart2 },
+  { label: 'Question Bank',   href: '/dashboard/coding/question-bank', icon: Library },
+  { label: 'Daily Challenge', href: '/dashboard/coding/daily',         icon: Calendar },
+  { label: 'Contests',        href: '/dashboard/coding/contests',      icon: Trophy },
+  { label: 'Favorites',       href: '/dashboard/coding/favorites',     icon: Star },
+  { label: 'Discussions',     href: '/dashboard/coding/discussions',   icon: MessageSquare },
+  { label: 'Analytics',       href: '/dashboard/coding/analytics',     icon: BarChart2 },
 ]
 
 const baseNavItems = [
-  { label: 'Dashboard',  href: '/dashboard',                          icon: LayoutDashboard },
-  { label: 'Learning',   href: '/dashboard/learning',                 icon: BookOpen },
-  { label: 'Coding',     href: '/dashboard/coding',                   icon: Code2 },
-  { label: 'Projects',   href: '/dashboard/launching-soon/projects',  icon: FolderKanban, launchingSoon: true },
-  { label: 'Placement',  href: '/dashboard/launching-soon/placement', icon: Briefcase,    launchingSoon: true },
-  { label: 'Events',     href: '/dashboard/launching-soon/events',    icon: Calendar,     launchingSoon: true },
-  { label: 'Analytics',  href: '/dashboard/launching-soon/analytics', icon: BarChart3,    launchingSoon: true },
-  { label: 'Notifications', href: '/dashboard/notifications',         icon: Bell, badge: true },
-  { label: 'Profile',    href: '/dashboard/profile',                  icon: User },
-  { label: 'Settings',   href: '/dashboard/settings',                 icon: Settings },
+  { label: 'Dashboard',     href: '/dashboard',                          icon: LayoutDashboard },
+  { label: 'Learning',      href: '/dashboard/learning',                 icon: BookOpen },
+  { label: 'Coding',        href: '/dashboard/coding',                   icon: Code2 },
+  { label: 'Projects',      href: '/dashboard/launching-soon/projects',  icon: FolderKanban, launchingSoon: true },
+  { label: 'Placement',     href: '/dashboard/launching-soon/placement', icon: Briefcase,    launchingSoon: true },
+  { label: 'Events',        href: '/dashboard/launching-soon/events',    icon: Calendar,     launchingSoon: true },
+  { label: 'Analytics',     href: '/dashboard/launching-soon/analytics', icon: BarChart3,    launchingSoon: true },
+  { label: 'Notifications', href: '/dashboard/notifications',            icon: Bell,         badge: true },
+  { label: 'Profile',       href: '/dashboard/profile',                  icon: User },
+  { label: 'Settings',      href: '/dashboard/settings',                 icon: Settings },
 ]
+
+// ─── SidebarContent ───────────────────────────────────────────────────────────
 
 interface SidebarContentProps {
   collapsed: boolean
@@ -51,13 +53,12 @@ function SidebarContent({ collapsed }: SidebarContentProps) {
   const { user } = useAuthStore()
   const { unreadCount } = useNotificationStore()
 
-  // Keep coding sub-nav open whenever we're inside /dashboard/coding
   const isCodingActive = location.pathname.startsWith('/dashboard/coding')
   const [codingOpen, setCodingOpen] = useState(isCodingActive)
 
   return (
     <div className="flex flex-col h-full">
-      {/* Logo */}
+      {/* ── Logo ── */}
       <div
         className={cn(
           'flex items-center gap-3 px-4 py-5 border-b border-border',
@@ -76,21 +77,20 @@ function SidebarContent({ collapsed }: SidebarContentProps) {
               transition={{ duration: 0.2 }}
               className="overflow-hidden whitespace-nowrap"
             >
-              <span className="font-bold text-foreground text-sm">CSE Platform</span>
+              <span className="font-bold text-foreground text-sm tracking-tight">CSE Ground</span>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Nav items */}
+      {/* ── Nav items ── */}
       <ScrollArea className="flex-1 px-2 py-3">
         <nav aria-label="Main navigation">
-          <ul className="space-y-1">
+          <ul className="space-y-0.5">
             {baseNavItems.map((item) => {
               const Icon = item.icon
               const isCoding = item.href === '/dashboard/coding'
 
-              // Active logic
               const isActive =
                 item.href === '/dashboard'
                   ? location.pathname === '/dashboard'
@@ -98,33 +98,31 @@ function SidebarContent({ collapsed }: SidebarContentProps) {
                     (location.pathname === item.href ||
                       location.pathname.startsWith(item.href + '/'))
 
-              // ── Coding item: renders with collapsible sub-nav ─────────────
+              // ── Coding: collapsible sub-nav ──────────────────────────────
               if (isCoding && !collapsed) {
                 return (
                   <li key={item.href}>
-                    {/* Coding toggle row */}
                     <button
                       type="button"
                       onClick={() => setCodingOpen((v) => !v)}
                       className={cn(
-                        'w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
+                        'w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-[13px] font-medium transition-colors duration-150',
                         isCodingActive
-                          ? 'bg-primary/10 text-primary'
-                          : 'text-muted-foreground hover:bg-accent/10 hover:text-foreground',
+                          ? 'bg-primary/10 text-primary border-l-2 border-primary pl-[10px]'
+                          : 'text-muted-foreground hover:bg-accent/10 hover:text-foreground border-l-2 border-transparent pl-[10px]',
                       )}
                       aria-expanded={codingOpen}
                     >
-                      <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                      <Icon className="h-4.5 w-4.5 shrink-0 h-[18px] w-[18px]" aria-hidden="true" />
                       <span className="flex-1 text-left">Coding</span>
                       <motion.div
                         animate={{ rotate: codingOpen ? 180 : 0 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <ChevronDown className="h-4 w-4 opacity-60" aria-hidden="true" />
+                        <ChevronDown className="h-4 w-4 opacity-50" aria-hidden="true" />
                       </motion.div>
                     </button>
 
-                    {/* Sub-nav */}
                     <AnimatePresence initial={false}>
                       {codingOpen && (
                         <motion.ul
@@ -144,7 +142,7 @@ function SidebarContent({ collapsed }: SidebarContentProps) {
                                 <Link
                                   to={sub.href}
                                   className={cn(
-                                    'flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors',
+                                    'flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[12px] font-medium transition-colors duration-150',
                                     subActive
                                       ? 'bg-primary/10 text-primary'
                                       : 'text-muted-foreground hover:bg-accent/10 hover:text-foreground',
@@ -166,21 +164,21 @@ function SidebarContent({ collapsed }: SidebarContentProps) {
                 )
               }
 
-              // ── Regular nav item ──────────────────────────────────────────
+              // ── Regular nav item ─────────────────────────────────────────
               const navLink = (
                 <Link
                   to={item.href}
                   className={cn(
-                    'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors relative group',
+                    'flex items-center gap-3 rounded-md px-3 py-2.5 text-[13px] font-medium transition-colors duration-150 relative group border-l-2',
                     isActive
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-accent/10 hover:text-foreground',
-                    'launchingSoon' in item && item.launchingSoon && !isActive && 'opacity-70',
-                    collapsed && 'justify-center px-2',
+                      ? 'bg-primary/10 text-primary border-primary sidebar-active-glow pl-[10px]'
+                      : 'text-muted-foreground hover:bg-accent/10 hover:text-foreground border-transparent pl-[10px]',
+                    'launchingSoon' in item && item.launchingSoon && !isActive && 'opacity-60',
+                    collapsed && 'justify-center border-l-0 pl-3 px-2',
                   )}
                   aria-current={isActive ? 'page' : undefined}
                 >
-                  <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                  <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
                   <AnimatePresence>
                     {!collapsed && (
                       <motion.span
@@ -194,18 +192,19 @@ function SidebarContent({ collapsed }: SidebarContentProps) {
                       </motion.span>
                     )}
                   </AnimatePresence>
+
                   {'launchingSoon' in item && item.launchingSoon && !collapsed && (
-                    <span className="ml-auto text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/60 bg-muted/60 rounded px-1 py-0.5">
+                    <span className="ml-auto text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/60 bg-muted/60 rounded px-1 py-0.5 shrink-0">
                       Soon
                     </span>
                   )}
                   {item.badge && unreadCount > 0 && !collapsed && (
-                    <Badge variant="destructive" className="ml-auto text-xs px-1.5 py-0">
+                    <Badge variant="destructive" className="ml-auto text-xs px-1.5 py-0 shrink-0">
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </Badge>
                   )}
                   {item.badge && unreadCount > 0 && collapsed && (
-                    <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
+                    <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive" />
                   )}
                 </Link>
               )
@@ -234,19 +233,19 @@ function SidebarContent({ collapsed }: SidebarContentProps) {
         </nav>
       </ScrollArea>
 
-      {/* User profile at bottom */}
+      {/* ── User profile at bottom ── */}
       {user && (
         <div className={cn('border-t border-border p-3', collapsed && 'flex justify-center')}>
           <Link
             to="/dashboard/profile"
             className={cn(
-              'flex items-center gap-3 rounded-md px-2 py-2 hover:bg-accent/10 transition-colors',
+              'flex items-center gap-3 rounded-md px-2 py-2 hover:bg-accent/10 transition-colors duration-150',
               collapsed && 'justify-center',
             )}
           >
-            <Avatar className="h-8 w-8 shrink-0">
+            <Avatar className="h-8 w-8 shrink-0 ring-2 ring-border">
               <AvatarImage src={user.profileImage} alt={user.fullName} />
-              <AvatarFallback>{getInitials(user.fullName)}</AvatarFallback>
+              <AvatarFallback className="text-xs">{getInitials(user.fullName)}</AvatarFallback>
             </Avatar>
             <AnimatePresence>
               {!collapsed && (
@@ -269,20 +268,23 @@ function SidebarContent({ collapsed }: SidebarContentProps) {
   )
 }
 
+// ─── Sidebar (shell + mobile drawer) ─────────────────────────────────────────
+
 export function Sidebar() {
   const { isCollapsed, toggleCollapsed, isMobileOpen, setMobileOpen } = useSidebarStore()
 
   return (
     <>
-      {/* Desktop sidebar */}
+      {/* Desktop sidebar — 280px expanded, 64px collapsed */}
       <motion.aside
-        animate={{ width: isCollapsed ? 64 : 260 }}
+        animate={{ width: isCollapsed ? 64 : 280 }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
         className="hidden lg:flex flex-col h-full bg-card border-r border-border relative shrink-0"
         aria-label="Sidebar"
       >
         <SidebarContent collapsed={isCollapsed} />
-        {/* Collapse toggle */}
+
+        {/* Collapse toggle button */}
         <Button
           variant="ghost"
           size="icon-sm"
@@ -304,6 +306,7 @@ export function Sidebar() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
               className="fixed inset-0 z-40 bg-black/50 lg:hidden"
               onClick={() => setMobileOpen(false)}
               aria-hidden="true"
@@ -313,7 +316,7 @@ export function Sidebar() {
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ duration: 0.3, ease: 'easeInOut' }}
-              className="fixed left-0 top-0 z-50 h-full w-[260px] bg-card border-r border-border lg:hidden flex flex-col"
+              className="fixed left-0 top-0 z-50 h-full w-[280px] bg-card border-r border-border lg:hidden flex flex-col"
               aria-label="Mobile sidebar"
             >
               <Button

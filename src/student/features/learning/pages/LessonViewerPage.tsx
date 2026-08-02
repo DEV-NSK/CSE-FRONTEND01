@@ -1527,6 +1527,49 @@ export function LessonViewerPage() {
             </div>
           </div>
 
+          {/* Lesson position + Prev/Next navigation */}
+          <div className="flex items-center justify-between px-6 lg:px-10 pt-3 pb-0 max-w-[900px] mx-auto w-full">
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild={!!lesson.prevLessonId}
+              disabled={!lesson.prevLessonId}
+              className="gap-1.5 text-xs text-muted-foreground hover:text-foreground -ml-2"
+            >
+              {lesson.prevLessonId ? (
+                <Link to={`/dashboard/learning/lesson/${lesson.prevLessonId}`}>
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                  Previous Lesson
+                </Link>
+              ) : (
+                <><ChevronLeft className="h-3.5 w-3.5" />Previous Lesson</>
+              )}
+            </Button>
+
+            {lessonIndex > 0 && (
+              <span className="text-xs text-muted-foreground font-medium tabular-nums">
+                Lesson {lessonIndex} of {totalLessonsInRoadmap}
+              </span>
+            )}
+
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild={!!lesson.nextLessonId}
+              disabled={!lesson.nextLessonId}
+              className="gap-1.5 text-xs text-muted-foreground hover:text-foreground -mr-2"
+            >
+              {lesson.nextLessonId ? (
+                <Link to={`/dashboard/learning/lesson/${lesson.nextLessonId}`}>
+                  Next Lesson
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </Link>
+              ) : (
+                <>Next Lesson<ChevronRight className="h-3.5 w-3.5" /></>
+              )}
+            </Button>
+          </div>
+
           {/* Lesson header */}
           <div className="px-6 lg:px-10 py-6 max-w-[900px] mx-auto w-full">
             <div className="flex flex-col gap-4">

@@ -181,7 +181,7 @@ export function DashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <Card className="overflow-hidden border-primary/10 bg-gradient-to-br from-background via-background to-primary/5">
+        <Card className="overflow-hidden bg-card border border-border shadow-sm">
           <CardContent className="p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-2">
@@ -331,9 +331,9 @@ export function DashboardPage() {
             return (
               <motion.div key={action.title} variants={item}>
                 <Link to={action.href} className="block h-full">
-                  <Card className={`h-full cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 border-border/60 ${action.hoverColor}`}>
+                  <Card className={`h-full cursor-pointer transition-all hover:shadow-sm border-border/60 ${action.hoverColor}`}>
                     <CardContent className="p-5">
-                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-3 ${action.color}`}>
+                      <div className={`w-11 h-11 rounded-lg flex items-center justify-center mb-3 ${action.color}`}>
                         <Icon className="h-5 w-5" aria-hidden="true" />
                       </div>
                       <h3 className="text-base font-semibold text-foreground mb-1">
@@ -405,7 +405,7 @@ export function DashboardPage() {
                           className={`w-full text-left flex items-start gap-3 p-2.5 rounded-lg transition-colors ${
                             n.isRead
                               ? "hover:bg-accent/30"
-                              : "hover:bg-accent/60 bg-accent/20"
+                              : "hover:bg-accent/60 bg-accent/20 border-l-2 border-primary pl-2"
                           }`}
                         >
                           <span
@@ -494,7 +494,7 @@ export function DashboardPage() {
                     const aCls = getActivityColor(a);
                     return (
                       <li key={a.id}>
-                        <div className="w-full flex items-start gap-3 p-2.5 rounded-lg">
+                        <div className="w-full flex items-start gap-3 p-2.5 rounded-lg border-l-2 border-transparent hover:border-primary/30 transition-colors">
                           <span
                             className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${aCls}`}
                           >
