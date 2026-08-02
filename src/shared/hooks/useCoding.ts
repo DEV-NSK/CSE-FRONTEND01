@@ -74,7 +74,14 @@ export function useProblem(slug: string) {
 export function useCodingCategories() {
   return useQuery({
     queryKey: codingKeys.categories(),
-    queryFn: () => codingService.getCategories().then((r) => r.data.data),
+    queryFn: async () => {
+      const r = await codingService.getCategories()
+      const raw = r.data?.data
+      // Backend may return a plain array OR a paginated object { data: [...], total, ... }
+      if (Array.isArray(raw)) return raw
+      if (raw && typeof raw === 'object' && Array.isArray((raw as any).data)) return (raw as any).data as typeof raw[]
+      return [] as any[]
+    },
     staleTime: 1000 * 60 * 30,
   })
 }
@@ -82,7 +89,13 @@ export function useCodingCategories() {
 export function useCodingTags() {
   return useQuery({
     queryKey: codingKeys.tags(),
-    queryFn: () => codingService.getTags().then((r) => r.data.data),
+    queryFn: async () => {
+      const r = await codingService.getTags()
+      const raw = r.data?.data
+      if (Array.isArray(raw)) return raw
+      if (raw && typeof raw === 'object' && Array.isArray((raw as any).data)) return (raw as any).data as typeof raw[]
+      return [] as any[]
+    },
     staleTime: 1000 * 60 * 30,
   })
 }
@@ -90,7 +103,15 @@ export function useCodingTags() {
 export function useCodingCompanies() {
   return useQuery({
     queryKey: codingKeys.companies(),
-    queryFn: () => codingService.getCompanies().then((r) => r.data.data),
+    queryFn: async () => {
+      const r = await codingService.getCompanies()
+      const raw = r.data?.data
+      // /coding/companies returns a paginated object { data: Company[], total, page, ... }
+      // Normalize it to always return a plain Company[]
+      if (Array.isArray(raw)) return raw
+      if (raw && typeof raw === 'object' && Array.isArray((raw as any).data)) return (raw as any).data as typeof raw[]
+      return [] as any[]
+    },
     staleTime: 1000 * 60 * 30,
   })
 }
@@ -174,7 +195,14 @@ export function useSubmission(id: string) {
 export function useProblemSubmissions(problemSlug: string) {
   return useQuery({
     queryKey: codingKeys.problemSubmissions(problemSlug),
-    queryFn: () => codingService.getSubmissionsByProblem(problemSlug).then((r) => r.data.data),
+    queryFn: async () => {
+      const r = await codingService.getSubmissionsByProblem(problemSlug)
+      const raw = r.data?.data
+      // Backend may return a plain Submission[] OR a paginated { data: Submission[], total, ... }
+      if (Array.isArray(raw)) return raw
+      if (raw && typeof raw === 'object' && Array.isArray((raw as any).data)) return (raw as any).data as import('@/shared/types/coding').Submission[]
+      return [] as import('@/shared/types/coding').Submission[]
+    },
     enabled: !!problemSlug,
     staleTime: 1000 * 60 * 2,
   })

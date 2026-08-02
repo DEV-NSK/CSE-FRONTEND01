@@ -159,7 +159,7 @@ export function ProblemsListPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              {categories?.map((cat) => (
+              {Array.isArray(categories) && categories.map((cat) => (
                 <SelectItem key={cat.id} value={cat.id}>
                   {cat.name}
                 </SelectItem>
@@ -177,7 +177,7 @@ export function ProblemsListPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Companies</SelectItem>
-              {companies?.map((co) => (
+              {Array.isArray(companies) && companies.map((co) => (
                 <SelectItem key={co.id} value={co.id}>
                   {co.name}
                 </SelectItem>
@@ -214,7 +214,7 @@ export function ProblemsListPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Tags</SelectItem>
-              {tags?.map((tag) => (
+              {Array.isArray(tags) && tags.map((tag) => (
                 <SelectItem key={tag.id} value={tag.id}>
                   {tag.name}
                 </SelectItem>

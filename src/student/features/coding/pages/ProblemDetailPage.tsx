@@ -464,7 +464,7 @@ export function ProblemDetailPage() {
                       <SubmissionCardSkeleton key={i} />
                     ))}
                   </div>
-                ) : !submissions?.length ? (
+                ) : !Array.isArray(submissions) || submissions.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-32 text-center">
                     <Code2 className="h-8 w-8 text-muted-foreground/40 mb-2" />
                     <p className="text-xs text-muted-foreground">No submissions yet</p>
