@@ -375,6 +375,8 @@ export const LANGUAGE_LABELS: Record<Language, string> = {
   c: 'C',
   go: 'Go',
   rust: 'Rust',
+  csharp: 'C#',
+  kotlin: 'Kotlin',
 }
 
 export const MONACO_LANGUAGE_MAP: Record<Language, string> = {
@@ -386,4 +388,39 @@ export const MONACO_LANGUAGE_MAP: Record<Language, string> = {
   c: 'c',
   go: 'go',
   rust: 'rust',
+  csharp: 'csharp',
+  kotlin: 'kotlin',
+}
+
+/**
+ * Maps frontend lowercase Language values to backend ProgrammingLanguage enum (UPPERCASE).
+ * Used when sending language to the backend judge APIs.
+ */
+export const LANGUAGE_TO_BACKEND: Record<Language, string> = {
+  javascript: 'JAVASCRIPT',
+  typescript: 'TYPESCRIPT',
+  python: 'PYTHON',
+  java: 'JAVA',
+  cpp: 'CPP',
+  c: 'C',
+  go: 'GO',
+  rust: 'RUST',
+  csharp: 'CSHARP',
+  kotlin: 'KOTLIN',
+}
+
+/**
+ * Maps backend ProgrammingLanguage enum to frontend lowercase Language values.
+ */
+export const BACKEND_TO_LANGUAGE: Record<string, Language> = {
+  JAVASCRIPT: 'javascript',
+  TYPESCRIPT: 'typescript',
+  PYTHON: 'python',
+  JAVA: 'java',
+  CPP: 'cpp',
+  C: 'c',
+  GO: 'go',
+  RUST: 'rust',
+  CSHARP: 'csharp',
+  KOTLIN: 'kotlin',
 }

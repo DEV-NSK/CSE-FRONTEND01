@@ -39,7 +39,7 @@ import { cn } from '@/shared/lib/utils'
 import type { Language } from '@/shared/types/coding'
 import type { RunResult } from '@/shared/types/coding'
 
-const LANGUAGES: Language[] = ['javascript', 'typescript', 'python', 'java', 'cpp', 'c', 'go', 'rust']
+const LANGUAGES: Language[] = ['javascript', 'typescript', 'python', 'java', 'cpp', 'c', 'go', 'rust', 'csharp', 'kotlin']
 
 export function ProblemDetailPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -668,6 +668,8 @@ function getDefaultTemplate(lang: Language): string {
     c: `int solve(int* nums, int numsSize) {\n    // Your solution here\n    return 0;\n}\n`,
     go: `func solve(nums []int) int {\n    // Your solution here\n    return 0\n}\n`,
     rust: `impl Solution {\n    pub fn solve(nums: Vec<i32>) -> i32 {\n        // Your solution here\n        0\n    }\n}\n`,
+    csharp: `using System;\nusing System.Collections.Generic;\n\npublic class Solution {\n    public int Solve(int[] nums) {\n        // Your solution here\n        return 0;\n    }\n}\n`,
+    kotlin: `class Solution {\n    fun solve(nums: IntArray): Int {\n        // Your solution here\n        return 0\n    }\n}\n`,
   }
   return templates[lang] ?? '// Write your solution here\n'
 }

@@ -20,6 +20,15 @@ import type {
   SubmissionFilters,
   Language,
 } from '@/shared/types/coding'
+import { LANGUAGE_TO_BACKEND } from '@/shared/hooks/useCoding'
+
+/**
+ * Maps frontend lowercase Language to backend UPPERCASE ProgrammingLanguage enum.
+ * Prevents enum mismatch errors in Run Code and Submit.
+ */
+function toBackendLanguage(lang: Language): string {
+  return LANGUAGE_TO_BACKEND[lang] ?? lang.toUpperCase()
+}
 
 /**
  * Strip filter values that mean "no filter" before sending to the API.
@@ -85,13 +94,22 @@ export const codingService = {
     language: Language
     code: string
     customInput?: string
-  }) => axiosInstance.post<ApiResponse<{ submissionId: string }>>('/coding/run', payload),
+  }) => axiosInstance.post<ApiResponse<{ submissionId: string }>>('/coding/run', {
+    problemId: payload.problemId,
+    language: toBackendLanguage(payload.language),
+    code: payload.code,
+    customInput: payload.customInput,
+  }),
 
   submitCode: (payload: {
     problemId: string
     language: Language
     code: string
-  }) => axiosInstance.post<ApiResponse<{ submissionId: string }>>('/coding/submit', payload),
+  }) => axiosInstance.post<ApiResponse<{ submissionId: string }>>('/coding/submit', {
+    problemId: payload.problemId,
+    language: toBackendLanguage(payload.language),
+    sourceCode: payload.code,
+  }),
 
   getSubmissionResult: (submissionId: string) =>
     axiosInstance.get<ApiResponse<RunResult>>(`/coding/submissions/${submissionId}/result`),
