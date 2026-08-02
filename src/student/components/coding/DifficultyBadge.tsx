@@ -2,7 +2,8 @@ import { cn } from '@/shared/lib/utils'
 import type { ProblemDifficulty } from '@/shared/types/coding'
 
 interface DifficultyBadgeProps {
-  difficulty: ProblemDifficulty
+  // Accept both lowercase ('easy') and uppercase ('EASY') from the API
+  difficulty: ProblemDifficulty | string
   className?: string
 }
 
@@ -21,8 +22,15 @@ const difficultyConfig: Record<ProblemDifficulty, { label: string; className: st
   },
 }
 
+const fallbackConfig = {
+  label: 'Unknown',
+  className: 'bg-muted text-muted-foreground',
+}
+
 export function CodingDifficultyBadge({ difficulty, className }: DifficultyBadgeProps) {
-  const config = difficultyConfig[difficulty]
+  // Normalize to lowercase so both 'EASY' and 'easy' work
+  const normalized = (difficulty ?? '').toLowerCase() as ProblemDifficulty
+  const config = difficultyConfig[normalized] ?? fallbackConfig
   return (
     <span
       className={cn(
