@@ -110,9 +110,9 @@ export function DailyChallengePage() {
                     </div>
 
                     {/* Tags */}
-                    {daily.problem.tags.length > 0 && (
+                    {(daily.problem.tags ?? []).length > 0 && (
                       <div className="flex flex-wrap gap-1">
-                        {daily.problem.tags.slice(0, 4).map((tag) => (
+                        {(daily.problem.tags ?? []).slice(0, 4).map((tag) => (
                           <span
                             key={tag.id}
                             className="text-xs px-2 py-0.5 rounded-md bg-muted/50 text-muted-foreground border border-border"

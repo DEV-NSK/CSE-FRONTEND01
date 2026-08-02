@@ -72,7 +72,7 @@ export function CodingHomePage() {
     },
     {
       label: 'Acceptance Rate',
-      value: `${stats?.acceptanceRate?.toFixed(1) ?? 0}%`,
+      value: `${(stats?.acceptanceRate ?? 0).toFixed(1)}%`,
       icon: TrendingUp,
       color: 'text-blue-500',
     },

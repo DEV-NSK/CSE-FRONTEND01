@@ -15,7 +15,6 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/shared/components/ui/card";
@@ -23,6 +22,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { Skeleton } from "@/shared/components/feedback/Skeleton";
 import { ErrorState } from "@/shared/components/feedback/ErrorState";
+import { WidgetErrorBoundary } from "@/shared/components/feedback/ErrorBoundary";
 import { useAuthStore } from "@/shared/store/authStore";
 import { timeAgo } from "@/shared/lib/time";
 import {
@@ -125,7 +125,6 @@ export function DashboardPage() {
       { limit: 5 },
       {
         refetchInterval: DASHBOARD_REFETCH_MS,
-        refetchOnWindowFocus: true,
       },
     );
 
@@ -355,12 +354,13 @@ export function DashboardPage() {
       {/* 4. NOTIFICATIONS CARD + 5. RECENT ACTIVITY */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* NOTIFICATION CARD */}
-        <motion.section
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          aria-labelledby="notifications-heading"
-        >
+        <WidgetErrorBoundary label="Recent Notifications" minHeight={200}>
+          <motion.section
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            aria-labelledby="notifications-heading"
+          >
           <Card className="h-full border-border/60">
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <CardTitle id="notifications-heading" className="text-base flex items-center gap-2">
@@ -447,8 +447,10 @@ export function DashboardPage() {
             </CardContent>
           </Card>
         </motion.section>
+        </WidgetErrorBoundary>
 
         {/* RECENT ACTIVITY */}
+        <WidgetErrorBoundary label="Recent Activity" minHeight={200}>
         <motion.section
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -534,6 +536,7 @@ export function DashboardPage() {
             </CardContent>
           </Card>
         </motion.section>
+        </WidgetErrorBoundary>
       </div>
     </div>
   );

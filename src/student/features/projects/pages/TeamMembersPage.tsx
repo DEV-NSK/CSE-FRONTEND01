@@ -33,8 +33,8 @@ export function TeamMembersPage() {
   const canManage = myMembership?.role === 'OWNER' || myMembership?.role === 'LEADER'
 
   const filteredMembers = (team?.members ?? []).filter((m) => {
-    const matchSearch = !search || m.user.fullName.toLowerCase().includes(search.toLowerCase()) ||
-      m.user.email.toLowerCase().includes(search.toLowerCase())
+    const matchSearch = !search || (m.user.fullName ?? '').toLowerCase().includes(search.toLowerCase()) ||
+      (m.user.email ?? '').toLowerCase().includes(search.toLowerCase())
     const matchRole = !roleFilter || m.role === roleFilter
     return matchSearch && matchRole
   })

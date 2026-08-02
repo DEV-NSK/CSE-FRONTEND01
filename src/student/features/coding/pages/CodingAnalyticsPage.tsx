@@ -95,7 +95,7 @@ export function CodingAnalyticsPage() {
         />
         <AnalyticsCard
           label="Acceptance Rate"
-          value={`${stats?.acceptanceRate?.toFixed(1) ?? 0}%`}
+          value={`${(stats?.acceptanceRate ?? 0).toFixed(1)}%`}
           icon={TrendingUp}
           iconColor="text-blue-500"
           description={`${stats?.acceptedSubmissions ?? 0} / ${stats?.totalSubmissions ?? 0} submissions`}
@@ -292,7 +292,7 @@ export function CodingAnalyticsPage() {
                         aria-hidden="true"
                       />
                       <span className="text-xs text-foreground flex-1 truncate">{lang.name}</span>
-                      <span className="text-xs text-muted-foreground">{lang.percentage.toFixed(0)}%</span>
+                      <span className="text-xs text-muted-foreground">{(lang.percentage ?? 0).toFixed(0)}%</span>
                     </div>
                   ))}
                 </div>

@@ -9,14 +9,13 @@ import { Card, CardContent } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { PageHeader } from '@/shared/components/common/PageHeader'
-import { ErrorState } from '@/shared/components/feedback/ErrorState'
 import { ContinueLearningCard } from '@/student/components/learning/ContinueLearningCard'
-import { CategoryCardSkeleton, RoadmapCardSkeleton } from '@/student/components/learning/LearningSkeletons'
+import { RoadmapCardSkeleton } from '@/student/components/learning/LearningSkeletons'
 import { EmptyLearningState } from '@/student/components/learning/EmptyLearningState'
 import { ProgressRing } from '@/student/components/learning/ProgressRing'
 import { DifficultyBadge } from '@/student/components/learning/DifficultyBadge'
 import {
-  useCategories, useRoadmaps, useContinueLearning,
+  useRoadmaps, useContinueLearning,
   useLearningStats, useRecentlyViewed, useBookmarks,
 } from '@/shared/hooks/useLearning'
 import { useAuthStore } from '@/shared/store/authStore'
@@ -29,12 +28,6 @@ const container = {
 }
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }
 
-const isPythonCategory = (name: string, slug: string) => {
-  const n = name.toLowerCase()
-  const s = slug.toLowerCase()
-  return n.includes('python') || s.includes('python') || n.includes('programming') || s.includes('programming')
-}
-
 const isPythonRoadmap = (r: { title: string; slug: string; category?: { name: string; slug: string } }) => {
   const t = r.title.toLowerCase()
   const s = r.slug.toLowerCase()
@@ -45,23 +38,21 @@ const isPythonRoadmap = (r: { title: string; slug: string; category?: { name: st
 
 export function LearningHomePage() {
   const navigate = useNavigate()
-  const { user } = useAuthStore()
+  const { user, isAuthenticated } = useAuthStore()
   const [searchValue, setSearchValue] = useState('')
 
-  const { data: categories, isLoading: categoriesLoading, isError: categoriesError } = useCategories()
+  // Categories & roadmaps are public — always fetch
   const { data: roadmapsData, isLoading: roadmapsLoading } = useRoadmaps({ limit: 50 })
+
+  // These queries require authentication — `enabled` prevents 401 floods for unauthenticated users
   const { data: continueLearning } = useContinueLearning()
   const { data: stats } = useLearningStats()
   const { data: recentlyViewed } = useRecentlyViewed(4)
   const { data: bookmarks } = useBookmarks()
 
-  const pythonCategories = useMemo(
-    () => categories?.filter((c) => isPythonCategory(c.name, c.slug)) ?? [],
-    [categories]
-  )
   const pythonRoadmaps = useMemo(
     () => roadmapsData?.data?.filter((r) => isPythonRoadmap(r)) ?? [],
-    [roadmapsData]
+    [roadmapsData],
   )
   const pythonRoadmap: Roadmap | undefined = pythonRoadmaps[0]
 
@@ -73,19 +64,26 @@ export function LearningHomePage() {
 
   const pythonRecentlyViewed = useMemo(
     () => recentlyViewed?.filter((r) => r.roadmapTitle?.toLowerCase().includes('python') ?? true) ?? [],
-    [recentlyViewed]
+    [recentlyViewed],
   )
   const pythonBookmarks = useMemo(
-    () => bookmarks?.filter((b) => b.roadmapTitle?.toLowerCase().includes('python') ?? b.title.toLowerCase().includes('python') ?? true) ?? [],
-    [bookmarks]
+    () =>
+      bookmarks?.filter(
+        (b) =>
+          b.roadmapTitle?.toLowerCase().includes('python') ??
+          b.title.toLowerCase().includes('python') ??
+          true,
+      ) ?? [],
+    [bookmarks],
   )
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleSearch = useCallback(
     debounce((q: string) => {
-      if (q.trim().length >= 2) navigate(`/dashboard/learning/search?q=${encodeURIComponent(q.trim())}`)
+      if (q.trim().length >= 2)
+        navigate(`/dashboard/learning/search?q=${encodeURIComponent(q.trim())}`)
     }, 300),
-    [navigate]
+    [navigate],
   )
 
   const onSearchChange = (val: string) => {
@@ -116,18 +114,27 @@ export function LearningHomePage() {
       />
 
       {/* Skip to content */}
-      <a href="#main-learning-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-2 focus:bg-background focus:text-foreground">
+      <a
+        href="#main-learning-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-2 focus:bg-background focus:text-foreground"
+      >
         Skip to content
       </a>
 
-      {/* Hero Banner - Python only */}
+      {/* Hero Banner */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-yellow-500 via-blue-500 to-indigo-600 p-8 md:p-12 text-white"
       >
-        <div className="absolute inset-0 opacity-10" aria-hidden="true"
-          style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)', backgroundSize: '40px 40px' }}
+        <div
+          className="absolute inset-0 opacity-10"
+          aria-hidden="true"
+          style={{
+            backgroundImage:
+              'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+          }}
         />
         <div className="relative z-10 max-w-3xl">
           <Badge className="mb-4 bg-white/20 text-white border-white/30">🐍 Python Programming</Badge>
@@ -141,9 +148,17 @@ export function LearningHomePage() {
           </p>
 
           {/* Search bar */}
-          <form onSubmit={onSearchSubmit} role="search" aria-label="Search learning content" className="mb-6">
+          <form
+            onSubmit={onSearchSubmit}
+            role="search"
+            aria-label="Search learning content"
+            className="mb-6"
+          >
             <div className="relative max-w-lg">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none" aria-hidden="true" />
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none"
+                aria-hidden="true"
+              />
               <input
                 type="search"
                 value={searchValue}
@@ -201,40 +216,54 @@ export function LearningHomePage() {
         {pythonContinueLearning && (
           <section aria-labelledby="continue-heading">
             <div className="flex items-center justify-between mb-4">
-              <h2 id="continue-heading" className="text-lg font-semibold text-foreground">Continue Learning</h2>
+              <h2 id="continue-heading" className="text-lg font-semibold text-foreground">
+                Continue Learning
+              </h2>
             </div>
             <ContinueLearningCard data={pythonContinueLearning} />
           </section>
         )}
 
-        {/* Learning Stats */}
-        <section aria-labelledby="stats-heading">
-          <h2 id="stats-heading" className="text-lg font-semibold text-foreground mb-4">Your Progress</h2>
-          <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {statsCards.map((stat) => {
-              const Icon = stat.icon
-              return (
-                <motion.div key={stat.label} variants={item}>
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs text-muted-foreground">{stat.label}</p>
-                        <Icon className={`h-4 w-4 ${stat.color}`} aria-hidden="true" />
-                      </div>
-                      <p className="text-2xl font-bold">
-                        {stat.value}{stat.suffix ?? ''}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )
-            })}
-          </motion.div>
-        </section>
+        {/* Learning Stats — only shown when authenticated */}
+        {isAuthenticated && (
+          <section aria-labelledby="stats-heading">
+            <h2 id="stats-heading" className="text-lg font-semibold text-foreground mb-4">
+              Your Progress
+            </h2>
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="show"
+              className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+            >
+              {statsCards.map((stat) => {
+                const Icon = stat.icon
+                return (
+                  <motion.div key={stat.label} variants={item}>
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs text-muted-foreground">{stat.label}</p>
+                          <Icon className={`h-4 w-4 ${stat.color}`} aria-hidden="true" />
+                        </div>
+                        <p className="text-2xl font-bold">
+                          {stat.value}
+                          {stat.suffix ?? ''}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )
+              })}
+            </motion.div>
+          </section>
+        )}
 
         {/* Python Course Card - Featured */}
         <section aria-labelledby="course-heading">
-          <h2 id="course-heading" className="text-lg font-semibold text-foreground mb-4">Your Python Course</h2>
+          <h2 id="course-heading" className="text-lg font-semibold text-foreground mb-4">
+            Your Python Course
+          </h2>
 
           {roadmapsLoading ? (
             <div className="grid grid-cols-1 gap-4">
@@ -270,7 +299,11 @@ export function LearningHomePage() {
                 {/* Right progress + CTA */}
                 <div className="flex-1 p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-8">
                   <div className="flex items-center gap-5">
-                    <ProgressRing progress={pythonRoadmap.progress ?? 0} size={120} strokeWidth={10} />
+                    <ProgressRing
+                      progress={pythonRoadmap.progress ?? 0}
+                      size={120}
+                      strokeWidth={10}
+                    />
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Course Progress</p>
                       <p className="text-lg font-semibold">
@@ -280,10 +313,14 @@ export function LearningHomePage() {
                         <Badge variant="success" className="mt-2 gap-1">
                           <Award className="h-3 w-3" /> Completed! Certificate Coming Soon
                         </Badge>
-                      ) : pythonRoadmap.progress ?? 0 > 0 ? (
-                        <Badge variant="info" className="mt-2">In Progress</Badge>
+                      ) : (pythonRoadmap.progress ?? 0) > 0 ? (
+                        <Badge variant="info" className="mt-2">
+                          In Progress
+                        </Badge>
                       ) : (
-                        <Badge variant="secondary" className="mt-2">Not Started</Badge>
+                        <Badge variant="secondary" className="mt-2">
+                          Not Started
+                        </Badge>
                       )}
                     </div>
                   </div>
@@ -306,7 +343,9 @@ export function LearningHomePage() {
                         asChild
                         className="gap-2 flex-1 md:flex-none md:min-w-[200px]"
                       >
-                        <Link to={`/dashboard/learning/lesson/${pythonContinueLearning.lesson.id}`}>
+                        <Link
+                          to={`/dashboard/learning/lesson/${pythonContinueLearning.lesson.id}`}
+                        >
                           <ArrowRight className="h-5 w-5" />
                           Resume
                         </Link>
@@ -319,11 +358,13 @@ export function LearningHomePage() {
           )}
         </section>
 
-        {/* Recently Viewed */}
-        {pythonRecentlyViewed.length > 0 && (
+        {/* Recently Viewed — only shown when authenticated and data exists */}
+        {isAuthenticated && pythonRecentlyViewed.length > 0 && (
           <section aria-labelledby="recent-heading">
             <div className="flex items-center justify-between mb-4">
-              <h2 id="recent-heading" className="text-lg font-semibold text-foreground">Recently Viewed</h2>
+              <h2 id="recent-heading" className="text-lg font-semibold text-foreground">
+                Recently Viewed
+              </h2>
               <Button variant="ghost" size="sm" asChild className="gap-1 text-xs">
                 <Link to="/dashboard/learning/recent">
                   View all <ArrowRight className="h-3.5 w-3.5" />
@@ -331,18 +372,23 @@ export function LearningHomePage() {
               </Button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {pythonRecentlyViewed.slice(0, 4).map((item) => (
-                <Card key={item.id} className="hover:shadow-sm transition-shadow">
+              {pythonRecentlyViewed.slice(0, 4).map((rv) => (
+                <Card key={rv.id} className="hover:shadow-sm transition-shadow">
                   <CardContent className="p-4 flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                       <BookOpen className="h-4 w-4 text-primary" aria-hidden="true" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{item.lesson.title}</p>
-                      <p className="text-xs text-muted-foreground truncate">{item.roadmapTitle}</p>
+                      <p className="text-sm font-medium truncate">{rv.lesson.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">{rv.roadmapTitle}</p>
                     </div>
-                    <Button variant="ghost" size="sm" asChild className="shrink-0 h-7 px-2 text-xs">
-                      <Link to={`/dashboard/learning/lesson/${item.lesson.id}`}>Continue</Link>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      asChild
+                      className="shrink-0 h-7 px-2 text-xs"
+                    >
+                      <Link to={`/dashboard/learning/lesson/${rv.lesson.id}`}>Continue</Link>
                     </Button>
                   </CardContent>
                 </Card>
@@ -351,11 +397,14 @@ export function LearningHomePage() {
           </section>
         )}
 
-        {/* Bookmarks Preview */}
-        {pythonBookmarks.length > 0 && (
+        {/* Bookmarks Preview — only shown when authenticated and data exists */}
+        {isAuthenticated && pythonBookmarks.length > 0 && (
           <section aria-labelledby="bookmarks-heading">
             <div className="flex items-center justify-between mb-4">
-              <h2 id="bookmarks-heading" className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <h2
+                id="bookmarks-heading"
+                className="text-lg font-semibold text-foreground flex items-center gap-2"
+              >
                 <Bookmark className="h-4 w-4" aria-hidden="true" />
                 Bookmarks
               </h2>
@@ -371,11 +420,16 @@ export function LearningHomePage() {
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
                       <div className="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
-                        <Bookmark className="h-4 w-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                        <Bookmark
+                          className="h-4 w-4 text-amber-600 dark:text-amber-400"
+                          aria-hidden="true"
+                        />
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-medium truncate">{bm.title}</p>
-                        <Badge variant="outline" className="text-xs mt-1">{bm.type}</Badge>
+                        <Badge variant="outline" className="text-xs mt-1">
+                          {bm.type}
+                        </Badge>
                       </div>
                     </div>
                   </CardContent>

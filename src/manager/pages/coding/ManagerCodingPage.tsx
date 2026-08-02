@@ -62,7 +62,7 @@ function ProblemsTab() {
     subtitle: p.category?.name,
     badge: p.difficulty,
     badgeColor: p.difficulty === 'EASY' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : p.difficulty === 'MEDIUM' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-red-50 text-red-700 border-red-200',
-    extra: `${p.acceptanceRate.toFixed(1)}% acceptance`,
+    extra: `${(p.acceptanceRate ?? 0).toFixed(1)}% acceptance`,
     updatedAt: p.updatedAt,
   }))
 

@@ -21,6 +21,7 @@ import { Label } from '@/shared/components/ui/label'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip'
 import { ErrorState } from '@/shared/components/feedback/ErrorState'
 import { Skeleton } from '@/shared/components/feedback/Skeleton'
+import { WidgetErrorBoundary } from '@/shared/components/feedback/ErrorBoundary'
 import { LessonSidebar } from '@/student/components/learning/LessonSidebar'
 import { LessonViewerSkeleton } from '@/student/components/learning/LearningSkeletons'
 import { DifficultyBadge } from '@/student/components/learning/DifficultyBadge'
@@ -932,9 +933,21 @@ function RightSidebar({ open, tab, onTabChange, lesson, sections, lessonIndex, t
                   <TableOfContents entries={tocEntries} scrollRef={scrollRef} />
                 </div>
               )}
-              {tab === 'notes' && <NotesPanel lessonId={lesson.id} />}
-              {tab === 'progress' && <ProgressTab lesson={lesson} sections={sections} lessonIndex={lessonIndex} totalLessons={totalLessons} />}
-              {tab === 'bookmarks' && <BookmarksTab />}
+              {tab === 'notes' && (
+                <WidgetErrorBoundary label="Notes" minHeight={160}>
+                  <NotesPanel lessonId={lesson.id} />
+                </WidgetErrorBoundary>
+              )}
+              {tab === 'progress' && (
+                <WidgetErrorBoundary label="Progress" minHeight={160}>
+                  <ProgressTab lesson={lesson} sections={sections} lessonIndex={lessonIndex} totalLessons={totalLessons} />
+                </WidgetErrorBoundary>
+              )}
+              {tab === 'bookmarks' && (
+                <WidgetErrorBoundary label="Bookmarks" minHeight={120}>
+                  <BookmarksTab />
+                </WidgetErrorBoundary>
+              )}
             </motion.div>
           </AnimatePresence>
         </ScrollArea>
@@ -1192,9 +1205,13 @@ export function LessonViewerPage() {
               )}
 
               <Separator className="my-4" />
-              <PracticeSection lessonId={lesson.id} />
+              <WidgetErrorBoundary label="Practice Questions" minHeight={120}>
+                <PracticeSection lessonId={lesson.id} />
+              </WidgetErrorBoundary>
               <Separator className="my-4" />
-              <QuizSection lessonId={lesson.id} onPassed={() => {}} />
+              <WidgetErrorBoundary label="Quiz" minHeight={120}>
+                <QuizSection lessonId={lesson.id} onPassed={() => {}} />
+              </WidgetErrorBoundary>
 
               {lesson.resources && lesson.resources.length > 0 && (
                 <div className="space-y-4">

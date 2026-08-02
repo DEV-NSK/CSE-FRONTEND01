@@ -6,6 +6,7 @@ import {
   type UseQueryOptions,
 } from "@tanstack/react-query";
 import { notificationsService } from "@/shared/services/notifications.service";
+import { useAuthStore } from "@/shared/store/authStore";
 import type {
   NotificationFilters,
   AppNotification,
@@ -35,12 +36,14 @@ export function useNotificationList(
   filters?: Partial<NotificationFilters>,
   options?: ListOptions,
 ) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   return useQuery({
     queryKey: notificationKeys.list(filters),
     queryFn: () =>
       notificationsService.getNotifications(filters).then((r) => r.data.data),
     staleTime: 1000 * 60 * 1,
     placeholderData: (prev) => prev,
+    enabled: isAuthenticated,
     ...options,
   });
 }
@@ -62,6 +65,7 @@ export function useInfiniteNotifications(
   filters?: Omit<NotificationFilters, "page">,
   options?: InfiniteOptions,
 ) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   return useInfiniteQuery({
     queryKey: notificationKeys.infinite(filters),
     queryFn: ({ pageParam = 1 }) =>
@@ -74,6 +78,7 @@ export function useInfiniteNotifications(
     },
     initialPageParam: 1,
     staleTime: 1000 * 30,
+    enabled: isAuthenticated,
     ...options,
   });
 }
@@ -84,6 +89,7 @@ export function useUnreadCount(
     "queryKey" | "queryFn"
   >,
 ) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   return useQuery({
     queryKey: notificationKeys.unreadCount(),
     queryFn: async () => {
@@ -100,6 +106,7 @@ export function useUnreadCount(
     refetchInterval: 1000 * 60,
     // Never let a failed unread-count call propagate as an error
     retry: false,
+    enabled: isAuthenticated,
     ...options,
   });
 }

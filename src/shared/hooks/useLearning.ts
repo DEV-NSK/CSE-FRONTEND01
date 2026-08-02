@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { learningService } from '@/shared/services/learning.service'
+import { useAuthStore } from '@/shared/store/authStore'
 import type { RoadmapFilters, BookmarkFilters } from '@/shared/types/learning'
 
 // ─── Query Keys ──────────────────────────────────────────────────────────────
@@ -116,30 +117,36 @@ export function useResource(id: string) {
 // ─── Stats ───────────────────────────────────────────────────────────────────
 
 export function useLearningStats() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   return useQuery({
     queryKey: learningKeys.stats(),
     queryFn: () => learningService.getLearningStats().then((r) => r.data.data),
     staleTime: 1000 * 60 * 2,
+    enabled: isAuthenticated,
   })
 }
 
 // ─── Continue Learning ───────────────────────────────────────────────────────
 
 export function useContinueLearning() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   return useQuery({
     queryKey: learningKeys.continueLearning(),
     queryFn: () => learningService.getContinueLearning().then((r) => r.data.data),
     staleTime: 1000 * 60 * 2,
+    enabled: isAuthenticated,
   })
 }
 
 // ─── Bookmarks ───────────────────────────────────────────────────────────────
 
 export function useBookmarks(filters?: Partial<BookmarkFilters>) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   return useQuery({
     queryKey: learningKeys.bookmarks(filters),
     queryFn: () => learningService.getBookmarks(filters).then((r) => r.data.data),
     staleTime: 1000 * 60 * 2,
+    enabled: isAuthenticated,
   })
 }
 
@@ -178,10 +185,12 @@ export function useRemoveBookmark() {
 // ─── Recently Viewed ─────────────────────────────────────────────────────────
 
 export function useRecentlyViewed(limit?: number) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   return useQuery({
     queryKey: learningKeys.recentlyViewed(),
     queryFn: () => learningService.getRecentlyViewed({ limit }).then((r) => r.data.data),
     staleTime: 1000 * 60 * 2,
+    enabled: isAuthenticated,
   })
 }
 

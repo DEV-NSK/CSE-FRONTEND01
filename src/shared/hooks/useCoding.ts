@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { codingService } from '@/shared/services/coding.service'
+import { useAuthStore } from '@/shared/store/authStore'
 import type { ProblemFilters, SubmissionFilters, Language } from '@/shared/types/coding'
 
 // ─── Query Keys ───────────────────────────────────────────────────────────────
@@ -136,11 +137,13 @@ export function useSubmissionResult(submissionId: string, enabled: boolean) {
 // ─── Submissions ──────────────────────────────────────────────────────────────
 
 export function useSubmissions(filters?: Partial<SubmissionFilters>) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   return useQuery({
     queryKey: codingKeys.submissions(filters),
     queryFn: () => codingService.getSubmissions(filters).then((r) => r.data.data),
     staleTime: 1000 * 60 * 2,
     placeholderData: (prev) => prev,
+    enabled: isAuthenticated,
   })
 }
 
@@ -164,11 +167,13 @@ export function useProblemSubmissions(problemSlug: string) {
 // ─── Favorites ────────────────────────────────────────────────────────────────
 
 export function useFavorites(params?: { search?: string; difficulty?: string; page?: number; limit?: number }) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   return useQuery({
     queryKey: codingKeys.favorites(params),
     queryFn: () => codingService.getFavorites(params).then((r) => r.data.data),
     staleTime: 1000 * 60 * 2,
     placeholderData: (prev) => prev,
+    enabled: isAuthenticated,
   })
 }
 
@@ -276,10 +281,12 @@ export function useDeleteReply() {
 // ─── Analytics ────────────────────────────────────────────────────────────────
 
 export function useCodingAnalytics() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   return useQuery({
     queryKey: codingKeys.analytics(),
     queryFn: () => codingService.getAnalytics().then((r) => r.data.data),
     staleTime: 1000 * 60 * 5,
+    enabled: isAuthenticated,
   })
 }
 
@@ -294,18 +301,22 @@ export function useRecommendedProblems(limit = 6) {
 }
 
 export function useRecentlySolved(limit = 5) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   return useQuery({
     queryKey: codingKeys.recentlySolved({ limit }),
     queryFn: () => codingService.getRecentlySolved({ limit }).then((r) => r.data.data),
     staleTime: 1000 * 60 * 2,
+    enabled: isAuthenticated,
   })
 }
 
 export function useContinueSolving(limit = 3) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   return useQuery({
     queryKey: codingKeys.continueSolving({ limit }),
     queryFn: () => codingService.getContinueSolving({ limit }).then((r) => r.data.data),
     staleTime: 1000 * 60 * 2,
+    enabled: isAuthenticated,
   })
 }
 

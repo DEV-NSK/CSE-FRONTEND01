@@ -564,7 +564,7 @@ function ProblemPanel({ problem, isLoading }: ProblemPanelProps) {
         </p>
         <div
           className="prose prose-sm dark:prose-invert max-w-none text-foreground leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: problem.description }}
+          dangerouslySetInnerHTML={{ __html: problem.description ?? '' }}
         />
       </div>
 
@@ -609,7 +609,7 @@ function ProblemPanel({ problem, isLoading }: ProblemPanelProps) {
           </p>
           <div
             className="text-xs font-mono text-foreground leading-relaxed bg-muted/30 rounded-md p-3"
-            dangerouslySetInnerHTML={{ __html: problem.constraints }}
+            dangerouslySetInnerHTML={{ __html: problem.constraints ?? '' }}
           />
         </div>
       )}

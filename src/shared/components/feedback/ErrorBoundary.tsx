@@ -2,6 +2,8 @@ import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 
+// ─── Full-page Error Boundary ─────────────────────────────────────────────────
+
 interface Props {
   children: ReactNode
   fallback?: ReactNode
@@ -25,7 +27,6 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.setState({ errorInfo })
-    // Log to error monitoring service in production
     console.error('[ErrorBoundary]', error, errorInfo)
   }
 
@@ -73,5 +74,92 @@ export class ErrorBoundary extends Component<Props, State> {
     }
 
     return this.props.children
+  }
+}
+
+// ─── Widget Error Boundary ────────────────────────────────────────────────────
+// Use this for isolated sections so a single widget failure never crashes the page.
+
+interface WidgetBoundaryProps {
+  children: ReactNode
+  /** Optional label shown in the inline fallback, e.g. "Recent Activity" */
+  label?: string
+  /** Custom fallback to show instead of the default inline error */
+  fallback?: ReactNode
+  /** Minimum height for the error placeholder (default 120px) */
+  minHeight?: number
+}
+
+interface WidgetBoundaryState {
+  hasError: boolean
+  retryKey: number
+}
+
+export class WidgetErrorBoundary extends Component<WidgetBoundaryProps, WidgetBoundaryState> {
+  private retryTimeout: ReturnType<typeof setTimeout> | null = null
+
+  constructor(props: WidgetBoundaryProps) {
+    super(props)
+    this.state = { hasError: false, retryKey: 0 }
+  }
+
+  static getDerivedStateFromError(): WidgetBoundaryState {
+    return { hasError: true, retryKey: 0 }
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error(`[WidgetErrorBoundary${this.props.label ? ` (${this.props.label})` : ''}]`, error, info)
+    // Auto-retry once after 3 seconds
+    this.retryTimeout = setTimeout(() => {
+      this.setState((s) => ({ hasError: false, retryKey: s.retryKey + 1 }))
+    }, 3000)
+  }
+
+  componentWillUnmount() {
+    if (this.retryTimeout) clearTimeout(this.retryTimeout)
+  }
+
+  handleManualRetry = () => {
+    if (this.retryTimeout) clearTimeout(this.retryTimeout)
+    this.setState((s) => ({ hasError: false, retryKey: s.retryKey + 1 }))
+  }
+
+  render() {
+    if (this.state.hasError) {
+      if (this.props.fallback) return this.props.fallback
+
+      const minH = this.props.minHeight ?? 120
+      const label = this.props.label
+
+      return (
+        <div
+          className="flex flex-col items-center justify-center rounded-lg border border-border/60 bg-muted/20 text-center px-4"
+          style={{ minHeight: minH }}
+          role="alert"
+          aria-label={label ? `${label} failed to load` : 'Widget failed to load'}
+        >
+          <AlertTriangle className="h-5 w-5 text-muted-foreground/40 mb-2" aria-hidden="true" />
+          <p className="text-xs text-muted-foreground">
+            {label ? `${label} couldn't be loaded` : 'This section couldn\'t be loaded'}
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2 text-xs h-7 gap-1"
+            onClick={this.handleManualRetry}
+          >
+            <RefreshCw className="h-3 w-3" />
+            Retry
+          </Button>
+        </div>
+      )
+    }
+
+    // Re-mount children on retry via key
+    return (
+      <div key={this.state.retryKey}>
+        {this.props.children}
+      </div>
+    )
   }
 }
