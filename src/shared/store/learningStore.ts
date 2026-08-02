@@ -36,8 +36,12 @@ interface LearningStore {
   categorySort: string
   categorySearch: string
 
-  // Sidebar state for lesson viewer
+  // Sidebar state for lesson viewer (left)
   lessonSidebarOpen: boolean
+  // Right sidebar state (FPRD-12)
+  lessonRightSidebarOpen: boolean
+  // Right sidebar active tab (FPRD-12)
+  lessonRightTab: 'notes' | 'progress' | 'bookmarks' | 'toc'
 
   // Actions
   setRoadmapsViewMode: (mode: ViewMode) => void
@@ -50,6 +54,8 @@ interface LearningStore {
   setCategorySort: (sort: string) => void
   setCategorySearch: (search: string) => void
   setLessonSidebarOpen: (open: boolean) => void
+  setLessonRightSidebarOpen: (open: boolean) => void
+  setLessonRightTab: (tab: 'notes' | 'progress' | 'bookmarks' | 'toc') => void
 }
 
 const defaultRoadmapFilters: LearningFilters = {
@@ -71,6 +77,8 @@ export const useLearningStore = create<LearningStore>()(
       categorySort: 'name',
       categorySearch: '',
       lessonSidebarOpen: true,
+      lessonRightSidebarOpen: true,
+      lessonRightTab: 'notes',
 
       setRoadmapsViewMode: (mode) => set({ roadmapsViewMode: mode }),
       setBookmarksViewMode: (mode) => set({ bookmarksViewMode: mode }),
@@ -84,6 +92,8 @@ export const useLearningStore = create<LearningStore>()(
       setCategorySort: (sort) => set({ categorySort: sort }),
       setCategorySearch: (search) => set({ categorySearch: search }),
       setLessonSidebarOpen: (open) => set({ lessonSidebarOpen: open }),
+      setLessonRightSidebarOpen: (open) => set({ lessonRightSidebarOpen: open }),
+      setLessonRightTab: (tab) => set({ lessonRightTab: tab }),
     }),
     {
       name: 'learning-ui-storage',
@@ -91,6 +101,8 @@ export const useLearningStore = create<LearningStore>()(
         roadmapsViewMode: state.roadmapsViewMode,
         bookmarksViewMode: state.bookmarksViewMode,
         lessonSidebarOpen: state.lessonSidebarOpen,
+        lessonRightSidebarOpen: state.lessonRightSidebarOpen,
+        lessonRightTab: state.lessonRightTab,
       }),
     }
   )

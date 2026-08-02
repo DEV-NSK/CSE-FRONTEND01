@@ -1,26 +1,28 @@
+// FPRD-12 — Lesson Viewer UI/UX Redesign
+// Premium learning experience: collapsible sidebars, reading progress, TOC, rich notes
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { lazy, Suspense, useEffect, useState, useMemo, useCallback } from 'react'
+import { lazy, Suspense, useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  ChevronLeft, ChevronRight, CheckCircle2, Menu, X,
-  Clock, BookOpen, ExternalLink, Heart, Search,
+  ChevronLeft, ChevronRight, CheckCircle2, X,
+  Clock, BookOpen, ExternalLink, Search,
   CheckCircle, AlertTriangle, Lightbulb, Send, Award,
   FileText, Copy, Check, StickyNote, ChevronDown, ChevronUp,
+  Bookmark, BookmarkCheck, Share2, PanelLeftClose, PanelLeftOpen,
+  PanelRightClose, PanelRightOpen, List, TrendingUp,
+  ChevronFirst, Hash, BarChart2,
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import { Separator } from '@/shared/components/ui/separator'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip'
 import { ErrorState } from '@/shared/components/feedback/ErrorState'
 import { Skeleton } from '@/shared/components/feedback/Skeleton'
-import { EmptyLearningState } from '@/student/components/learning/EmptyLearningState'
 import { LessonSidebar } from '@/student/components/learning/LessonSidebar'
 import { LessonViewerSkeleton } from '@/student/components/learning/LearningSkeletons'
-import { BookmarkButton } from '@/student/components/learning/BookmarkButton'
 import { DifficultyBadge } from '@/student/components/learning/DifficultyBadge'
 import { ResourceCard } from '@/student/components/learning/ResourceCard'
 import {
@@ -28,197 +30,115 @@ import {
   useRoadmap, useToggleLessonBookmark, prefetchLesson,
   useLessonPractice, useLessonQuiz, useSubmitQuiz,
   useLessonNotes, useUpdateLessonNote, useCreateLessonNote,
+  useBookmarks, useRemoveBookmark,
 } from '@/shared/hooks/useLearning'
 import { useLearningStore } from '@/shared/store/learningStore'
 import { cn, debounce } from '@/shared/lib/utils'
-import type { Difficulty, QuizQuestion, PracticeQuestion, LessonNote } from '@/shared/types/learning'
+import type { Difficulty, QuizQuestion, PracticeQuestion, RoadmapSection } from '@/shared/types/learning'
 
 const MarkdownRenderer = lazy(() => import('@/student/components/learning/MarkdownRenderer'))
 
+// ─── Fallback data ───────────────────────────────────────────────────────────
+
 const FALLBACK_PRACTICE: PracticeQuestion[] = [
-  {
-    id: 'p1', lessonId: 'fallback', order: 1,
-    question: 'Write a Python program to print "Hello, World!" to the console.',
-    type: 'coding', answer: 'print("Hello, World!")',
-    explanation: 'In Python, the print() function outputs text to the console. Strings are enclosed in quotes.',
-    hint: 'Use the built-in print() function with a string argument.',
-    difficulty: 'beginner',
-  },
-  {
-    id: 'p2', lessonId: 'fallback', order: 2,
-    question: 'What will be the output of: x = 5 + 3 * 2?',
-    type: 'output', answer: '11',
-    explanation: 'Python follows PEMDAS/BODMAS order: multiplication (*) before addition (+). So 3*2=6, then 5+6=11.',
-    options: ['16', '11', '10', '8'],
-    hint: 'Remember order of operations — multiply first.',
-    difficulty: 'beginner',
-  },
-  {
-    id: 'p3', lessonId: 'fallback', order: 3,
-    question: 'Create a variable named "age" and assign it the value 25.',
-    type: 'fill-blank', answer: 'age = 25',
-    codeSnippet: '_____ = ___',
-    explanation: 'Variables in Python are created with = operator. No type keyword is needed — Python uses dynamic typing.',
-    hint: 'Variable name on the left, value on the right of =.',
-    difficulty: 'beginner',
-  },
-  {
-    id: 'p4', lessonId: 'fallback', order: 4,
-    question: 'Write a function called add that takes two parameters a and b and returns their sum.',
-    type: 'coding', answer: 'def add(a, b):\n    return a + b',
-    codeSnippet: 'Complete the function:',
-    explanation: 'Functions are defined with def keyword. Parameters go in parentheses. return keyword sends value back.',
-    hint: 'Use def to define the function.',
-    difficulty: 'beginner',
-  },
-  {
-    id: 'p5', lessonId: 'fallback', order: 5,
-    question: 'What is the data type of: my_list = [1, 2, 3]?',
-    type: 'theory', answer: 'list',
-    explanation: 'Square brackets [] with comma-separated values define a list in Python. Lists are ordered, mutable collections.',
-    options: ['tuple', 'list', 'dict', 'set'],
-    hint: 'Square brackets define this ordered collection.',
-    difficulty: 'beginner',
-  },
-  {
-    id: 'p6', lessonId: 'fallback', order: 6,
-    question: 'Write a for loop that prints numbers from 1 to 5 (inclusive).',
-    type: 'coding', answer: 'for i in range(1, 6):\n    print(i)',
-    explanation: 'range(1, 6) generates 1,2,3,4,5 — the end value is exclusive. Indentation matters in Python blocks.',
-    hint: 'Use range() and remember the end is exclusive.',
-    difficulty: 'beginner',
-  },
+  { id: 'p1', lessonId: 'fallback', order: 1, question: 'Write a Python program to print "Hello, World!" to the console.', type: 'coding', answer: 'print("Hello, World!")', explanation: 'In Python, the print() function outputs text to the console.', hint: 'Use the built-in print() function.', difficulty: 'beginner' },
+  { id: 'p2', lessonId: 'fallback', order: 2, question: 'What will be the output of: x = 5 + 3 * 2?', type: 'output', answer: '11', explanation: 'Python follows PEMDAS: multiplication before addition. 3*2=6, then 5+6=11.', options: ['16', '11', '10', '8'], hint: 'Remember order of operations.', difficulty: 'beginner' },
+  { id: 'p3', lessonId: 'fallback', order: 3, question: 'Create a variable named "age" and assign it the value 25.', type: 'fill-blank', answer: 'age = 25', codeSnippet: '_____ = ___', explanation: 'Variables in Python are created with = operator.', hint: 'Variable name on left, value on right.', difficulty: 'beginner' },
+  { id: 'p4', lessonId: 'fallback', order: 4, question: 'Write a function called add that takes two parameters a and b and returns their sum.', type: 'coding', answer: 'def add(a, b):\n    return a + b', explanation: 'Functions are defined with def keyword.', hint: 'Use def to define the function.', difficulty: 'beginner' },
+  { id: 'p5', lessonId: 'fallback', order: 5, question: 'What is the data type of: my_list = [1, 2, 3]?', type: 'theory', answer: 'list', explanation: 'Square brackets [] define a list in Python.', options: ['tuple', 'list', 'dict', 'set'], hint: 'Square brackets define this ordered collection.', difficulty: 'beginner' },
+  { id: 'p6', lessonId: 'fallback', order: 6, question: 'Write a for loop that prints numbers from 1 to 5 (inclusive).', type: 'coding', answer: 'for i in range(1, 6):\n    print(i)', explanation: 'range(1, 6) generates 1,2,3,4,5 — the end is exclusive.', hint: 'Use range() and remember the end is exclusive.', difficulty: 'beginner' },
 ]
 
 const FALLBACK_QUIZ: QuizQuestion[] = [
-  {
-    id: 'q1', lessonId: 'fallback', order: 1,
-    question: 'Which keyword is used to define a function in Python?',
-    options: ['func', 'def', 'function', 'define'],
-    correctOption: 1,
-    explanation: 'The "def" keyword is used to define functions in Python.',
-  },
-  {
-    id: 'q2', lessonId: 'fallback', order: 2,
-    question: 'What is the output of: print(type((1, 2, 3)))?',
-    options: ['<class \'list\'>', '<class \'tuple\'>', '<class \'dict\'>', '<class \'set\'>'],
-    correctOption: 1,
-    explanation: 'Parentheses () with comma-separated values create a tuple, which is immutable.',
-  },
-  {
-    id: 'q3', lessonId: 'fallback', order: 3,
-    question: 'Which of the following is NOT a valid Python variable name?',
-    options: ['my_var', '_private', '2nd_place', 'camelCase'],
-    correctOption: 2,
-    explanation: 'Variable names cannot start with a number in Python. They must start with a letter or underscore.',
-  },
-  {
-    id: 'q4', lessonId: 'fallback', order: 4,
-    question: 'What does len("Python") return?',
-    options: ['5', '6', '7', 'Error'],
-    correctOption: 1,
-    explanation: 'len() returns the number of characters in a string. "Python" has 6 characters.',
-  },
-  {
-    id: 'q5', lessonId: 'fallback', order: 5,
-    question: 'Which operator is used for integer division in Python 3?',
-    options: ['/', '//', '\\', 'div'],
-    correctOption: 1,
-    explanation: '// performs floor/integer division. / returns a float in Python 3.',
-  },
-  {
-    id: 'q6', lessonId: 'fallback', order: 6,
-    question: 'What is the result of: [1, 2, 3] + [4, 5]?',
-    options: ['[1, 2, 3, 4, 5]', '[1, 2, 3, [4, 5]]', 'Error', '[5, 7, 3]'],
-    correctOption: 0,
-    explanation: 'The + operator concatenates lists, creating a new list with all elements in order.',
-  },
+  { id: 'q1', lessonId: 'fallback', order: 1, question: 'Which keyword is used to define a function in Python?', options: ['func', 'def', 'function', 'define'], correctOption: 1, explanation: 'The "def" keyword defines functions in Python.' },
+  { id: 'q2', lessonId: 'fallback', order: 2, question: 'What is the output of: print(type((1, 2, 3)))?', options: ["<class 'list'>", "<class 'tuple'>", "<class 'dict'>", "<class 'set'>"], correctOption: 1, explanation: 'Parentheses with comma-separated values create a tuple.' },
+  { id: 'q3', lessonId: 'fallback', order: 3, question: 'Which of the following is NOT a valid Python variable name?', options: ['my_var', '_private', '2nd_place', 'camelCase'], correctOption: 2, explanation: 'Variable names cannot start with a number.' },
+  { id: 'q4', lessonId: 'fallback', order: 4, question: 'What does len("Python") return?', options: ['5', '6', '7', 'Error'], correctOption: 1, explanation: '"Python" has 6 characters.' },
+  { id: 'q5', lessonId: 'fallback', order: 5, question: 'Which operator is used for integer division in Python 3?', options: ['/', '//', '\\', 'div'], correctOption: 1, explanation: '// performs floor division.' },
+  { id: 'q6', lessonId: 'fallback', order: 6, question: 'What is the result of: [1, 2, 3] + [4, 5]?', options: ['[1, 2, 3, 4, 5]', '[1, 2, 3, [4, 5]]', 'Error', '[5, 7, 3]'], correctOption: 0, explanation: 'The + operator concatenates lists.' },
 ]
 
-function LessonHeaderSkeleton() {
-  return (
-    <div className="space-y-4">
-      <Skeleton className="h-10 w-3/4" />
-      <div className="flex flex-wrap gap-3">
-        <Skeleton className="h-6 w-28 rounded-full" />
-        <Skeleton className="h-6 w-28 rounded-full" />
-        <Skeleton className="h-6 w-32 rounded-full" />
-        <Skeleton className="h-9 w-9 rounded-md" />
-      </div>
-    </div>
-  )
-}
+// ─── Reading Progress Bar ────────────────────────────────────────────────────
 
-function SectionRenderer({ content }: { content: string }) {
-  const sections = useMemo(() => parseSections(content), [content])
-
-  return (
-    <div className="space-y-8">
-      {sections.map((section, idx) => (
-        <section key={idx} id={`section-${idx}`} className="scroll-mt-24">
-          {section.heading && (
-            <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
-              <span className="w-1 h-6 bg-primary rounded-full shrink-0" />
-              {section.heading}
-            </h2>
-          )}
-          <div className="pl-3">
-            <MarkdownWrapper content={section.body} />
-          </div>
-        </section>
-      ))}
-    </div>
-  )
-}
-
-function MarkdownWrapper({ content }: { content: string }) {
-  return (
-    <Suspense fallback={
-      <div className="space-y-2">
-        {[1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} className={`h-4 w-${i % 2 === 0 ? 'full' : '5/6'}`} />
-        ))}
-      </div>
-    }>
-      <MarkdownRenderer content={content} />
-    </Suspense>
-  )
-}
-
-type ParsedSection = { heading: string | null; body: string }
-
-function parseSections(md: string): ParsedSection[] {
-  const lines = md.split('\n')
-  const sections: ParsedSection[] = []
-  let current: ParsedSection = { heading: null, body: '' }
-  let firstHeadingFound = false
-
-  for (const line of lines) {
-    const h2Match = line.match(/^## (.+)$/)
-    if (h2Match) {
-      if (current.heading !== null || current.body.trim()) {
-        sections.push(current)
-      }
-      current = { heading: h2Match[1].trim(), body: '' }
-      firstHeadingFound = true
-    } else {
-      if (!firstHeadingFound) {
-        current.body += (current.body ? '\n' : '') + line
-      } else {
-        current.body += (current.body ? '\n' : '') + line
-      }
+function ReadingProgressBar({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement | null> }) {
+  const [progress, setProgress] = useState(0)
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const update = () => {
+      const { scrollTop, scrollHeight, clientHeight } = el
+      const max = scrollHeight - clientHeight
+      setProgress(max > 0 ? Math.round((scrollTop / max) * 100) : 0)
     }
-  }
-  if (current.heading !== null || current.body.trim()) {
-    sections.push(current)
-  }
-  if (sections.length === 0) {
-    sections.push({ heading: null, body: md })
-  }
-  return sections
+    el.addEventListener('scroll', update, { passive: true })
+    return () => el.removeEventListener('scroll', update)
+  }, [scrollRef])
+
+  return (
+    <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-border/40" aria-hidden="true">
+      <motion.div
+        className="h-full bg-primary rounded-full"
+        style={{ width: `${progress}%` }}
+        transition={{ duration: 0.1 }}
+      />
+    </div>
+  )
 }
 
-function CopyableCodeBlock({ code }: { code: string }) {
+// ─── Floating Scroll Progress ────────────────────────────────────────────────
+
+function FloatingProgress({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement | null> }) {
+  const [pct, setPct] = useState(0)
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const update = () => {
+      const { scrollTop, scrollHeight, clientHeight } = el
+      const max = scrollHeight - clientHeight
+      const p = max > 0 ? Math.round((scrollTop / max) * 100) : 0
+      setPct(p)
+      setVisible(scrollTop > 120)
+    }
+    el.addEventListener('scroll', update, { passive: true })
+    return () => el.removeEventListener('scroll', update)
+  }, [scrollRef])
+
+  const r = 20, stroke = 3, circ = 2 * Math.PI * r
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.8, y: 12 }}
+          transition={{ duration: 0.2 }}
+          className="fixed bottom-20 right-4 z-50 flex flex-col items-center"
+          aria-label={`Reading progress: ${pct}%`}
+        >
+          <div className="relative w-12 h-12 drop-shadow-lg">
+            <svg width="48" height="48" className="-rotate-90" aria-hidden="true">
+              <circle cx="24" cy="24" r={r} fill="none" strokeWidth={stroke} className="stroke-muted" />
+              <circle cx="24" cy="24" r={r} fill="none" strokeWidth={stroke}
+                stroke="hsl(var(--primary))" strokeLinecap="round"
+                strokeDasharray={circ}
+                strokeDashoffset={circ - (pct / 100) * circ}
+                style={{ transition: 'stroke-dashoffset 0.2s ease' }}
+              />
+            </svg>
+            <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-foreground">
+              {pct}%
+            </span>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
+// ─── Code Block ──────────────────────────────────────────────────────────────
+
+function CopyableCodeBlock({ code, lang }: { code: string; lang?: string }) {
   const [copied, setCopied] = useState(false)
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(code).then(() => {
@@ -228,530 +148,259 @@ function CopyableCodeBlock({ code }: { code: string }) {
   }, [code])
 
   return (
-    <div className="relative group">
-      <pre className="bg-muted rounded-lg p-4 pr-12 overflow-x-auto text-xs">
-        <code className="font-mono">{code}</code>
-      </pre>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        onClick={handleCopy}
-        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-        aria-label="Copy code"
-      >
-        {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
-      </Button>
-    </div>
-  )
-}
-
-function OutputBox({ output }: { output: string }) {
-  return (
-    <div className="rounded-lg border border-green-300 dark:border-green-800 bg-green-50 dark:bg-green-950/20 p-4">
-      <div className="flex items-center gap-2 text-xs font-semibold text-green-700 dark:text-green-400 mb-2">
-        <CheckCircle className="h-3.5 w-3.5" /> Output
+    <div className="rounded-xl overflow-hidden border border-border/60 shadow-sm my-4">
+      <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e2e] border-b border-white/10">
+        <span className="text-xs font-mono text-[#a6accd] uppercase tracking-wider">
+          {lang || 'code'}
+        </span>
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={handleCopy}
+                className="h-6 w-6 text-[#a6accd] hover:text-white hover:bg-white/10"
+                aria-label="Copy code"
+              >
+                {copied ? <Check className="h-3.5 w-3.5 text-green-400" /> : <Copy className="h-3.5 w-3.5" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{copied ? 'Copied!' : 'Copy'}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
-      <pre className="text-xs font-mono text-green-900 dark:text-green-300 whitespace-pre-wrap">{output}</pre>
+      <pre className="bg-[#1e1e2e] p-6 overflow-x-auto text-sm leading-relaxed">
+        <code className="font-mono text-[#cdd6f4] text-[13px]">{code}</code>
+      </pre>
     </div>
   )
 }
 
-function BestPracticesList({ items }: { items: string[] }) {
+// ─── Callout / Info Boxes ────────────────────────────────────────────────────
+
+type CalloutType = 'tip' | 'important' | 'warning' | 'success' | 'example'
+
+const calloutConfig: Record<CalloutType, { label: string; icon: React.ElementType; classes: string; iconClass: string }> = {
+  tip:       { label: 'Tip',       icon: Lightbulb,      classes: 'bg-blue-50 border-blue-300 dark:bg-blue-950/30 dark:border-blue-700',      iconClass: 'text-blue-600 dark:text-blue-400' },
+  important: { label: 'Important', icon: AlertTriangle,   classes: 'bg-orange-50 border-orange-300 dark:bg-orange-950/30 dark:border-orange-700', iconClass: 'text-orange-600 dark:text-orange-400' },
+  warning:   { label: 'Warning',   icon: AlertTriangle,   classes: 'bg-red-50 border-red-300 dark:bg-red-950/30 dark:border-red-700',          iconClass: 'text-red-600 dark:text-red-400' },
+  success:   { label: 'Success',   icon: CheckCircle,     classes: 'bg-green-50 border-green-300 dark:bg-green-950/30 dark:border-green-700',  iconClass: 'text-green-600 dark:text-green-400' },
+  example:   { label: 'Example',   icon: Hash,            classes: 'bg-purple-50 border-purple-300 dark:bg-purple-950/30 dark:border-purple-700', iconClass: 'text-purple-600 dark:text-purple-400' },
+}
+
+function Callout({ type, children }: { type: CalloutType; children: React.ReactNode }) {
+  const cfg = calloutConfig[type]
+  const Icon = cfg.icon
   return (
-    <ul className="space-y-2">
-      {items.map((item, i) => (
-        <li key={i} className="flex items-start gap-2 text-sm">
-          <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-          <span>{item}</span>
-        </li>
-      ))}
-    </ul>
+    <div className={cn('rounded-xl border-l-4 p-4 my-4 flex gap-3', cfg.classes)}>
+      <Icon className={cn('h-5 w-5 mt-0.5 shrink-0', cfg.iconClass)} aria-hidden="true" />
+      <div className="flex-1 min-w-0">
+        <p className={cn('text-xs font-bold uppercase tracking-wider mb-1', cfg.iconClass)}>{cfg.label}</p>
+        <div className="text-sm text-foreground/90 leading-relaxed">{children}</div>
+      </div>
+    </div>
   )
 }
 
-function CommonMistakesList({ items }: { items: string[] }) {
+// ─── Markdown Wrapper ────────────────────────────────────────────────────────
+
+function MarkdownWrapper({ content }: { content: string }) {
   return (
-    <ul className="space-y-2">
-      {items.map((item, i) => (
-        <li key={i} className="flex items-start gap-2 text-sm">
-          <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-          <span>{item}</span>
-        </li>
-      ))}
-    </ul>
+    <Suspense fallback={
+      <div className="space-y-3">
+        {[1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className={`h-4 ${i % 2 === 0 ? 'w-full' : 'w-5/6'}`} />
+        ))}
+      </div>
+    }>
+      <MarkdownRenderer content={content} className="
+        [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:tracking-tight [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:leading-tight
+        [&_h2]:text-3xl [&_h2]:font-semibold [&_h2]:tracking-tight [&_h2]:mt-8 [&_h2]:mb-3
+        [&_h3]:text-2xl [&_h3]:font-semibold [&_h3]:mt-6 [&_h3]:mb-3
+        [&_h4]:text-xl [&_h4]:font-semibold [&_h4]:mt-5 [&_h4]:mb-2
+        [&_p]:text-[17px] [&_p]:leading-[1.85] [&_p]:text-foreground/90 [&_p]:mb-4
+        [&_li]:text-[17px] [&_li]:leading-[1.75]
+        [&_pre]:bg-[#1e1e2e] [&_pre]:rounded-xl [&_pre]:p-6 [&_pre]:overflow-x-auto [&_pre]:my-4
+        [&_code]:text-[13px] [&_pre_code]:text-[#cdd6f4]
+        [&_img]:rounded-xl [&_img]:shadow-md [&_img]:my-4 [&_img]:cursor-zoom-in
+        [&_blockquote]:border-l-4 [&_blockquote]:border-primary/50 [&_blockquote]:pl-5 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_blockquote]:my-4 [&_blockquote]:text-lg
+      " />
+    </Suspense>
   )
 }
 
-function PracticeSection({ lessonId }: { lessonId: string }) {
-  const { data: apiQuestions, isLoading, isError, refetch } = useLessonPractice(lessonId)
-  const questions = (apiQuestions && apiQuestions.length >= 5 ? apiQuestions : FALLBACK_PRACTICE)
-    .slice()
-    .sort((a, b) => a.order - b.order)
-  const [revealed, setRevealed] = useState<Set<string>>(new Set())
-  const [showHint, setShowHint] = useState<Set<string>>(new Set())
-  const [userAnswers, setUserAnswers] = useState<Record<string, string>>({})
+// ─── TOC heading types ───────────────────────────────────────────────────────
 
-  const toggle = (set: Set<string>, id: string) => {
-    const next = new Set(set)
-    if (next.has(id)) next.delete(id)
-    else next.add(id)
-    return next
-  }
+interface TocEntry { id: string; text: string; level: number }
 
-  const isCorrect = (q: PracticeQuestion) => {
-    const ua = (userAnswers[q.id] ?? '').trim().toLowerCase()
-    const ans = q.answer.trim().toLowerCase()
-    return ua === ans || ua.replace(/\s+/g, ' ').includes(ans.replace(/\s+/g, ' '))
-  }
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-40" />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-24 w-full rounded-lg" />
-          ))}
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (isError) {
-    return (
-      <ErrorState
-        title="Unable to load practice questions"
-        message="Could not fetch practice questions for this lesson."
-        onRetry={() => refetch()}
-      />
-    )
-  }
-
-  if (!questions.length) {
-    return <EmptyLearningState variant="lessons" />
-  }
-
-  const typeLabel: Record<PracticeQuestion['type'], string> = {
-    coding: 'Coding', theory: 'Theory', 'fill-blank': 'Fill in the Blank', output: 'Predict Output',
-  }
-  const diffColor: Record<Difficulty, string> = {
-    beginner: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
-    intermediate: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-    advanced: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-xl flex items-center gap-2">
-          <FileText className="h-5 w-5 text-primary" /> Practice Questions
-        </CardTitle>
-        <p className="text-sm text-muted-foreground mt-1">
-          Solve these {questions.length} questions to reinforce what you learned.
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {questions.map((q, idx) => {
-          const isRevealed = revealed.has(q.id)
-          const isHintShown = showHint.has(q.id)
-          const answered = !!userAnswers[q.id]?.trim()
-          const correct = answered ? isCorrect(q) : null
-          return (
-            <motion.div
-              key={q.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.03 }}
-            >
-              <Card className={cn(
-                'border-l-4 transition-all',
-                correct === true && 'border-l-green-500',
-                correct === false && 'border-l-red-500',
-                correct === null && 'border-l-primary/40',
-              )}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline" className="text-[10px] uppercase tracking-wide">Q{idx + 1}</Badge>
-                      <Badge variant="secondary" className="text-[10px]">{typeLabel[q.type]}</Badge>
-                      <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-medium', diffColor[q.difficulty])}>
-                        {q.difficulty}
-                      </span>
-                    </div>
-                  </div>
-                  <CardTitle className="text-sm font-medium mt-2 leading-relaxed">{q.question}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {q.codeSnippet && <CopyableCodeBlock code={q.codeSnippet} />}
-
-                  {q.options && (
-                    <div className="grid gap-2">
-                      {q.options.map((opt, oi) => (
-                        <label
-                          key={oi}
-                          className="flex items-center gap-2 p-2 rounded-md border border-input hover:bg-accent/10 cursor-pointer text-sm transition-colors"
-                        >
-                          <input
-                            type="radio"
-                            name={`pq-${q.id}`}
-                            value={opt}
-                            checked={userAnswers[q.id] === opt}
-                            onChange={(e) => setUserAnswers((p) => ({ ...p, [q.id]: e.target.value }))}
-                            className="h-3.5 w-3.5 ml-2"
-                          />
-                          <span className="py-1.5">{opt}</span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
-
-                  {!q.options && (
-                    <textarea
-                      value={userAnswers[q.id] ?? ''}
-                      onChange={(e) => setUserAnswers((p) => ({ ...p, [q.id]: e.target.value }))}
-                      placeholder={q.type === 'coding' ? '# Write your code here...' : 'Type your answer...'}
-                      rows={q.type === 'coding' ? 4 : 2}
-                      className={cn(
-                        'w-full rounded-md border border-input bg-background px-3 py-2 text-sm',
-                        'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                        'font-mono text-xs',
-                      )}
-                    />
-                  )}
-
-                  <div className="flex items-center gap-2 pt-1 flex-wrap">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowHint((s) => toggle(s, q.id))}
-                      className="gap-1.5 text-xs"
-                    >
-                      <Lightbulb className="h-3.5 w-3.5" /> {isHintShown ? 'Hide Hint' : 'Hint'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setRevealed((s) => toggle(s, q.id))}
-                      className="gap-1.5 text-xs"
-                    >
-                      {isRevealed ? (
-                        <><ChevronUp className="h-3.5 w-3.5" /> Hide Answer</>
-                      ) : (
-                        <><ChevronDown className="h-3.5 w-3.5" /> Show Answer</>
-                      )}
-                    </Button>
-                    {answered && correct === true && (
-                      <Badge variant="success" className="gap-1 text-xs">
-                        <CheckCircle2 className="h-3 w-3" /> Correct!
-                      </Badge>
-                    )}
-                    {answered && correct === false && (
-                      <Badge variant="destructive" className="gap-1 text-xs">
-                        <AlertTriangle className="h-3 w-3" /> Review needed
-                      </Badge>
-                    )}
-                  </div>
-
-                  <AnimatePresence initial={false}>
-                    {isHintShown && q.hint && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="pt-2 border-t border-border mt-2">
-                          <div className="flex items-start gap-2">
-                            <Lightbulb className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
-                            <p className="text-xs text-muted-foreground">{q.hint}</p>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <AnimatePresence initial={false}>
-                    {isRevealed && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="pt-2 border-t border-border mt-2 space-y-2">
-                          <div className="flex items-start gap-2">
-                            <Lightbulb className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
-                            <div className="text-xs space-y-2">
-                              <div>
-                                <p className="font-semibold text-foreground">Answer:</p>
-                                <CopyableCodeBlock code={q.answer} />
-                              </div>
-                              {q.explanation && (
-                                <div>
-                                  <p className="font-semibold text-foreground">Explanation:</p>
-                                  <p className="text-muted-foreground mt-0.5">{q.explanation}</p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )
-        })}
-      </CardContent>
-    </Card>
-  )
-}
-
-function QuizSection({ lessonId, onPassed }: { lessonId: string; onPassed?: () => void }) {
-  const { data: apiQuiz, isLoading, isError, refetch } = useLessonQuiz(lessonId)
-  const { mutate: submitQuiz, isPending: submitting } = useSubmitQuiz()
-  const quiz = (apiQuiz && apiQuiz.length >= 5 ? apiQuiz : FALLBACK_QUIZ)
-    .slice()
-    .sort((a, b) => a.order - b.order)
-
-  const [answers, setAnswers] = useState<Record<string, number>>({})
-  const [submitted, setSubmitted] = useState(false)
-  const [result, setResult] = useState<{ score: number; total: number; percentage: number; passed: boolean } | null>(null)
-
-  const allAnswered = quiz.length > 0 && quiz.every((q) => answers[q.id] !== undefined)
-
-  const handleSubmit = () => {
-    let score = 0
-    for (const q of quiz) {
-      if (answers[q.id] === q.correctOption) score++
+function extractToc(md: string): TocEntry[] {
+  const entries: TocEntry[] = []
+  const lines = md.split('\n')
+  for (const line of lines) {
+    const m = line.match(/^(#{1,3}) (.+)$/)
+    if (m) {
+      const level = m[1].length
+      const text = m[2].trim()
+      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+      entries.push({ id, text, level })
     }
-    const total = quiz.length
-    const percentage = Math.round((score / total) * 100)
-    const passed = percentage >= 60
-    const localResult = { score, total, percentage, passed }
-    setResult(localResult)
-    setSubmitted(true)
-    submitQuiz({ lessonId, answers }, {
-      onSuccess: () => {
-        if (passed) onPassed?.()
-      },
-    })
   }
+  return entries
+}
 
-  const handleRetry = () => {
-    setAnswers({})
-    setSubmitted(false)
-    setResult(null)
+// ─── Section Renderer ────────────────────────────────────────────────────────
+
+type ParsedSection = { heading: string | null; level: number; body: string; id: string }
+
+function parseSections(md: string): ParsedSection[] {
+  const lines = md.split('\n')
+  const sections: ParsedSection[] = []
+  let current: ParsedSection = { heading: null, level: 0, body: '', id: '' }
+
+  for (const line of lines) {
+    const h = line.match(/^(#{1,3}) (.+)$/)
+    if (h) {
+      if (current.heading !== null || current.body.trim()) sections.push(current)
+      const text = h[2].trim()
+      current = {
+        heading: text,
+        level: h[1].length,
+        body: '',
+        id: text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+      }
+    } else {
+      current.body += (current.body ? '\n' : '') + line
+    }
   }
+  if (current.heading !== null || current.body.trim()) sections.push(current)
+  if (!sections.length) sections.push({ heading: null, level: 0, body: md, id: 'content' })
+  return sections
+}
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-32" />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-28 w-full rounded-lg" />
-          ))}
-        </CardContent>
-      </Card>
-    )
-  }
+const headingColors: Record<number, string> = {
+  1: 'bg-primary',
+  2: 'bg-blue-500',
+  3: 'bg-purple-500',
+}
 
-  if (isError) {
-    return (
-      <ErrorState
-        title="Unable to load quiz"
-        message="Could not fetch quiz questions for this lesson."
-        onRetry={() => refetch()}
-      />
-    )
-  }
+function SectionRenderer({ content }: { content: string }) {
+  const sections = useMemo(() => parseSections(content), [content])
 
-  if (!quiz.length) {
-    return <EmptyLearningState variant="lessons" />
+  return (
+    <div className="space-y-10">
+      {sections.map((section, idx) => (
+        <section key={idx} id={section.id || `section-${idx}`} className="scroll-mt-28">
+          {section.heading && (
+            <div className="flex items-start gap-3 mb-5">
+              <div className={cn(
+                'mt-1 rounded-full shrink-0',
+                section.level === 1 ? 'w-1.5 h-8' : section.level === 2 ? 'w-1.5 h-6' : 'w-1 h-5',
+                headingColors[section.level] || 'bg-primary',
+              )} aria-hidden="true" />
+              {section.level === 1 && (
+                <h1 className="text-[2.25rem] font-bold leading-tight tracking-tight text-foreground">{section.heading}</h1>
+              )}
+              {section.level === 2 && (
+                <h2 className="text-[1.85rem] font-semibold leading-tight tracking-tight text-foreground">{section.heading}</h2>
+              )}
+              {section.level === 3 && (
+                <h3 className="text-[1.5rem] font-semibold text-foreground">{section.heading}</h3>
+              )}
+            </div>
+          )}
+          {section.body.trim() && (
+            <div className={cn(section.heading ? 'pl-5' : '')}>
+              <MarkdownWrapper content={section.body} />
+            </div>
+          )}
+        </section>
+      ))}
+    </div>
+  )
+}
+
+// ─── Table of Contents ───────────────────────────────────────────────────────
+
+function TableOfContents({ entries, scrollRef }: { entries: TocEntry[]; scrollRef: React.RefObject<HTMLDivElement | null> }) {
+  const [active, setActive] = useState<string>('')
+
+  useEffect(() => {
+    if (!entries.length) return
+    const el = scrollRef.current
+    if (!el) return
+    const update = () => {
+      const scrollTop = el.scrollTop + 120
+      let current = entries[0]?.id ?? ''
+      for (const entry of entries) {
+        const dom = el.querySelector(`#${entry.id}`)
+        if (dom && (dom as HTMLElement).offsetTop <= scrollTop) current = entry.id
+      }
+      setActive(current)
+    }
+    el.addEventListener('scroll', update, { passive: true })
+    update()
+    return () => el.removeEventListener('scroll', update)
+  }, [entries, scrollRef])
+
+  if (!entries.length) {
+    return <p className="text-xs text-muted-foreground px-1">No headings found in this lesson.</p>
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-xl flex items-center gap-2">
-          <Award className="h-5 w-5 text-primary" /> Quiz
-        </CardTitle>
-        <p className="text-sm text-muted-foreground mt-1">
-          Test your knowledge. {quiz.length} multiple-choice questions. Pass threshold: 60%.
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        {submitted && result && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={cn(
-              'rounded-lg p-5 border',
-              result.passed
-                ? 'bg-green-50 dark:bg-green-950/20 border-green-300 dark:border-green-800'
-                : 'bg-red-50 dark:bg-red-950/20 border-red-300 dark:border-red-800',
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                'w-12 h-12 rounded-full flex items-center justify-center',
-                result.passed ? 'bg-green-100 dark:bg-green-900/50' : 'bg-red-100 dark:bg-red-900/50',
-              )}>
-                {result.passed ? (
-                  <Award className="h-6 w-6 text-green-600 dark:text-green-400" />
-                ) : (
-                  <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
-                )}
-              </div>
-              <div>
-                <h3 className={cn(
-                  'font-bold text-lg',
-                  result.passed ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400',
-                )}>
-                  {result.passed ? '🎉 Passed!' : 'Keep practicing!'}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Score: <strong className="text-foreground">{result.score}/{result.total}</strong> ({result.percentage}%)
-                </p>
-              </div>
-            </div>
-            <div className="mt-4 flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleRetry}>Retake Quiz</Button>
-            </div>
-          </motion.div>
-        )}
-
-        {quiz.map((q, idx) => {
-          const userChoice = answers[q.id]
-          const isCorrectChoice = submitted && userChoice === q.correctOption
-          const isWrongChoice = submitted && userChoice !== undefined && userChoice !== q.correctOption
-          return (
-            <motion.div
-              key={q.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.03 }}
+    <nav aria-label="Table of contents">
+      <ul className="space-y-0.5">
+        {entries.map((e) => (
+          <li key={e.id}>
+            <button
+              onClick={() => {
+                const el = scrollRef.current
+                if (!el) return
+                const dom = el.querySelector(`#${e.id}`)
+                if (dom) (dom as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }}
+              className={cn(
+                'w-full text-left text-xs py-1.5 px-2 rounded-md transition-all',
+                e.level === 1 ? 'pl-2 font-semibold' : e.level === 2 ? 'pl-4' : 'pl-6 text-muted-foreground',
+                active === e.id
+                  ? 'bg-primary/10 text-primary font-medium border-l-2 border-primary'
+                  : 'hover:bg-accent/10 hover:text-foreground text-muted-foreground',
+              )}
             >
-              <Card className={cn(
-                submitted && isCorrectChoice && 'border-green-300 dark:border-green-700 bg-green-50/50 dark:bg-green-950/10',
-                submitted && isWrongChoice && 'border-red-300 dark:border-red-700 bg-red-50/50 dark:bg-red-950/10',
-              )}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <Badge variant="outline" className="text-[10px] uppercase tracking-wide shrink-0">
-                      Question {idx + 1}
-                    </Badge>
-                    {submitted && isCorrectChoice && (
-                      <Badge variant="success" className="gap-1 text-xs shrink-0">
-                        <CheckCircle2 className="h-3 w-3" /> Correct
-                      </Badge>
-                    )}
-                    {submitted && isWrongChoice && (
-                      <Badge variant="destructive" className="gap-1 text-xs shrink-0">
-                        <X className="h-3 w-3" /> Incorrect
-                      </Badge>
-                    )}
-                  </div>
-                  <CardTitle className="text-sm font-medium mt-2 leading-relaxed">{q.question}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {q.options.map((opt, oi) => {
-                    const isSelected = userChoice === oi
-                    const isCorrectOpt = submitted && oi === q.correctOption
-                    return (
-                      <Label
-                        key={oi}
-                        className={cn(
-                          'flex items-center gap-3 p-3 rounded-md border cursor-pointer text-sm transition-all',
-                          isSelected && !submitted && 'border-primary bg-primary/5',
-                          isCorrectOpt && 'border-green-500 bg-green-50 dark:bg-green-950/20',
-                          submitted && isSelected && oi !== q.correctOption && 'border-red-500 bg-red-50 dark:bg-red-950/20',
-                          !isSelected && !isCorrectOpt && 'border-input hover:bg-accent/10',
-                        )}
-                      >
-                        <input
-                          type="radio"
-                          name={`quiz-${q.id}`}
-                          value={oi}
-                          checked={isSelected}
-                          onChange={() => !submitted && setAnswers((p) => ({ ...p, [q.id]: oi }))}
-                          disabled={submitted}
-                          className="h-4 w-4 ml-1"
-                        />
-                        <span className="flex-1 py-0.5">
-                          <span className="font-semibold mr-2 text-muted-foreground">{String.fromCharCode(65 + oi)}.</span>
-                          {opt}
-                        </span>
-                        {isCorrectOpt && <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />}
-                        {submitted && isSelected && oi !== q.correctOption && (
-                          <X className="h-4 w-4 text-red-500 shrink-0" />
-                        )}
-                      </Label>
-                    )
-                  })}
-                  {submitted && q.explanation && (
-                    <div className="pt-2 mt-2 border-t border-border">
-                      <p className="text-xs">
-                        <span className="font-semibold">Explanation: </span>
-                        <span className="text-muted-foreground">{q.explanation}</span>
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
-          )
-        })}
-
-        <div className="flex justify-end gap-2 pt-2">
-          {!submitted ? (
-            <Button onClick={handleSubmit} disabled={!allAnswered || submitting} className="gap-2">
-              <Send className="h-4 w-4" /> {submitting ? 'Submitting...' : 'Submit Quiz'}
-            </Button>
-          ) : null}
-        </div>
-      </CardContent>
-    </Card>
+              {e.text}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </nav>
   )
 }
+
+// ─── Rich Notes Panel ────────────────────────────────────────────────────────
 
 function NotesPanel({ lessonId }: { lessonId: string }) {
   const { data: notes, isLoading, isError, refetch } = useLessonNotes(lessonId)
   const { mutate: createNote, isPending: creating } = useCreateLessonNote()
   const { mutate: updateNote, isPending: updating } = useUpdateLessonNote()
-
   const existingNote = notes?.[0]
   const [content, setContent] = useState('')
   const [savedAt, setSavedAt] = useState<string | null>(null)
   const [isDirty, setIsDirty] = useState(false)
 
   useEffect(() => {
-    if (existingNote?.content !== undefined) {
-      setContent(existingNote.content)
-    }
+    if (existingNote?.content !== undefined) setContent(existingNote.content)
   }, [existingNote?.content, existingNote?.id])
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSave = useCallback(
     debounce((text: string) => {
+      const onSuccess = () => { setSavedAt(new Date().toLocaleTimeString()); setIsDirty(false) }
       if (existingNote) {
-        updateNote(
-          { lessonId, noteId: existingNote.id, content: text },
-          { onSuccess: () => { setSavedAt(new Date().toLocaleTimeString()); setIsDirty(false) } },
-        )
+        updateNote({ lessonId, noteId: existingNote.id, content: text }, { onSuccess })
       } else {
-        createNote(
-          { lessonId, content: text },
-          { onSuccess: () => { setSavedAt(new Date().toLocaleTimeString()); setIsDirty(false) } },
-        )
+        createNote({ lessonId, content: text }, { onSuccess })
       }
-    }, 800),
+    }, 2000),
     [existingNote, lessonId, createNote, updateNote],
   )
 
@@ -761,549 +410,875 @@ function NotesPanel({ lessonId }: { lessonId: string }) {
     debouncedSave(val)
   }
 
+  const insertFormatting = (before: string, after = '') => {
+    const ta = document.getElementById('lesson-notes-area') as HTMLTextAreaElement
+    if (!ta) return
+    const start = ta.selectionStart, end = ta.selectionEnd
+    const selected = content.slice(start, end)
+    const newVal = content.slice(0, start) + before + selected + after + content.slice(end)
+    handleChange(newVal)
+    setTimeout(() => { ta.focus(); ta.setSelectionRange(start + before.length, start + before.length + selected.length) }, 0)
+  }
+
+  if (isLoading) return <div className="p-4 space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-32 w-full rounded-md mt-2" /></div>
+  if (isError) return (
+    <div className="flex flex-col items-center justify-center gap-2 p-6 text-center">
+      <AlertTriangle className="h-8 w-8 text-muted-foreground/40" />
+      <p className="text-sm text-muted-foreground">Couldn't load notes</p>
+      <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
+    </div>
+  )
+
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-border shrink-0">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold flex items-center gap-2">
-            <StickyNote className="h-4 w-4 text-primary" /> Notes
-          </h3>
-          {savedAt && (
-            <span className={cn(
-              'text-[10px]',
-              isDirty ? 'text-amber-500' : 'text-green-500',
-            )}>
-              {isDirty ? 'Saving...' : `Saved ${savedAt}`}
-            </span>
-          )}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border/60 shrink-0">
+        <div className="flex items-center gap-1.5">
+          <Button variant="ghost" size="icon-sm" className="h-6 w-6 text-xs font-bold" onClick={() => insertFormatting('**', '**')} title="Bold"><span className="font-bold text-sm">B</span></Button>
+          <Button variant="ghost" size="icon-sm" className="h-6 w-6 text-xs italic" onClick={() => insertFormatting('_', '_')} title="Italic"><span className="italic text-sm">I</span></Button>
+          <Button variant="ghost" size="icon-sm" className="h-6 w-6 text-[11px]" onClick={() => insertFormatting('`', '`')} title="Code"><span className="font-mono">{'<>'}</span></Button>
+          <Button variant="ghost" size="icon-sm" className="h-6 w-6" onClick={() => insertFormatting('\n- ')} title="Bullet list"><List className="h-3 w-3" /></Button>
+          <Button variant="ghost" size="icon-sm" className="h-6 w-6" onClick={() => insertFormatting('\n- [ ] ')} title="Checklist"><CheckCircle2 className="h-3 w-3" /></Button>
         </div>
-      </div>
-      <div className="p-4 flex-1 flex flex-col min-h-0">
-        {isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-            <Skeleton className="h-4 w-4/6" />
-            <Skeleton className="h-20 w-full rounded-md mt-3" />
-          </div>
-        ) : isError ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-2 text-center">
-            <AlertTriangle className="h-8 w-8 text-muted-foreground/50" />
-            <p className="text-sm text-muted-foreground">Couldn't load notes</p>
-            <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
-          </div>
-        ) : (
-          <>
-            <p className="text-xs text-muted-foreground mb-2">
-              Your notes are auto-saved as you type.
-            </p>
-            <textarea
-              value={content}
-              onChange={(e) => handleChange(e.target.value)}
-              disabled={creating || updating}
-              placeholder="Write your notes here...\n\n• Key concepts\n• Code snippets\n• Questions to revisit"
-              className={cn(
-                'flex-1 w-full rounded-md border border-input bg-background px-3 py-3 text-sm',
-                'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                'resize-none min-h-[200px]',
-              )}
-            />
-          </>
+        {savedAt && (
+          <span className={cn('text-[10px] shrink-0', isDirty ? 'text-amber-500' : 'text-green-500')}>
+            {isDirty ? 'Saving...' : `Saved ${savedAt}`}
+          </span>
         )}
+      </div>
+      <div className="flex-1 p-3 flex flex-col min-h-0">
+        <p className="text-[11px] text-muted-foreground mb-2">Notes auto-save every 2 seconds as you type.</p>
+        <textarea
+          id="lesson-notes-area"
+          value={content}
+          onChange={(e) => handleChange(e.target.value)}
+          disabled={creating || updating}
+          placeholder={"Write your notes here...\n\n• Key concepts\n• Code snippets\n• Questions to revisit"}
+          className={cn(
+            'flex-1 w-full rounded-lg border border-input bg-background/60 px-3 py-3 text-sm',
+            'placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            'resize-none min-h-[180px] leading-relaxed',
+          )}
+        />
       </div>
     </div>
   )
 }
 
+// ─── Progress Tab ────────────────────────────────────────────────────────────
+
+function ProgressTab({
+  lesson,
+  sections,
+  lessonIndex,
+  totalLessons,
+}: {
+  lesson: NonNullable<ReturnType<typeof useLesson>['data']>
+  sections: RoadmapSection[]
+  lessonIndex: number
+  totalLessons: number
+}) {
+  const readingTime = lesson.readingTimeMinutes ?? lesson.estimatedMinutes
+  const totalCompleted = sections.reduce((a, s) => a + s.lessons.filter((l) => l.status === 'completed').length, 0)
+  const totalAll = sections.reduce((a, s) => a + s.lessons.length, 0)
+  const remaining = totalAll - totalCompleted
+  const pct = totalAll ? Math.round((totalCompleted / totalAll) * 100) : 0
+
+  return (
+    <div className="p-4 space-y-5">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Current Lesson</p>
+        <div className="space-y-2.5">
+          {[
+            ['Status', <Badge key="s" variant={lesson.status === 'completed' ? 'success' : 'secondary'} className="text-xs capitalize">{lesson.status?.replace('_', ' ') ?? 'not started'}</Badge>],
+            ['Reading time', `${readingTime} min`],
+            ['Est. complete', `${lesson.estimatedMinutes} min`],
+            ['Difficulty', <DifficultyBadge key="d" difficulty={lesson.difficulty ?? 'beginner'} />],
+            ['Position', lessonIndex > 0 ? `${lessonIndex} of ${totalLessons}` : '—'],
+          ].map(([label, value]) => (
+            <div key={String(label)} className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">{label}</span>
+              <span className="font-medium">{value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <Separator />
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Roadmap Progress</p>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Overall</span>
+            <span className="font-bold text-primary">{pct}%</span>
+          </div>
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
+            <motion.div className="h-full bg-primary rounded-full" initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.6 }} />
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            {[
+              ['Completed', totalCompleted, 'text-green-600 dark:text-green-400'],
+              ['Remaining', remaining, 'text-amber-600 dark:text-amber-400'],
+              ['Total', totalAll, 'text-foreground'],
+            ].map(([label, val, cls]) => (
+              <div key={String(label)} className="rounded-lg bg-muted/60 p-2">
+                <p className={cn('text-lg font-bold', cls)}>{val}</p>
+                <p className="text-[10px] text-muted-foreground">{label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      {lesson.resources && lesson.resources.length > 0 && (
+        <>
+          <Separator />
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+              Resources ({lesson.resources.length})
+            </p>
+            <div className="space-y-1">
+              {lesson.resources.map((r) => (
+                <a key={r.id} href={r.url} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-xs text-primary hover:underline py-0.5">
+                  <ExternalLink className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{r.title}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── Bookmarks Tab ───────────────────────────────────────────────────────────
+
+function BookmarksTab() {
+  const { data: bookmarks, isLoading } = useBookmarks({ type: 'lesson' })
+  const { mutate: removeBookmark } = useRemoveBookmark()
+
+  if (isLoading) return <div className="p-4 space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}</div>
+  if (!bookmarks?.length) return (
+    <div className="flex flex-col items-center justify-center gap-2 p-8 text-center">
+      <Bookmark className="h-8 w-8 text-muted-foreground/30" />
+      <p className="text-sm text-muted-foreground">No bookmarked lessons yet</p>
+    </div>
+  )
+
+  return (
+    <div className="p-3 space-y-2">
+      {bookmarks.map((bm) => (
+        <div key={bm.id} className="flex items-start gap-2 p-2.5 rounded-lg border border-border/60 hover:bg-accent/5 group">
+          <BookmarkCheck className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <Link to={`/dashboard/learning/lesson/${bm.itemId}`} className="text-xs font-medium hover:text-primary truncate block">{bm.title}</Link>
+            {bm.roadmapTitle && <p className="text-[10px] text-muted-foreground truncate">{bm.roadmapTitle}</p>}
+          </div>
+          <Button variant="ghost" size="icon-sm" className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => removeBookmark(bm.id)} aria-label="Remove bookmark">
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Practice Section ────────────────────────────────────────────────────────
+
+function PracticeSection({ lessonId }: { lessonId: string }) {
+  const { data: apiQuestions, isLoading, isError, refetch } = useLessonPractice(lessonId)
+  const questions = (apiQuestions && apiQuestions.length >= 5 ? apiQuestions : FALLBACK_PRACTICE).slice().sort((a, b) => a.order - b.order)
+  const [revealed, setRevealed] = useState<Set<string>>(new Set())
+  const [showHint, setShowHint] = useState<Set<string>>(new Set())
+  const [userAnswers, setUserAnswers] = useState<Record<string, string>>({})
+
+  const toggle = (set: Set<string>, id: string) => { const next = new Set(set); if (next.has(id)) next.delete(id); else next.add(id); return next }
+  const isCorrect = (q: PracticeQuestion) => { const ua = (userAnswers[q.id] ?? '').trim().toLowerCase(); const ans = q.answer.trim().toLowerCase(); return ua === ans || ua.replace(/\s+/g, ' ').includes(ans.replace(/\s+/g, ' ')) }
+
+  if (isLoading) return <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}</div>
+  if (isError) return <ErrorState title="Unable to load practice" message="Could not fetch practice questions." onRetry={() => refetch()} />
+
+  const diffColor: Record<Difficulty, string> = { beginner: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300', intermediate: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300', advanced: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' }
+  const typeLabel: Record<PracticeQuestion['type'], string> = { coding: 'Coding', theory: 'Theory', 'fill-blank': 'Fill Blank', output: 'Predict Output' }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+          <FileText className="h-4 w-4 text-primary" aria-hidden="true" />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold">Practice Questions</h2>
+          <p className="text-sm text-muted-foreground">Solve {questions.length} questions to reinforce your learning.</p>
+        </div>
+      </div>
+      <div className="space-y-3">
+        {questions.map((q, idx) => {
+          const isRev = revealed.has(q.id), isHint = showHint.has(q.id)
+          const answered = !!userAnswers[q.id]?.trim(), correct = answered ? isCorrect(q) : null
+          return (
+            <motion.div key={q.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}>
+              <div className={cn('rounded-xl border-l-4 border border-border/60 bg-card shadow-sm transition-all', correct === true ? 'border-l-green-500' : correct === false ? 'border-l-red-500' : 'border-l-primary/50')}>
+                <div className="p-4">
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <Badge variant="outline" className="text-[10px] uppercase tracking-wide">Q{idx + 1}</Badge>
+                    <Badge variant="secondary" className="text-[10px]">{typeLabel[q.type]}</Badge>
+                    <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-medium', diffColor[q.difficulty])}>{q.difficulty}</span>
+                  </div>
+                  <p className="text-sm font-medium leading-relaxed mb-3">{q.question}</p>
+                  {q.codeSnippet && <CopyableCodeBlock code={q.codeSnippet} lang="python" />}
+                  {q.options && (
+                    <div className="grid gap-2 mb-3">
+                      {q.options.map((opt, oi) => (
+                        <label key={oi} className="flex items-center gap-2 p-2.5 rounded-lg border border-input hover:bg-accent/10 cursor-pointer text-sm transition-colors">
+                          <input type="radio" name={`pq-${q.id}`} value={opt} checked={userAnswers[q.id] === opt} onChange={(e) => setUserAnswers(p => ({ ...p, [q.id]: e.target.value }))} className="h-3.5 w-3.5" />
+                          <span>{opt}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  {!q.options && (
+                    <textarea value={userAnswers[q.id] ?? ''} onChange={(e) => setUserAnswers(p => ({ ...p, [q.id]: e.target.value }))}
+                      placeholder={q.type === 'coding' ? '# Write your code here...' : 'Type your answer...'}
+                      rows={q.type === 'coding' ? 4 : 2}
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring font-mono text-xs mb-3"
+                    />
+                  )}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Button variant="outline" size="sm" onClick={() => setShowHint(s => toggle(s, q.id))} className="gap-1.5 text-xs h-7">
+                      <Lightbulb className="h-3.5 w-3.5" />{isHint ? 'Hide Hint' : 'Hint'}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setRevealed(s => toggle(s, q.id))} className="gap-1.5 text-xs h-7">
+                      {isRev ? <><ChevronUp className="h-3.5 w-3.5" />Hide</> : <><ChevronDown className="h-3.5 w-3.5" />Answer</>}
+                    </Button>
+                    {answered && correct === true && <Badge variant="success" className="gap-1 text-xs"><CheckCircle2 className="h-3 w-3" />Correct!</Badge>}
+                    {answered && correct === false && <Badge variant="destructive" className="gap-1 text-xs"><AlertTriangle className="h-3 w-3" />Review needed</Badge>}
+                  </div>
+                  <AnimatePresence initial={false}>
+                    {isHint && q.hint && (
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                        <Callout type="tip">{q.hint}</Callout>
+                      </motion.div>
+                    )}
+                    {isRev && (
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                        <div className="mt-3 pt-3 border-t border-border/60 space-y-2">
+                          <p className="text-xs font-semibold">Answer:</p>
+                          <CopyableCodeBlock code={q.answer} />
+                          {q.explanation && <p className="text-xs text-muted-foreground leading-relaxed">{q.explanation}</p>}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+            </motion.div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ─── Quiz Section ────────────────────────────────────────────────────────────
+
+function QuizSection({ lessonId, onPassed }: { lessonId: string; onPassed?: () => void }) {
+  const { data: apiQuiz, isLoading, isError, refetch } = useLessonQuiz(lessonId)
+  const { mutate: submitQuiz, isPending: submitting } = useSubmitQuiz()
+  const quiz = (apiQuiz && apiQuiz.length >= 5 ? apiQuiz : FALLBACK_QUIZ).slice().sort((a, b) => a.order - b.order)
+  const [answers, setAnswers] = useState<Record<string, number>>({})
+  const [submitted, setSubmitted] = useState(false)
+  const [result, setResult] = useState<{ score: number; total: number; percentage: number; passed: boolean } | null>(null)
+  const allAnswered = quiz.length > 0 && quiz.every((q) => answers[q.id] !== undefined)
+
+  const handleSubmit = () => {
+    let score = 0
+    for (const q of quiz) { if (answers[q.id] === q.correctOption) score++ }
+    const total = quiz.length, percentage = Math.round((score / total) * 100), passed = percentage >= 60
+    setResult({ score, total, percentage, passed }); setSubmitted(true)
+    submitQuiz({ lessonId, answers }, { onSuccess: () => { if (passed) onPassed?.() } })
+  }
+
+  if (isLoading) return <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-28 w-full rounded-xl" />)}</div>
+  if (isError) return <ErrorState title="Unable to load quiz" message="Could not fetch quiz questions." onRetry={() => refetch()} />
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <div className="h-8 w-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+          <Award className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold">Knowledge Quiz</h2>
+          <p className="text-sm text-muted-foreground">{quiz.length} questions · Pass threshold: 60%</p>
+        </div>
+      </div>
+
+      {submitted && result && (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+          className={cn('rounded-xl p-5 border', result.passed ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800')}>
+          <div className="flex items-center gap-4">
+            <div className={cn('w-14 h-14 rounded-full flex items-center justify-center text-2xl font-bold', result.passed ? 'bg-green-100 dark:bg-green-900/50 text-green-600' : 'bg-red-100 dark:bg-red-900/50 text-red-600')}>
+              {result.passed ? '🎉' : '📚'}
+            </div>
+            <div>
+              <h3 className={cn('font-bold text-lg', result.passed ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400')}>{result.passed ? 'Excellent work!' : 'Keep practicing!'}</h3>
+              <p className="text-sm text-muted-foreground">Score: <strong className="text-foreground">{result.score}/{result.total}</strong> ({result.percentage}%)</p>
+            </div>
+          </div>
+          <Button variant="outline" size="sm" className="mt-4" onClick={() => { setAnswers({}); setSubmitted(false); setResult(null) }}>Retake Quiz</Button>
+        </motion.div>
+      )}
+
+      <div className="space-y-3">
+        {quiz.map((q, idx) => {
+          const userChoice = answers[q.id]
+          const isCorrectChoice = submitted && userChoice === q.correctOption
+          const isWrongChoice = submitted && userChoice !== undefined && userChoice !== q.correctOption
+          return (
+            <motion.div key={q.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}>
+              <div className={cn('rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden', submitted && isCorrectChoice && 'border-green-300 dark:border-green-700', submitted && isWrongChoice && 'border-red-300 dark:border-red-700')}>
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <Badge variant="outline" className="text-[10px] uppercase tracking-wide shrink-0">Q{idx + 1}</Badge>
+                    {submitted && isCorrectChoice && <Badge variant="success" className="gap-1 text-xs shrink-0"><CheckCircle2 className="h-3 w-3" />Correct</Badge>}
+                    {submitted && isWrongChoice && <Badge variant="destructive" className="gap-1 text-xs shrink-0"><X className="h-3 w-3" />Incorrect</Badge>}
+                  </div>
+                  <p className="text-sm font-medium leading-relaxed mb-3">{q.question}</p>
+                  <div className="space-y-2">
+                    {q.options.map((opt, oi) => {
+                      const isSelected = userChoice === oi, isCorrectOpt = submitted && oi === q.correctOption
+                      return (
+                        <Label key={oi} className={cn('flex items-center gap-3 p-3 rounded-lg border cursor-pointer text-sm transition-all',
+                          isSelected && !submitted && 'border-primary bg-primary/5',
+                          isCorrectOpt && 'border-green-500 bg-green-50 dark:bg-green-950/20',
+                          submitted && isSelected && oi !== q.correctOption && 'border-red-500 bg-red-50 dark:bg-red-950/20',
+                          !isSelected && !isCorrectOpt && 'border-input hover:bg-accent/10',
+                        )}>
+                          <input type="radio" name={`quiz-${q.id}`} value={oi} checked={isSelected}
+                            onChange={() => !submitted && setAnswers(p => ({ ...p, [q.id]: oi }))} disabled={submitted} className="h-4 w-4" />
+                          <span className="flex-1"><span className="font-semibold text-muted-foreground mr-2">{String.fromCharCode(65 + oi)}.</span>{opt}</span>
+                          {isCorrectOpt && <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />}
+                          {submitted && isSelected && oi !== q.correctOption && <X className="h-4 w-4 text-red-500 shrink-0" />}
+                        </Label>
+                      )
+                    })}
+                  </div>
+                  {submitted && q.explanation && (
+                    <div className="mt-3 pt-3 border-t border-border/60">
+                      <p className="text-xs"><span className="font-semibold">Explanation: </span><span className="text-muted-foreground">{q.explanation}</span></p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )
+        })}
+      </div>
+      {!submitted && (
+        <div className="flex justify-end pt-2">
+          <Button onClick={handleSubmit} disabled={!allAnswered || submitting} className="gap-2">
+            <Send className="h-4 w-4" />{submitting ? 'Submitting...' : 'Submit Quiz'}
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Left Sidebar (Roadmap Nav) ──────────────────────────────────────────────
+
+interface LeftSidebarProps {
+  open: boolean
+  onClose: () => void
+  sections: RoadmapSection[]
+  currentLessonId: string
+  lesson: NonNullable<ReturnType<typeof useLesson>['data']>
+  navigate: ReturnType<typeof useNavigate>
+}
+
+function LeftSidebar({ open, onClose, sections, currentLessonId, lesson, navigate }: LeftSidebarProps) {
+  const totalSec = sections.reduce((a, s) => a + s.lessons.length, 0)
+  const doneSec = sections.reduce((a, s) => a + s.lessons.filter((l) => l.status === 'completed').length, 0)
+  const pct = totalSec ? Math.round((doneSec / totalSec) * 100) : 0
+
+  return (
+    <>
+      {/* Mobile backdrop */}
+      <AnimatePresence>
+        {open && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={onClose} aria-hidden="true" />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar panel */}
+      <motion.aside
+        animate={{ width: open ? 320 : 0 }}
+        transition={{ duration: 0.28, ease: 'easeInOut' }}
+        className={cn('relative flex flex-col shrink-0 overflow-hidden',
+          'border-r border-border bg-card/80 backdrop-blur-sm',
+          'fixed lg:relative left-0 top-0 z-50 lg:z-auto h-full lg:h-auto',
+        )}
+        aria-label="Lesson navigation"
+        style={{ minWidth: 0 }}
+      >
+        {/* Close button mobile */}
+        <Button variant="ghost" size="icon-sm" onClick={onClose}
+          className="absolute right-2 top-2 z-10 lg:hidden" aria-label="Close navigation">
+          <X className="h-4 w-4" />
+        </Button>
+
+        <div className="flex flex-col h-full w-80">
+          {/* Header */}
+          <div className="p-4 border-b border-border/60 space-y-3 shrink-0">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <Input type="search" placeholder="Search lessons..." className="pl-9 h-8 text-xs"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const val = (e.target as HTMLInputElement).value.trim()
+                    if (val.length >= 2) navigate(`/dashboard/learning/search?q=${encodeURIComponent(val)}`)
+                  }
+                }} />
+            </div>
+            <Link to="/dashboard/learning/roadmaps/python" className="flex items-center gap-2 text-xs font-semibold text-primary hover:underline">
+              <BookOpen className="h-3.5 w-3.5" />{lesson.roadmapTitle ?? 'Python Programming'}
+            </Link>
+            <div>
+              <div className="flex items-center justify-between text-[11px] mb-1.5">
+                <span className="text-muted-foreground">Overall progress</span>
+                <span className="font-semibold text-primary">{pct}%</span>
+              </div>
+              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                <motion.div className="h-full bg-primary rounded-full" initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.5 }} />
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">{doneSec} of {totalSec} lessons completed</p>
+            </div>
+          </div>
+
+          {sections.length > 0 ? (
+            <LessonSidebar sections={sections} currentLessonId={currentLessonId}
+              roadmapTitle={lesson.roadmapTitle ?? 'Python Programming'}
+              roadmapSlug={lesson.roadmapSlug ?? 'python'} className="flex-1 min-h-0" />
+          ) : (
+            <div className="p-4">
+              <p className="text-xs text-muted-foreground">Full lesson list appears when viewing a roadmap lesson.</p>
+            </div>
+          )}
+        </div>
+      </motion.aside>
+    </>
+  )
+}
+
+// ─── Right Sidebar ───────────────────────────────────────────────────────────
+
+interface RightSidebarProps {
+  open: boolean
+  tab: 'notes' | 'progress' | 'bookmarks' | 'toc'
+  onTabChange: (t: 'notes' | 'progress' | 'bookmarks' | 'toc') => void
+  lesson: NonNullable<ReturnType<typeof useLesson>['data']>
+  sections: RoadmapSection[]
+  lessonIndex: number
+  totalLessons: number
+  tocEntries: TocEntry[]
+  scrollRef: React.RefObject<HTMLDivElement | null>
+}
+
+function RightSidebar({ open, tab, onTabChange, lesson, sections, lessonIndex, totalLessons, tocEntries, scrollRef }: RightSidebarProps) {
+  return (
+    <motion.aside
+      animate={{ width: open ? 340 : 0 }}
+      transition={{ duration: 0.28, ease: 'easeInOut' }}
+      className="hidden xl:flex flex-col shrink-0 overflow-hidden border-l border-border bg-card/60 backdrop-blur-sm"
+      aria-label="Lesson tools"
+      style={{ minWidth: 0 }}
+    >
+      <div className="flex flex-col h-full w-[340px]">
+        {/* Tab bar */}
+        <div className="px-3 pt-3 pb-0 border-b border-border/60 shrink-0">
+          <div className="flex items-center gap-1">
+            {[
+              { id: 'toc', icon: List, label: 'Contents' },
+              { id: 'notes', icon: StickyNote, label: 'Notes' },
+              { id: 'progress', icon: BarChart2, label: 'Progress' },
+              { id: 'bookmarks', icon: Bookmark, label: 'Saved' },
+            ].map(({ id, icon: Icon, label }) => (
+              <button
+                key={id}
+                onClick={() => onTabChange(id as typeof tab)}
+                className={cn(
+                  'flex items-center gap-1.5 px-2.5 py-2 text-xs font-medium rounded-t-md border-b-2 transition-all',
+                  tab === id
+                    ? 'border-primary text-primary bg-primary/5'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/10',
+                )}
+                aria-selected={tab === id}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tab content */}
+        <ScrollArea className="flex-1">
+          <AnimatePresence mode="wait">
+            <motion.div key={tab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="h-full">
+              {tab === 'toc' && (
+                <div className="p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">Table of Contents</p>
+                  <TableOfContents entries={tocEntries} scrollRef={scrollRef} />
+                </div>
+              )}
+              {tab === 'notes' && <NotesPanel lessonId={lesson.id} />}
+              {tab === 'progress' && <ProgressTab lesson={lesson} sections={sections} lessonIndex={lessonIndex} totalLessons={totalLessons} />}
+              {tab === 'bookmarks' && <BookmarksTab />}
+            </motion.div>
+          </AnimatePresence>
+        </ScrollArea>
+      </div>
+    </motion.aside>
+  )
+}
+
+// ─── Loading Skeleton ────────────────────────────────────────────────────────
+
+function PageSkeleton() {
+  return (
+    <div className="flex h-[calc(100vh-3.5rem)] -m-6">
+      <div className="hidden lg:flex w-80 border-r border-border flex-col bg-card/60">
+        <div className="p-4 border-b border-border space-y-3">
+          <Skeleton className="h-8 w-full rounded-lg" />
+          <Skeleton className="h-4 w-40" />
+          <div className="h-1.5 bg-muted rounded-full overflow-hidden"><Skeleton className="h-full w-1/2" /></div>
+        </div>
+        <div className="p-4 space-y-2 flex-1">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-8 w-full rounded-lg" />)}</div>
+      </div>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="border-b border-border p-4 space-y-3">
+          <Skeleton className="h-9 w-3/4" /><Skeleton className="h-5 w-1/2" />
+        </div>
+        <div className="flex-1 p-8 max-w-4xl mx-auto w-full space-y-4">
+          <LessonViewerSkeleton />
+        </div>
+      </div>
+      <div className="hidden xl:flex w-80 border-l border-border flex-col bg-card/60">
+        <div className="p-4 space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-10 w-full rounded-lg" />)}</div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Main Page ───────────────────────────────────────────────────────────────
+
 export function LessonViewerPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { lessonSidebarOpen, setLessonSidebarOpen } = useLearningStore()
+  const {
+    lessonSidebarOpen, setLessonSidebarOpen,
+    lessonRightSidebarOpen, setLessonRightSidebarOpen,
+    lessonRightTab, setLessonRightTab,
+  } = useLearningStore()
 
   const { data: lesson, isLoading, isError, refetch } = useLesson(id ?? '')
   const { mutate: markComplete, isPending: completing } = useMarkLessonComplete()
   const { mutate: markStarted } = useMarkLessonStarted()
   const { mutate: toggleBookmark, isPending: bookmarkPending } = useToggleLessonBookmark()
-
   const { data: roadmap, isLoading: roadmapLoading } = useRoadmap(lesson?.roadmapSlug ?? '')
   const sections = roadmap?.sections ?? []
 
-  // Prefetch next lesson when this one loads
-  useEffect(() => {
-    if (lesson?.nextLessonId) {
-      prefetchLesson(lesson.nextLessonId)
-    }
-  }, [lesson?.nextLessonId])
+  const scrollRef = useRef<HTMLDivElement>(null)
 
+  // Prefetch next lesson
+  useEffect(() => { if (lesson?.nextLessonId) prefetchLesson(lesson.nextLessonId) }, [lesson?.nextLessonId])
+
+  // Mark started
   useEffect(() => {
-    if (id && lesson?.status === 'not_started') {
-      markStarted(id)
-    }
+    if (id && lesson?.status === 'not_started') markStarted(id)
   }, [id, lesson?.status]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleComplete = () => {
-    if (!id) return
-    markComplete(id, {
-      onSuccess: () => {
-        if (lesson?.nextLessonId) {
-          navigate(`/dashboard/learning/lesson/${lesson.nextLessonId}`)
-        }
-      },
-    })
-  }
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      if (e.key === 'ArrowLeft' && lesson?.prevLessonId) navigate(`/dashboard/learning/lesson/${lesson.prevLessonId}`)
+      if (e.key === 'ArrowRight' && lesson?.nextLessonId) navigate(`/dashboard/learning/lesson/${lesson.nextLessonId}`)
+      if (e.ctrlKey && e.key === 'b') { e.preventDefault(); setLessonSidebarOpen(!lessonSidebarOpen) }
+      if (e.ctrlKey && e.shiftKey && e.key === 'B') { e.preventDefault(); setLessonRightSidebarOpen(!lessonRightSidebarOpen) }
+      if (e.key === 'Escape') { setLessonSidebarOpen(false) }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [lesson, navigate, lessonSidebarOpen, lessonRightSidebarOpen, setLessonSidebarOpen, setLessonRightSidebarOpen])
 
-  // Compute lesson index within roadmap for progress indicator
   const { lessonIndex, totalLessonsInRoadmap } = useMemo(() => {
     if (!sections.length || !id) return { lessonIndex: -1, totalLessonsInRoadmap: 0 }
-    let idx = 0
-    let total = 0
+    let idx = 0, total = 0
     for (const s of sections) {
       for (const l of s.lessons) {
         total++
-        if (l.id === id) {
-          idx = total
-        }
+        if (l.id === id) idx = total
       }
     }
     return { lessonIndex: idx, totalLessonsInRoadmap: total }
   }, [sections, id])
 
-  if (isLoading || roadmapLoading) {
-    return (
-      <div className="flex h-[calc(100vh-3.5rem)] -m-6">
-        <div className="hidden lg:flex w-80 border-r border-border flex-col">
-          <div className="p-4 border-b border-border space-y-3">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-6 w-full" />
-            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-              <Skeleton className="h-full w-1/2" />
-            </div>
-          </div>
-          <div className="p-4 space-y-3 flex-1">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <Skeleton key={i} className="h-8 w-full rounded animate-pulse" />
-            ))}
-          </div>
-        </div>
-        <div className="flex-1 p-6 lg:p-8 overflow-auto">
-          <div className="max-w-3xl mx-auto space-y-8">
-            <LessonHeaderSkeleton />
-            <LessonViewerSkeleton />
-            <Skeleton className="h-64 w-full rounded-lg" />
-          </div>
-        </div>
-        <div className="hidden xl:flex w-80 border-l border-border flex-col">
-          <div className="p-4 space-y-3">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-32 w-full rounded-md" />
-          </div>
-        </div>
-      </div>
-    )
+  const tocEntries = useMemo(() => lesson?.content ? extractToc(lesson.content) : [], [lesson?.content])
+
+  const handleComplete = () => {
+    if (!id) return
+    markComplete(id, {
+      onSuccess: () => { if (lesson?.nextLessonId) navigate(`/dashboard/learning/lesson/${lesson.nextLessonId}`) },
+    })
   }
 
-  if (isError || !lesson) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center -m-6">
-        <ErrorState
-          title="Unable to load lesson"
-          message="This lesson doesn't exist, or we couldn't reach the server. Please try again."
-          onRetry={() => refetch()}
-        />
-      </div>
-    )
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({ title: lesson?.title, url: window.location.href }).catch(() => {})
+    } else {
+      navigator.clipboard.writeText(window.location.href)
+    }
   }
+
+  if (isLoading || roadmapLoading) return <PageSkeleton />
+  if (isError || !lesson) return (
+    <div className="min-h-[60vh] flex items-center justify-center -m-6">
+      <ErrorState title="Unable to load lesson" message="This lesson doesn't exist or we couldn't reach the server." onRetry={() => refetch()} />
+    </div>
+  )
 
   const readingTime = lesson.readingTimeMinutes ?? lesson.estimatedMinutes
   const difficulty = lesson.difficulty ?? 'beginner'
+  const progress = lessonIndex > 0 && totalLessonsInRoadmap > 0
+    ? Math.round((lessonIndex / totalLessonsInRoadmap) * 100) : 0
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] -m-6 overflow-hidden">
-      {/* Left Sidebar */}
-      <>
-        <AnimatePresence>
-          {lessonSidebarOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-              onClick={() => setLessonSidebarOpen(false)}
-              aria-hidden="true"
-            />
-          )}
-        </AnimatePresence>
+    <div className="flex h-[calc(100vh-3.5rem)] -m-6 overflow-hidden bg-background" role="main">
 
-        <AnimatePresence initial={false}>
-          {lessonSidebarOpen && (
-            <motion.aside
-              initial={{ x: -320 }}
-              animate={{ x: 0 }}
-              exit={{ x: -320 }}
-              transition={{ duration: 0.25, ease: 'easeInOut' }}
-              className="fixed lg:relative left-0 top-0 lg:top-auto z-50 lg:z-auto h-full w-80 border-r border-border bg-card lg:bg-background flex flex-col shrink-0"
-              aria-label="Lesson navigation"
-            >
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => setLessonSidebarOpen(false)}
-                className="absolute right-2 top-2 z-10 lg:hidden"
-                aria-label="Close sidebar"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+      {/* ── Left Sidebar ── */}
+      <LeftSidebar
+        open={lessonSidebarOpen}
+        onClose={() => setLessonSidebarOpen(false)}
+        sections={sections}
+        currentLessonId={lesson.id}
+        lesson={lesson}
+        navigate={navigate}
+      />
 
-              <div className="flex flex-col h-full">
-                <div className="p-4 border-b border-border space-y-3 shrink-0">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                    <Input
-                      type="search"
-                      placeholder="Search lessons (Variables, Functions...)"
-                      className="pl-9 h-9 text-sm"
-                      aria-label="Search lessons in sidebar"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          const val = (e.target as HTMLInputElement).value.trim()
-                          if (val.length >= 2) {
-                            navigate(`/dashboard/learning/search?q=${encodeURIComponent(val)}`)
-                          }
-                        }
-                      }}
-                    />
-                  </div>
+      {/* ── Center Content ── */}
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
 
-                  <Link
-                    to="/dashboard/learning/roadmaps/python"
-                    className="flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
-                  >
-                    <BookOpen className="h-4 w-4" />
-                    Python Programming
-                  </Link>
+        {/* Sticky Top Bar */}
+        <header className="sticky top-0 z-30 bg-background/95 backdrop-blur shrink-0 border-b border-border relative">
+          <ReadingProgressBar scrollRef={scrollRef} />
 
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
-                      {lesson.moduleTitle ?? lesson.sectionTitle ?? 'Module'}
-                    </p>
-                    <p className="text-sm text-foreground font-medium truncate">
-                      {lesson.roadmapTitle ?? 'Python Fundamentals'}
-                    </p>
-                  </div>
-
-                  {(() => {
-                    const totalSec = sections.reduce((a, s) => a + s.lessons.length, 0)
-                    const doneSec = sections.reduce(
-                      (a, s) => a + s.lessons.filter((l) => l.status === 'completed').length,
-                      0,
-                    )
-                    const pct = totalSec ? Math.round((doneSec / totalSec) * 100) : 0
-                    return (
-                      <div>
-                        <div className="flex items-center justify-between text-xs mb-1.5">
-                          <span className="text-muted-foreground">Module progress</span>
-                          <span className="font-medium">{pct}%</span>
-                        </div>
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
-                          <motion.div
-                            className="h-full bg-primary rounded-full"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${pct}%` }}
-                            transition={{ duration: 0.5 }}
-                          />
-                        </div>
-                      </div>
-                    )
-                  })()}
-                </div>
-
-                {sections.length > 0 ? (
-                  <LessonSidebar
-                    sections={sections}
-                    currentLessonId={lesson.id}
-                    roadmapTitle={lesson.roadmapTitle ?? 'Python Programming'}
-                    roadmapSlug={lesson.roadmapSlug ?? 'python'}
-                    className="flex-1 min-h-0"
-                  />
-                ) : (
-                  <ScrollArea className="flex-1">
-                    <div className="p-4">
-                      <Button variant="ghost" size="sm" asChild className="mb-3 -ml-1 h-7 text-xs gap-1 text-muted-foreground">
-                        <Link to="/dashboard/learning/roadmaps">
-                          <ChevronLeft className="h-3.5 w-3.5" /> Back to Roadmaps
-                        </Link>
-                      </Button>
-                      <p className="text-sm text-muted-foreground">
-                        Full lesson list appears when viewing a roadmap lesson.
-                      </p>
-                    </div>
-                  </ScrollArea>
-                )}
-              </div>
-            </motion.aside>
-          )}
-        </AnimatePresence>
-      </>
-
-      {/* Center: Content + Bottom nav */}
-      <main className="flex-1 flex flex-col overflow-hidden min-w-0" id="lesson-content">
-        {/* Sticky top bar + header */}
-        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border shrink-0">
-          <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-border/60">
+          {/* Toolbar row */}
+          <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-border/40">
             <div className="flex items-center gap-2 min-w-0">
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => setLessonSidebarOpen(!lessonSidebarOpen)}
-                aria-label={lessonSidebarOpen ? 'Hide lesson navigation' : 'Show lesson navigation'}
-              >
-                <Menu className="h-4 w-4" />
-              </Button>
-              <div className="min-w-0">
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon-sm" onClick={() => setLessonSidebarOpen(!lessonSidebarOpen)}
+                      aria-label={lessonSidebarOpen ? 'Collapse roadmap panel' : 'Expand roadmap panel'}>
+                      {lessonSidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">{lessonSidebarOpen ? 'Collapse roadmap (Ctrl+B)' : 'Expand roadmap (Ctrl+B)'}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <div className="min-w-0 hidden sm:block">
                 <p className="text-[11px] text-muted-foreground truncate">
-                  {lesson.roadmapTitle ?? 'Python Programming'}
-                  {lesson.sectionTitle && ` · ${lesson.sectionTitle}`}
+                  <Link to="/dashboard/learning" className="hover:text-primary transition-colors">Learning</Link>
+                  {lesson.roadmapTitle && <> · <Link to={`/dashboard/learning/roadmaps/${lesson.roadmapSlug ?? ''}`} className="hover:text-primary transition-colors">{lesson.roadmapTitle}</Link></>}
+                  {lesson.sectionTitle && <> · <span>{lesson.sectionTitle}</span></>}
                 </p>
               </div>
             </div>
+
             <div className="flex items-center gap-2 shrink-0">
-              <Badge
-                variant={lesson.status === 'completed' ? 'success' : lesson.status === 'in_progress' ? 'info' : 'secondary'}
-                className="text-xs hidden sm:flex"
-              >
+              <Badge variant={lesson.status === 'completed' ? 'success' : lesson.status === 'in_progress' ? 'info' : 'secondary'} className="text-xs hidden sm:flex">
                 {lesson.status === 'completed' ? '✓ Completed' : lesson.status === 'in_progress' ? 'In Progress' : 'Not Started'}
               </Badge>
-              <BookmarkButton
-                isBookmarked={lesson.isBookmarked ?? false}
-                onToggle={() => id && toggleBookmark(id)}
-                loading={bookmarkPending}
-                size="sm"
-              />
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon-sm" onClick={() => id && toggleBookmark(id)} disabled={bookmarkPending}
+                      aria-label={lesson.isBookmarked ? 'Remove bookmark' : 'Bookmark lesson'} aria-pressed={lesson.isBookmarked}>
+                      {lesson.isBookmarked ? <BookmarkCheck className="h-4 w-4 text-primary" /> : <Bookmark className="h-4 w-4" />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{lesson.isBookmarked ? 'Remove bookmark' : 'Bookmark'}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon-sm" onClick={handleShare} aria-label="Share lesson"><Share2 className="h-4 w-4" /></Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Share lesson</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon-sm" className="hidden xl:flex" onClick={() => setLessonRightSidebarOpen(!lessonRightSidebarOpen)}
+                      aria-label={lessonRightSidebarOpen ? 'Collapse tools panel' : 'Expand tools panel'}>
+                      {lessonRightSidebarOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">{lessonRightSidebarOpen ? 'Collapse tools (Ctrl+Shift+B)' : 'Expand tools (Ctrl+Shift+B)'}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
 
-          <div className="px-4 lg:px-8 py-5 max-w-5xl mx-auto w-full">
-            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-              <div className="space-y-3 min-w-0">
-                <h1 className="text-2xl lg:text-3xl font-bold text-foreground tracking-tight leading-tight">
-                  {lesson.title}
-                </h1>
-                <div className="flex flex-wrap items-center gap-2.5">
+          {/* Lesson header */}
+          <div className="px-6 lg:px-10 py-6 max-w-[900px] mx-auto w-full">
+            <div className="flex flex-col gap-4">
+              <h1 className="text-3xl lg:text-[2.6rem] font-bold leading-tight tracking-tight text-foreground">
+                {lesson.title}
+              </h1>
+              <div className="flex flex-wrap items-center gap-3">
+                <DifficultyBadge difficulty={difficulty} />
+                <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4" />{readingTime} min read
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <TrendingUp className="h-4 w-4" />Est. {lesson.estimatedMinutes} min
+                </span>
+                {lessonIndex > 0 && (
                   <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4" /> {readingTime} min read
+                    <ChevronFirst className="h-4 w-4" />Lesson {lessonIndex} of {totalLessonsInRoadmap}
                   </span>
-                  <DifficultyBadge difficulty={difficulty} />
-                  <Badge variant="outline" className="gap-1 text-xs">
-                    <Clock className="h-3 w-3" /> Est. {lesson.estimatedMinutes} min to complete
-                  </Badge>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
+                )}
+                {lessonIndex > 0 && totalLessonsInRoadmap > 0 && (
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 w-24 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
+                    </div>
+                    <span className="text-xs text-muted-foreground font-medium">{progress}%</span>
+                  </div>
+                )}
                 <Button
-                  variant={lesson.isBookmarked ? 'default' : 'outline'}
+                  onClick={handleComplete}
+                  disabled={completing || lesson.status === 'completed'}
                   size="sm"
-                  onClick={() => id && toggleBookmark(id)}
-                  disabled={bookmarkPending}
-                  className="gap-1.5"
-                  aria-label={lesson.isBookmarked ? 'Remove bookmark' : 'Bookmark lesson'}
+                  variant={lesson.status === 'completed' ? 'outline' : 'default'}
+                  className="gap-1.5 ml-auto"
                 >
-                  <Heart className={cn('h-4 w-4', lesson.isBookmarked && 'fill-current')} />
-                  {lesson.isBookmarked ? 'Bookmarked' : 'Bookmark'}
+                  <CheckCircle2 className="h-4 w-4" />
+                  {lesson.status === 'completed' ? 'Completed ✓' : completing ? 'Marking...' : 'Mark Complete'}
                 </Button>
               </div>
             </div>
           </div>
-        </div>
+        </header>
 
-        {/* Scrollable content area */}
-        <ScrollArea className="flex-1">
-          <div className="max-w-3xl mx-auto px-4 py-8 lg:px-8 pb-32">
-            <motion.div
-              key={id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-10"
-            >
+        {/* Scrollable content */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto" id="lesson-content-scroll">
+          <div className="max-w-[900px] mx-auto px-6 lg:px-10 py-10 pb-36">
+            <motion.div key={id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="space-y-14">
+
               {lesson.content ? (
                 <SectionRenderer content={lesson.content} />
               ) : (
-                <div className="rounded-lg border border-dashed border-border p-8 text-center">
-                  <BookOpen className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" aria-hidden="true" />
-                  <p className="text-muted-foreground text-sm">Lesson content will appear here.</p>
+                <div className="rounded-xl border border-dashed border-border p-12 text-center">
+                  <BookOpen className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" aria-hidden="true" />
+                  <p className="text-muted-foreground">Lesson content will appear here.</p>
                 </div>
               )}
 
-              <Separator className="my-2" />
-
+              <Separator className="my-4" />
               <PracticeSection lessonId={lesson.id} />
-
+              <Separator className="my-4" />
               <QuizSection lessonId={lesson.id} onPassed={() => {}} />
 
               {lesson.resources && lesson.resources.length > 0 && (
-                <div className="space-y-3">
-                  <h2 className="text-xl font-bold flex items-center gap-2">
-                    <ExternalLink className="h-5 w-5 text-primary" /> Additional Resources
-                  </h2>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                      <ExternalLink className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <h2 className="text-xl font-bold">Additional Resources</h2>
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {lesson.resources.map((r) => (
-                      <ResourceCard key={r.id} resource={r} />
-                    ))}
+                    {lesson.resources.map((r) => <ResourceCard key={r.id} resource={r} />)}
                   </div>
                 </div>
               )}
             </motion.div>
           </div>
-        </ScrollArea>
+        </div>
 
         {/* Sticky bottom nav */}
-        <div className="sticky bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur shrink-0">
-          <div className="max-w-5xl mx-auto w-full px-4 lg:px-8 py-3 flex items-center justify-between gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              asChild={!!lesson.prevLessonId}
-              disabled={!lesson.prevLessonId}
-              className="gap-1.5"
-            >
+        <nav className="sticky bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur shrink-0" aria-label="Lesson navigation">
+          <div className="max-w-[900px] mx-auto w-full px-6 lg:px-10 py-3 flex items-center justify-between gap-3">
+
+            {/* Previous */}
+            <Button variant="outline" size="sm" asChild={!!lesson.prevLessonId} disabled={!lesson.prevLessonId}
+              className="gap-2 group min-w-0 max-w-[200px]">
               {lesson.prevLessonId ? (
                 <Link to={`/dashboard/learning/lesson/${lesson.prevLessonId}`}>
-                  <ChevronLeft className="h-4 w-4" /> Previous Lesson
+                  <ChevronLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform shrink-0" />
+                  <span className="truncate text-sm">Previous</span>
                 </Link>
               ) : (
-                <>
-                  <ChevronLeft className="h-4 w-4" /> Previous Lesson
-                </>
+                <><ChevronLeft className="h-4 w-4 shrink-0" /><span className="text-sm">Previous</span></>
               )}
             </Button>
 
-            <div className="flex flex-col items-center gap-1 px-2 hidden sm:flex">
-              <span className="text-xs font-medium text-foreground">
-                {lessonIndex > 0 ? `Lesson ${lessonIndex} of ${totalLessonsInRoadmap}` : 'Lesson Viewer'}
-              </span>
-              {lessonIndex > 0 && totalLessonsInRoadmap > 0 && (
-                <div className="h-1 w-32 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary rounded-full transition-all"
-                    style={{ width: `${(lessonIndex / totalLessonsInRoadmap) * 100}%` }}
-                  />
-                </div>
+            {/* Center info */}
+            <div className="flex flex-col items-center gap-1 hidden sm:flex">
+              {lessonIndex > 0 && (
+                <span className="text-xs text-muted-foreground font-medium">{lessonIndex} / {totalLessonsInRoadmap}</span>
               )}
-            </div>
-
-            <div className="flex items-center gap-2">
               <Button
                 onClick={handleComplete}
                 disabled={completing || lesson.status === 'completed' || !lesson.nextLessonId}
-                className="gap-2 hidden sm:flex"
+                className="gap-2"
+                size="sm"
                 variant={lesson.status === 'completed' ? 'outline' : 'default'}
               >
                 <CheckCircle2 className="h-4 w-4" />
-                {lesson.status === 'completed'
-                  ? 'Completed'
-                  : completing
-                    ? 'Marking...'
-                    : 'Mark Complete & Next'}
-              </Button>
-              <Button
-                variant={lesson.nextLessonId ? 'default' : 'outline'}
-                size="sm"
-                asChild={!!lesson.nextLessonId}
-                disabled={!lesson.nextLessonId}
-                className="gap-1.5"
-              >
-                {lesson.nextLessonId ? (
-                  <Link to={`/dashboard/learning/lesson/${lesson.nextLessonId}`}>
-                    Next Lesson <ChevronRight className="h-4 w-4" />
-                  </Link>
-                ) : (
-                  <>
-                    Next Lesson <ChevronRight className="h-4 w-4" />
-                  </>
-                )}
+                {lesson.status === 'completed' ? 'Completed' : completing ? 'Saving...' : 'Complete & Next'}
               </Button>
             </div>
-          </div>
-        </div>
-      </main>
 
-      {/* Right sidebar: Quick nav + Notes */}
-      <aside className="hidden xl:flex flex-col w-80 border-l border-border bg-card/50 shrink-0" aria-label="Lesson sidebar">
-        <Tabs defaultValue="notes" className="flex flex-col h-full">
-          <div className="px-4 pt-3 shrink-0">
-            <TabsList className="w-full">
-              <TabsTrigger value="notes" className="flex-1 text-xs gap-1">
-                <StickyNote className="h-3.5 w-3.5" /> Notes
-              </TabsTrigger>
-              <TabsTrigger value="progress" className="flex-1 text-xs gap-1">
-                <Award className="h-3.5 w-3.5" /> Progress
-              </TabsTrigger>
-            </TabsList>
+            {/* Next */}
+            <Button variant={lesson.nextLessonId ? 'default' : 'outline'} size="sm"
+              asChild={!!lesson.nextLessonId} disabled={!lesson.nextLessonId}
+              className="gap-2 group min-w-0 max-w-[200px]">
+              {lesson.nextLessonId ? (
+                <Link to={`/dashboard/learning/lesson/${lesson.nextLessonId}`}>
+                  <span className="truncate text-sm">Next</span>
+                  <ChevronRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                </Link>
+              ) : (
+                <><span className="text-sm">Next</span><ChevronRight className="h-4 w-4 shrink-0" /></>
+              )}
+            </Button>
           </div>
-          <div className="flex-1 min-h-0">
-            <TabsContent value="notes" className="h-full mt-0 data-[state=inactive]:hidden flex flex-col">
-              <NotesPanel lessonId={lesson.id} />
-            </TabsContent>
-            <TabsContent value="progress" className="h-full mt-0 data-[state=inactive]:hidden">
-              <ScrollArea className="flex-1 h-full">
-                <div className="p-4 space-y-5">
-                  <div>
-                    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-                      Progress
-                    </h3>
-                    <div className="space-y-2.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">Status</span>
-                        <Badge
-                          variant={lesson.status === 'completed' ? 'success' : 'secondary'}
-                          className="text-xs capitalize"
-                        >
-                          {lesson.status?.replace('_', ' ') ?? 'not started'}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">Reading</span>
-                        <span className="font-medium">{readingTime} min</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">Est. Complete</span>
-                        <span className="font-medium">{lesson.estimatedMinutes} min</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">Difficulty</span>
-                        <DifficultyBadge difficulty={difficulty} />
-                      </div>
-                    </div>
-                  </div>
+        </nav>
+      </div>
 
-                  <Separator />
+      {/* ── Right Sidebar ── */}
+      <RightSidebar
+        open={lessonRightSidebarOpen}
+        tab={lessonRightTab}
+        onTabChange={setLessonRightTab}
+        lesson={lesson}
+        sections={sections}
+        lessonIndex={lessonIndex}
+        totalLessons={totalLessonsInRoadmap}
+        tocEntries={tocEntries}
+        scrollRef={scrollRef}
+      />
 
-                  {lesson.resources && lesson.resources.length > 0 && (
-                    <div>
-                      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                        Resources ({lesson.resources.length})
-                      </h3>
-                      <div className="space-y-1.5">
-                        {lesson.resources.map((r) => (
-                          <a
-                            key={r.id}
-                            href={r.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 text-xs text-primary hover:underline py-0.5"
-                          >
-                            <ExternalLink className="h-3 w-3 shrink-0" />
-                            <span className="truncate">{r.title}</span>
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </TabsContent>
-          </div>
-        </Tabs>
-      </aside>
+      {/* Floating progress indicator */}
+      <FloatingProgress scrollRef={scrollRef} />
     </div>
   )
 }
