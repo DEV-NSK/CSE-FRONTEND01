@@ -101,7 +101,7 @@ export function TopNav() {
                   Settings
                 </Link>
               </DropdownMenuItem>
-              {user.role === 'admin' && (
+              {user.role === 'SUPER_ADMIN' && (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>

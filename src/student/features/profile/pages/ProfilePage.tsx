@@ -17,16 +17,16 @@ export function ProfilePage() {
 
   const profileItems = [
     { icon: Mail, label: 'Email', value: user.email },
-    user.phone ? { icon: Phone, label: 'Phone', value: user.phone } : null,
-    user.college ? { icon: GraduationCap, label: 'College', value: user.college } : null,
+    user.phoneNumber ? { icon: Phone, label: 'Phone', value: user.phoneNumber } : null,
+    user.collegeName ? { icon: GraduationCap, label: 'College', value: user.collegeName } : null,
     user.branch ? { icon: GraduationCap, label: 'Branch', value: user.branch } : null,
-    user.year ? { icon: Calendar, label: 'Year', value: `Year ${user.year}` } : null,
+    user.currentYear ? { icon: Calendar, label: 'Year', value: `Year ${user.currentYear}` } : null,
   ].filter(Boolean) as Array<{ icon: React.ElementType; label: string; value: string }>
 
   const socialLinks = [
-    user.github ? { icon: GitBranch, label: 'GitHub', value: user.github, href: user.github } : null,
-    user.linkedin ? { icon: Link2, label: 'LinkedIn', value: user.linkedin, href: user.linkedin } : null,
-    user.website ? { icon: Globe, label: 'Website', value: user.website, href: user.website } : null,
+    user.githubUrl ? { icon: GitBranch, label: 'GitHub', value: user.githubUrl, href: user.githubUrl } : null,
+    user.linkedinUrl ? { icon: Link2, label: 'LinkedIn', value: user.linkedinUrl, href: user.linkedinUrl } : null,
+    user.portfolioUrl ? { icon: Globe, label: 'Website', value: user.portfolioUrl, href: user.portfolioUrl } : null,
   ].filter(Boolean) as Array<{ icon: React.ElementType; label: string; value: string; href: string }>
 
   return (

@@ -56,18 +56,18 @@ export function ProblemCard({ problem, className }: ProblemCardProps) {
             <div className="flex items-center gap-2 flex-wrap">
               <CodingDifficultyBadge difficulty={problem.difficulty} />
               <span className="text-xs text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5">
-                {problem.category.name}
+                {problem.category?.name ?? '—'}
               </span>
             </div>
 
             {/* Tags */}
-            {problem.tags.length > 0 && (
+            {(problem.tags ?? []).length > 0 && (
               <div className="flex flex-wrap gap-1">
-                {problem.tags.slice(0, 3).map((tag) => (
+                {(problem.tags ?? []).slice(0, 3).map((tag) => (
                   <TagChip key={tag.id} tag={tag} />
                 ))}
-                {problem.tags.length > 3 && (
-                  <span className="text-xs text-muted-foreground">+{problem.tags.length - 3}</span>
+                {(problem.tags ?? []).length > 3 && (
+                  <span className="text-xs text-muted-foreground">+{(problem.tags ?? []).length - 3}</span>
                 )}
               </div>
             )}
@@ -76,7 +76,7 @@ export function ProblemCard({ problem, className }: ProblemCardProps) {
             <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
               <span className="flex items-center gap-1">
                 <TrendingUp className="h-3 w-3" aria-hidden="true" />
-                {problem.acceptanceRate.toFixed(1)}%
+                {(problem.acceptanceRate ?? 0).toFixed(1)}%
               </span>
               {problem.discussionCount !== undefined && (
                 <span className="flex items-center gap-1">

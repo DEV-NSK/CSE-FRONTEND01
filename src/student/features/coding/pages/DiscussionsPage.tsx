@@ -86,7 +86,7 @@ export function DiscussionsPage() {
   }
 
   const isOwner = (authorId: string) => user?.id === authorId
-  const isModerator = user?.role === 'admin' || user?.role === 'instructor'
+  const isModerator = user?.role === 'SUPER_ADMIN' || user?.role === 'MANAGER'
 
   return (
     <div className="space-y-6">
@@ -315,9 +315,9 @@ function DiscussionThread({
         </div>
 
         {/* Replies */}
-        {discussion.replies.length > 0 && (
+        {(discussion.replies ?? []).length > 0 && (
           <div className="pl-11 space-y-3">
-            {discussion.replies.map((reply) => (
+            {(discussion.replies ?? []).map((reply) => (
               <ReplyItem
                 key={reply.id}
                 reply={reply}

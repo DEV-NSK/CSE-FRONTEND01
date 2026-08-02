@@ -11,8 +11,8 @@ import { QueryClient } from '@tanstack/react-query'
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 3,
-      retryDelay: (attempt) => Math.min(500 * 2 ** attempt, 8000), // 500ms, 1s, 2s, max 8s
+      retry: 1,
+      retryDelay: (attempt) => Math.min(500 * 2 ** attempt, 4000), // 500ms, 1s max 4s
       staleTime: 5 * 60 * 1000,        // 5 minutes
       gcTime: 1000 * 60 * 10,          // 10 minutes
       refetchOnWindowFocus: true,

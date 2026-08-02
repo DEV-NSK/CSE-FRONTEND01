@@ -218,7 +218,7 @@ export function SearchResultsPage() {
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                               <DifficultyBadge difficulty={roadmap.difficulty} />
-                              <Badge variant="outline" className="text-xs">{roadmap.category.name}</Badge>
+                              <Badge variant="outline" className="text-xs">{roadmap.category?.name ?? '—'}</Badge>
                             </div>
                           </CardContent>
                         </Card>

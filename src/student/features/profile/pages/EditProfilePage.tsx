@@ -47,13 +47,13 @@ export function EditProfilePage() {
     defaultValues: {
       name: user?.fullName || '',
       bio: user?.bio || '',
-      college: user?.college || '',
+      college: user?.collegeName || '',
       branch: user?.branch || '',
-      year: user?.year || '',
+      year: user?.currentYear || '',
       phone: user?.phoneNumber || '',
-      github: user?.github || '',
-      linkedin: user?.linkedin || '',
-      website: user?.website || '',
+      github: user?.githubUrl || '',
+      linkedin: user?.linkedinUrl || '',
+      website: user?.portfolioUrl || '',
     },
   })
 
@@ -72,7 +72,19 @@ export function EditProfilePage() {
         linkedin: data.linkedin || undefined,
         website: data.website || undefined,
       })
-      updateUser(response.data.data)
+      // Map response back to User type field names
+      const updatedUser = response.data.data
+      updateUser({
+        fullName: updatedUser.fullName ?? data.name,
+        bio: updatedUser.bio ?? data.bio,
+        collegeName: updatedUser.collegeName ?? data.college,
+        branch: updatedUser.branch ?? data.branch,
+        currentYear: updatedUser.currentYear ?? (data.year ? Number(data.year) : undefined),
+        phoneNumber: updatedUser.phoneNumber ?? data.phone,
+        githubUrl: updatedUser.githubUrl ?? data.github,
+        linkedinUrl: updatedUser.linkedinUrl ?? data.linkedin,
+        portfolioUrl: updatedUser.portfolioUrl ?? data.website,
+      })
       setSaveSuccess(true)
       setTimeout(() => navigate('/dashboard/profile'), 1200)
     } catch (err: unknown) {

@@ -79,18 +79,18 @@ export function ProblemTable({ problems, className }: ProblemTableProps) {
               <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
                 <span className="flex items-center gap-1">
                   <TrendingUp className="h-3 w-3" aria-hidden="true" />
-                  {problem.acceptanceRate.toFixed(1)}%
+                  {(problem.acceptanceRate ?? 0).toFixed(1)}%
                 </span>
               </td>
 
               {/* Tags */}
               <td className="px-4 py-3 hidden lg:table-cell">
                 <div className="flex flex-wrap gap-1 max-w-[200px]">
-                  {problem.tags.slice(0, 2).map((tag) => (
+                  {(problem.tags ?? []).slice(0, 2).map((tag) => (
                     <TagChip key={tag.id} tag={tag} />
                   ))}
-                  {problem.tags.length > 2 && (
-                    <span className="text-xs text-muted-foreground">+{problem.tags.length - 2}</span>
+                  {(problem.tags ?? []).length > 2 && (
+                    <span className="text-xs text-muted-foreground">+{(problem.tags ?? []).length - 2}</span>
                   )}
                 </div>
               </td>
@@ -98,12 +98,12 @@ export function ProblemTable({ problems, className }: ProblemTableProps) {
               {/* Companies */}
               <td className="px-4 py-3 hidden xl:table-cell">
                 <div className="flex flex-wrap gap-1 max-w-[160px]">
-                  {problem.companies.slice(0, 2).map((co) => (
+                  {(problem.companies ?? []).slice(0, 2).map((co) => (
                     <CompanyBadge key={co.id} company={co} />
                   ))}
-                  {problem.companies.length > 2 && (
+                  {(problem.companies ?? []).length > 2 && (
                     <span className="text-xs text-muted-foreground">
-                      +{problem.companies.length - 2}
+                      +{(problem.companies ?? []).length - 2}
                     </span>
                   )}
                 </div>

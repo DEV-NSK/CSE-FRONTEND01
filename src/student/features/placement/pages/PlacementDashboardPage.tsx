@@ -124,8 +124,8 @@ export function PlacementDashboardPage() {
                       <div key={app.id} className="flex items-center gap-3 py-1">
                         <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{app.job.title}</p>
-                          <p className="text-xs text-muted-foreground truncate">{app.job.company.name}</p>
+                          <p className="text-sm font-medium truncate">{app.job?.title ?? '—'}</p>
+                          <p className="text-xs text-muted-foreground truncate">{app.job?.company?.name ?? '—'}</p>
                         </div>
                         <Badge variant="outline" className="text-xs capitalize shrink-0">
                           {app.status}

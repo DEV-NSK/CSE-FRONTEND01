@@ -499,7 +499,7 @@ export function ProblemDetailPage() {
           <>
             <span className="ml-auto flex items-center gap-1">
               <Tag className="h-3 w-3" aria-hidden="true" />
-              {problem.tags.slice(0, 2).map((t) => t.name).join(', ')}
+              {(problem.tags ?? []).slice(0, 2).map((t) => t.name).join(', ')}
             </span>
             <Link
               to={`/dashboard/coding/problems/${problem.slug}/discussions`}
@@ -548,7 +548,7 @@ function ProblemPanel({ problem, isLoading }: ProblemPanelProps) {
         <h1 className="text-base font-bold text-foreground mb-2">{problem.title}</h1>
         <div className="flex items-center flex-wrap gap-2">
           <CodingDifficultyBadge difficulty={problem.difficulty} />
-          <Badge variant="outline" className="text-xs">{problem.category.name}</Badge>
+          <Badge variant="outline" className="text-xs">{problem.category?.name ?? '—'}</Badge>
           {problem.isSolved && (
             <Badge variant="success" className="text-xs gap-1">
               <CheckCircle2 className="h-3 w-3" /> Solved
@@ -569,13 +569,13 @@ function ProblemPanel({ problem, isLoading }: ProblemPanelProps) {
       </div>
 
       {/* Examples */}
-      {problem.examples.length > 0 && (
+      {(problem.examples ?? []).length > 0 && (
         <div>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
             Examples
           </p>
           <div className="space-y-3">
-            {problem.examples.map((ex, idx) => (
+            {(problem.examples ?? []).map((ex, idx) => (
               <div
                 key={ex.id}
                 className="rounded-md border border-border bg-muted/30 p-3 space-y-1.5"
@@ -615,14 +615,14 @@ function ProblemPanel({ problem, isLoading }: ProblemPanelProps) {
       )}
 
       {/* Tags */}
-      {problem.tags.length > 0 && (
+      {(problem.tags ?? []).length > 0 && (
         <div>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
             <Tag className="h-3 w-3" aria-hidden="true" />
             Tags
           </p>
           <div className="flex flex-wrap gap-1">
-            {problem.tags.map((tag) => (
+            {(problem.tags ?? []).map((tag) => (
               <TagChip key={tag.id} tag={tag} />
             ))}
           </div>
@@ -630,14 +630,14 @@ function ProblemPanel({ problem, isLoading }: ProblemPanelProps) {
       )}
 
       {/* Companies */}
-      {problem.companies.length > 0 && (
+      {(problem.companies ?? []).length > 0 && (
         <div>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
             <Building2 className="h-3 w-3" aria-hidden="true" />
             Companies
           </p>
           <div className="flex flex-wrap gap-1">
-            {problem.companies.map((co) => (
+            {(problem.companies ?? []).map((co) => (
               <CompanyBadge key={co.id} company={co} />
             ))}
           </div>

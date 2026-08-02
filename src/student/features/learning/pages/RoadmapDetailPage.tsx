@@ -105,7 +105,7 @@ export function RoadmapDetailPage() {
                     <BookOpen className="h-3 w-3" />
                     {roadmap.lessonCount} lessons
                   </Badge>
-                  <Badge variant="outline">{roadmap.category.name}</Badge>
+                  <Badge variant="outline">{roadmap.category?.name ?? '—'}</Badge>
                 </div>
 
                 {tags.length > 0 && (

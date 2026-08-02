@@ -1,4 +1,26 @@
+/**
+ * Shared utility re-exports.
+ * All helpers from lib/utils and the new safe helpers are available here.
+ */
 export * from '@/shared/lib/utils'
+
+// ── Safe helpers (FPRD-13) ───────────────────────────────────────────────────
+export {
+  safeArray,
+  safeMap,
+  safeFilter,
+  safeFind,
+  safeLength,
+  safeSlice,
+  safeGet,
+  normalizeObject,
+  normalizeString,
+  normalizeNumber,
+  normalizeBoolean,
+  safePaginatedData,
+} from '@/shared/utils/safe'
+
+// ── Local helpers ────────────────────────────────────────────────────────────
 
 export function debounce<T extends (...args: unknown[]) => void>(fn: T, delay: number): T {
   let timer: ReturnType<typeof setTimeout>
@@ -31,8 +53,6 @@ export function slugify(str: string): string {
  * - Already an array  → returned as-is (filtered to strings)
  * - Comma-separated string → split, trimmed, empty values removed
  * - null / undefined / other → empty array
- *
- * Logs a warning in development when an unexpected type is received.
  */
 export function normalizeArray(value: unknown): string[] {
   if (Array.isArray(value)) {
@@ -43,11 +63,6 @@ export function normalizeArray(value: unknown): string[] {
       .split(',')
       .map((v) => v.trim())
       .filter(Boolean)
-  }
-  if (value !== null && value !== undefined) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('[normalizeArray] Unexpected value type:', typeof value, value)
-    }
   }
   return []
 }

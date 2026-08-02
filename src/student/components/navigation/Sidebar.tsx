@@ -16,13 +16,16 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shar
 import { getInitials } from '@/shared/lib/utils'
 
 const baseNavItems = [
+  // ── MVP modules ─────────────────────────────────────────────────────────────
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Learning', href: '/dashboard/learning', icon: BookOpen },
   { label: 'Coding', href: '/dashboard/coding', icon: Code2 },
-  { label: 'Projects', href: '/dashboard/projects', icon: FolderKanban },
-  { label: 'Placement', href: '/dashboard/placement', icon: Briefcase },
-  { label: 'Events', href: '/dashboard/events', icon: Calendar },
-  { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+  // ── Non-MVP modules — navigate to Launching Soon ────────────────────────────
+  { label: 'Projects', href: '/dashboard/launching-soon/projects', icon: FolderKanban, launchingSoon: true },
+  { label: 'Placement', href: '/dashboard/launching-soon/placement', icon: Briefcase, launchingSoon: true },
+  { label: 'Events', href: '/dashboard/launching-soon/events', icon: Calendar, launchingSoon: true },
+  { label: 'Analytics', href: '/dashboard/launching-soon/analytics', icon: BarChart3, launchingSoon: true },
+  // ── MVP modules (continued) ──────────────────────────────────────────────────
   { label: 'Notifications', href: '/dashboard/notifications', icon: Bell, badge: true },
   { label: 'Profile', href: '/dashboard/profile', icon: User },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
@@ -84,6 +87,8 @@ function SidebarContent({ collapsed }: SidebarContentProps) {
                     isActive
                       ? 'bg-primary text-primary-foreground'
                       : 'text-muted-foreground hover:bg-accent/10 hover:text-foreground',
+                    // Launching-soon items are slightly dimmer when not active
+                    'launchingSoon' in item && item.launchingSoon && !isActive && 'opacity-70',
                     collapsed && 'justify-center px-2'
                   )}
                   aria-current={isActive ? 'page' : undefined}
@@ -102,6 +107,11 @@ function SidebarContent({ collapsed }: SidebarContentProps) {
                       </motion.span>
                     )}
                   </AnimatePresence>
+                  {'launchingSoon' in item && item.launchingSoon && !collapsed && (
+                    <span className="ml-auto text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/60 bg-muted/60 rounded px-1 py-0.5">
+                      Soon
+                    </span>
+                  )}
                   {item.badge && unreadCount > 0 && !collapsed && (
                     <Badge variant="destructive" className="ml-auto text-xs px-1.5 py-0">
                       {unreadCount > 99 ? '99+' : unreadCount}
@@ -119,7 +129,12 @@ function SidebarContent({ collapsed }: SidebarContentProps) {
                     <TooltipProvider delayDuration={0}>
                       <Tooltip>
                         <TooltipTrigger asChild>{navLink}</TooltipTrigger>
-                        <TooltipContent side="right">{item.label}</TooltipContent>
+                        <TooltipContent side="right">
+                          {item.label}
+                          {'launchingSoon' in item && item.launchingSoon && (
+                            <span className="ml-1.5 text-[10px] opacity-70">· Soon</span>
+                          )}
+                        </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   ) : (

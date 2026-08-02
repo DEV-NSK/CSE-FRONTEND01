@@ -87,40 +87,25 @@ import { FavoritesPage } from "@/student/features/coding/pages/FavoritesPage";
 import { DiscussionsPage } from "@/student/features/coding/pages/DiscussionsPage";
 import { CodingAnalyticsPage } from "@/student/features/coding/pages/CodingAnalyticsPage";
 
-// ── Pages - Projects ──────────────────────────────────────────────────────────
-import { ProjectHubHomePage } from "@/student/features/projects/pages/ProjectHubHomePage";
-import { ProjectsExplorePage } from "@/student/features/projects/pages/ProjectsExplorePage";
-import { ProjectDetailPage } from "@/student/features/projects/pages/ProjectDetailPage";
-import { TeamDashboardPage } from "@/student/features/projects/pages/TeamDashboardPage";
-import { TeamMembersPage } from "@/student/features/projects/pages/TeamMembersPage";
-import { TeamInvitationsPage } from "@/student/features/projects/pages/TeamInvitationsPage";
-import { TaskBoardPage } from "@/student/features/projects/pages/TaskBoardPage";
-import { TaskDetailPage } from "@/student/features/projects/pages/TaskDetailPage";
-import { MilestonesPage } from "@/student/features/projects/pages/MilestonesPage";
-import { ProjectFilesPage } from "@/student/features/projects/pages/ProjectFilesPage";
-import { ActivityTimelinePage } from "@/student/features/projects/pages/ActivityTimelinePage";
-
-// ── Pages - Placement ─────────────────────────────────────────────────────────
-import { PlacementDashboardPage } from "@/student/features/placement/pages/PlacementDashboardPage";
-import { CompaniesPage } from "@/student/features/placement/pages/CompaniesPage";
-import { CompanyDetailPage } from "@/student/features/placement/pages/CompanyDetailPage";
-import { JobsPage } from "@/student/features/placement/pages/JobsPage";
-import { JobDetailPage } from "@/student/features/placement/pages/JobDetailPage";
-import { ApplicationsPage } from "@/student/features/placement/pages/ApplicationsPage";
-
-// ── Pages - Resume ────────────────────────────────────────────────────────────
-import { ResumeBuilderPage } from "@/student/features/resume/pages/ResumeBuilderPage";
-import { ResumeTemplatesPage } from "@/student/features/resume/pages/ResumeTemplatesPage";
-
-// ── Pages - Events ────────────────────────────────────────────────────────────
-import { EventsPage } from "@/student/features/events/pages/EventsPage";
-import { EventDetailPage } from "@/student/features/events/pages/EventDetailPage";
-
 // ── Pages - Notifications ─────────────────────────────────────────────────────
 import { NotificationsPage } from "@/student/features/notifications/pages/NotificationsPage";
 
-// ── Pages - Analytics ─────────────────────────────────────────────────────────
-import { AnalyticsDashboardPage } from "@/student/features/analytics/pages/AnalyticsDashboardPage";
+// ── Pages - Projects (NOT MVP — redirected to LaunchingSoon) ─────────────────
+// These are kept as lazy imports to prevent TypeScript "unused import" errors
+// but are NOT rendered — all /projects/* routes redirect to LaunchingSoon
+// (Removed for FPRD-13: routes now redirect to /launching-soon/projects)
+
+// ── Pages - Placement (NOT MVP — redirected to LaunchingSoon) ────────────────
+// (Removed for FPRD-13: routes now redirect to /launching-soon/placement)
+
+// ── Pages - Events (NOT MVP — redirected to LaunchingSoon) ───────────────────
+// (Removed for FPRD-13: routes now redirect to /launching-soon/events)
+
+// ── Pages - Analytics (NOT MVP — redirected to LaunchingSoon) ────────────────
+// (Removed for FPRD-13: routes now redirect to /launching-soon/analytics)
+
+// ── Pages - Launching Soon ────────────────────────────────────────────────────
+import { LaunchingSoonPage } from "@/shared/pages/LaunchingSoonPage";
 
 // ── Error pages ───────────────────────────────────────────────────────────────
 import { NotFoundPage } from "@/shared/pages/errors/NotFoundPage";
@@ -217,37 +202,32 @@ export const router = createBrowserRouter([
       { path: "coding/favorites", element: <FavoritesPage /> },
       { path: "coding/analytics", element: <CodingAnalyticsPage /> },
 
-      // Projects
-      { path: "projects", element: <ProjectHubHomePage /> },
-      { path: "projects/explore", element: <ProjectsExplorePage /> },
-      { path: "projects/invitations", element: <TeamInvitationsPage /> },
-      { path: "projects/tasks/:id", element: <TaskDetailPage /> },
-      { path: "projects/team/:id", element: <TeamDashboardPage /> },
-      { path: "projects/team/:id/members", element: <TeamMembersPage /> },
-      { path: "projects/team/:id/tasks", element: <TaskBoardPage /> },
-      { path: "projects/team/:id/milestones", element: <MilestonesPage /> },
-      { path: "projects/team/:id/files", element: <ProjectFilesPage /> },
-      { path: "projects/team/:id/activity", element: <ActivityTimelinePage /> },
-      { path: "projects/:id", element: <ProjectDetailPage /> },
+      // ── FPRD-13: Non-MVP modules redirect to Launching Soon ─────────────────
+      // Projects → /launching-soon/projects
+      { path: "projects", element: <Navigate to="/dashboard/launching-soon/projects" replace /> },
+      { path: "projects/*", element: <Navigate to="/dashboard/launching-soon/projects" replace /> },
 
-      // Placement
-      { path: "placement", element: <PlacementDashboardPage /> },
-      { path: "placement/companies", element: <CompaniesPage /> },
-      { path: "placement/companies/:id", element: <CompanyDetailPage /> },
-      { path: "placement/jobs", element: <JobsPage /> },
-      { path: "placement/jobs/:id", element: <JobDetailPage /> },
-      { path: "placement/applications", element: <ApplicationsPage /> },
+      // Placement → /launching-soon/placement
+      { path: "placement", element: <Navigate to="/dashboard/launching-soon/placement" replace /> },
+      { path: "placement/*", element: <Navigate to="/dashboard/launching-soon/placement" replace /> },
 
-      // Resume
-      { path: "resume", element: <ResumeBuilderPage /> },
-      { path: "resume/templates", element: <ResumeTemplatesPage /> },
+      // Resume (part of Placement) → /launching-soon/placement
+      { path: "resume", element: <Navigate to="/dashboard/launching-soon/placement" replace /> },
+      { path: "resume/*", element: <Navigate to="/dashboard/launching-soon/placement" replace /> },
 
-      // Events
-      { path: "events", element: <EventsPage /> },
-      { path: "events/:id", element: <EventDetailPage /> },
+      // Events → /launching-soon/events
+      { path: "events", element: <Navigate to="/dashboard/launching-soon/events" replace /> },
+      { path: "events/*", element: <Navigate to="/dashboard/launching-soon/events" replace /> },
 
-      // Analytics
-      { path: "analytics", element: <AnalyticsDashboardPage /> },
+      // Analytics → /launching-soon/analytics
+      { path: "analytics", element: <Navigate to="/dashboard/launching-soon/analytics" replace /> },
+
+      // Launching Soon page (catch-all for non-MVP modules)
+      { path: "launching-soon/:module", element: <LaunchingSoonPage /> },
+      { path: "launching-soon", element: <LaunchingSoonPage /> },
+
+      // Unknown /dashboard/* routes → 404 within layout
+      { path: "*", element: <NotFoundPage /> },
     ],
   },
 

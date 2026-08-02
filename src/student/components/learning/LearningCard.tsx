@@ -101,7 +101,7 @@ export function RoadmapCard({ roadmap, viewMode = 'grid', className }: RoadmapCa
                       <BookOpen className="h-3 w-3" />
                       {roadmap.lessonCount} lessons
                     </span>
-                    <Badge variant="outline" className="text-xs">{roadmap.category.name}</Badge>
+                    <Badge variant="outline" className="text-xs">{roadmap.category?.name ?? '—'}</Badge>
                   </div>
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
@@ -121,7 +121,7 @@ export function RoadmapCard({ roadmap, viewMode = 'grid', className }: RoadmapCa
           <div
             className="h-3 w-full"
             style={{
-              background: `linear-gradient(135deg, ${roadmap.category.color}80, hsl(var(--primary)))`,
+              background: `linear-gradient(135deg, ${roadmap.category?.color ?? 'hsl(var(--primary))'}80, hsl(var(--primary)))`,
             }}
             aria-hidden="true"
           />
@@ -132,7 +132,7 @@ export function RoadmapCard({ roadmap, viewMode = 'grid', className }: RoadmapCa
                 <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 mb-1">
                   {roadmap.title}
                 </h3>
-                <Badge variant="outline" className="text-xs">{roadmap.category.name}</Badge>
+                <Badge variant="outline" className="text-xs">{roadmap.category?.name ?? '—'}</Badge>
               </div>
               <ProgressRing progress={progress} size={56} strokeWidth={5} />
             </div>

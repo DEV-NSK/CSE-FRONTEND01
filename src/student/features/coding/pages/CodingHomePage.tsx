@@ -126,7 +126,7 @@ export function CodingHomePage() {
         <div className="relative z-10 max-w-2xl">
           <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
             <Code2 className="h-6 w-6" aria-hidden="true" />
-            Welcome back, {user?.name?.split(' ')[0]}! 🚀
+            Welcome back, {user?.fullName?.split(' ')[0] ?? 'there'}! 🚀
           </h2>
           <p className="text-white/80 mb-6 text-sm">
             {continueSolving && continueSolving.length > 0
