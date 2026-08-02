@@ -2,10 +2,10 @@ export type Theme = 'light' | 'dark' | 'system'
 
 /**
  * PRD-08: Role enum matches backend exactly (UPPERCASE).
- * The backend Role enum is: STUDENT | MENTOR | MANAGER | SUPER_ADMIN
- * ADMIN role is removed — SUPER_ADMIN is the single platform owner.
+ * The backend Role enum is: STUDENT | MANAGER | SUPER_ADMIN
+ * ADMIN and MENTOR roles are completely removed.
  */
-export type UserRole = 'STUDENT' | 'MANAGER' | 'SUPER_ADMIN' | 'MENTOR'
+export type UserRole = 'STUDENT' | 'MANAGER' | 'SUPER_ADMIN'
 
 export interface User {
   id: string
@@ -102,19 +102,11 @@ export function isSuperAdmin(role?: UserRole | string): boolean {
 }
 
 /**
- * Returns true if the user is a MENTOR (read-only dashboard, future implementation).
- */
-export function isMentor(role?: UserRole | string): boolean {
-  return role === 'MENTOR'
-}
-
-/**
  * Returns the correct dashboard path for a given role.
  * PRD-08: Backend decides the role, frontend just routes accordingly.
  */
 export function getDashboardPath(role?: UserRole | string): string {
   if (isSuperAdmin(role)) return '/admin/dashboard'
   if (isManager(role)) return '/manager/dashboard'
-  if (isMentor(role)) return '/mentor/dashboard'
   return '/dashboard'
 }

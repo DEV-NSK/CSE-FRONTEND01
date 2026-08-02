@@ -14,6 +14,10 @@ import type {
   ContinueLearning,
   RoadmapFilters,
   BookmarkFilters,
+  LessonNote,
+  PracticeQuestion,
+  QuizQuestion,
+  QuizSubmission,
 } from '@/shared/types/learning'
 
 // ─── Categories ──────────────────────────────────────────────────────────────
@@ -87,4 +91,28 @@ export const learningService = {
   // Search
   search: (query: string) =>
     axiosInstance.get<ApiResponse<SearchResults>>('/learning/search', { params: { q: query } }),
+
+  // Lesson Notes
+  getLessonNotes: (lessonId: string) =>
+    axiosInstance.get<ApiResponse<LessonNote[]>>(`/learning/lessons/${lessonId}/notes`),
+
+  createLessonNote: (lessonId: string, content: string) =>
+    axiosInstance.post<ApiResponse<LessonNote>>(`/learning/lessons/${lessonId}/notes`, { content }),
+
+  updateLessonNote: (lessonId: string, noteId: string, content: string) =>
+    axiosInstance.patch<ApiResponse<LessonNote>>(`/learning/lessons/${lessonId}/notes/${noteId}`, { content }),
+
+  deleteLessonNote: (lessonId: string, noteId: string) =>
+    axiosInstance.delete<ApiResponse<void>>(`/learning/lessons/${lessonId}/notes/${noteId}`),
+
+  // Practice Questions
+  getLessonPractice: (lessonId: string) =>
+    axiosInstance.get<ApiResponse<PracticeQuestion[]>>(`/learning/lessons/${lessonId}/practice`),
+
+  // Quiz Questions
+  getLessonQuiz: (lessonId: string) =>
+    axiosInstance.get<ApiResponse<QuizQuestion[]>>(`/learning/lessons/${lessonId}/quiz`),
+
+  submitQuiz: (lessonId: string, answers: Record<string, number>) =>
+    axiosInstance.post<ApiResponse<QuizSubmission>>(`/learning/lessons/${lessonId}/quiz/submit`, { answers }),
 }

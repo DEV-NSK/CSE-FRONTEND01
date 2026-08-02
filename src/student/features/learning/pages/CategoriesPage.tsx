@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { PageHeader } from '@/shared/components/common/PageHeader'
 import { ErrorState } from '@/shared/components/feedback/ErrorState'
@@ -13,12 +13,19 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/shared/components/ui/select'
 import { cn } from '@/shared/lib/utils'
+import type { LearningCategory } from '@/shared/types/learning'
 
 const container = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { staggerChildren: 0.06 } },
 }
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }
+
+const isPythonCategory = (c: LearningCategory) => {
+  const n = c.name.toLowerCase()
+  const s = c.slug.toLowerCase()
+  return n.includes('python') || s.includes('python') || n.includes('programming') || s.includes('programming')
+}
 
 export function CategoriesPage() {
   const { categorySearch, categorySort, setCategorySearch, setCategorySort } = useLearningStore()
@@ -37,13 +44,16 @@ export function CategoriesPage() {
     sort: categorySort,
   })
 
-  const filtered = categories ?? []
+  const pythonCategories = useMemo(
+    () => categories?.filter(isPythonCategory) ?? [],
+    [categories]
+  )
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Learning Categories"
-        description="Explore topics organized by subject area."
+        title="Python Categories"
+        description="Explore Python programming categories and learning paths."
         breadcrumbs={[
           { label: 'Learning', href: '/dashboard/learning' },
           { label: 'Categories' },
@@ -58,7 +68,7 @@ export function CategoriesPage() {
             type="search"
             value={localSearch}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search categories..."
+            placeholder="Search Python categories..."
             aria-label="Search categories"
             className={cn(
               'flex h-10 w-full rounded-md border border-input bg-background pl-9 pr-4 py-2 text-sm',
@@ -84,7 +94,7 @@ export function CategoriesPage() {
       {/* Results count */}
       {!isLoading && !isError && (
         <p className="text-sm text-muted-foreground">
-          {filtered.length} categor{filtered.length !== 1 ? 'ies' : 'y'}
+          {pythonCategories.length} categor{pythonCategories.length !== 1 ? 'ies' : 'y'}
           {categorySearch ? ` matching "${categorySearch}"` : ''}
         </p>
       )}
@@ -98,9 +108,9 @@ export function CategoriesPage() {
         />
       ) : isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => <CategoryCardSkeleton key={i} />)}
+          {[1, 2, 3].map((i) => <CategoryCardSkeleton key={i} />)}
         </div>
-      ) : !filtered.length ? (
+      ) : !pythonCategories.length ? (
         <EmptyLearningState variant="categories" searchQuery={categorySearch} />
       ) : (
         <motion.div
@@ -109,7 +119,7 @@ export function CategoriesPage() {
           animate="show"
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
         >
-          {filtered.map((cat) => (
+          {pythonCategories.map((cat) => (
             <motion.div key={cat.id} variants={item}>
               <CategoryCard category={cat} />
             </motion.div>

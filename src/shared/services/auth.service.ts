@@ -15,21 +15,6 @@ export interface RegisterPayload {
   phoneNumber?: string
 }
 
-export interface ForgotPasswordPayload {
-  email: string
-}
-
-export interface ResetPasswordPayload {
-  email: string
-  otp: string
-  newPassword: string
-}
-
-export interface VerifyEmailPayload {
-  email: string
-  otp: string
-}
-
 export interface ChangePasswordPayload {
   currentPassword: string
   newPassword: string
@@ -75,24 +60,8 @@ export const authService = {
   logout: (refreshToken?: string) =>
     axiosInstance.post('/auth/logout', refreshToken ? { refreshToken } : {}),
 
-  /** POST /auth/forgot-password — sends OTP to email */
-  forgotPassword: (payload: ForgotPasswordPayload) =>
-    axiosInstance.post<ApiResponse<null>>('/auth/forgot-password', payload),
-
-  /** POST /auth/reset-password — resets password using OTP */
-  resetPassword: (payload: ResetPasswordPayload) =>
-    axiosInstance.post<ApiResponse<null>>('/auth/reset-password', payload),
-
-  /** POST /auth/verify-email — verifies email using OTP (legacy flow) */
-  verifyEmail: (payload: VerifyEmailPayload) =>
-    axiosInstance.post<ApiResponse<null>>('/auth/verify-email', payload),
-
-  /** POST /auth/resend-verification — resends email verification OTP */
-  resendVerification: (email: string) =>
-    axiosInstance.post<ApiResponse<null>>('/auth/resend-verification', { email }),
-
   /**
-   * PRD-08: GET /auth/me
+   * V-01.2: GET /auth/me
    * Always fetches the latest user data (including role) from the database.
    * Call this on every page reload — never rely on cached role.
    */
@@ -100,21 +69,21 @@ export const authService = {
     axiosInstance.get<ApiResponse<User>>('/auth/me'),
 
   /**
-   * PRD-08: POST /auth/refresh
+   * V-01.2: POST /auth/refresh
    * Rotate the access token using the refresh token.
    */
   refreshTokens: (refreshToken: string) =>
     axiosInstance.post<ApiResponse<TokenRefreshData>>('/auth/refresh', { refreshToken }),
 
   /**
-   * PRD-08: PATCH /auth/change-password
+   * V-01.2: PATCH /auth/change-password
    * Change password for authenticated user.
    */
   changePassword: (payload: ChangePasswordPayload) =>
     axiosInstance.patch<ApiResponse<null>>('/auth/change-password', payload),
 
   /**
-   * PRD-08: PATCH /auth/update-profile
+   * V-01.2: PATCH /auth/update-profile
    * Update profile fields for authenticated user.
    */
   updateProfile: (payload: UpdateProfilePayload) =>

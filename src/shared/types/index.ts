@@ -15,4 +15,4 @@ export type {
   NavItem,
 } from '@/types'
 
-export { isStudent, isManager, isSuperAdmin, isMentor, getDashboardPath } from '@/types'
+export { isStudent, isManager, isSuperAdmin, getDashboardPath } from '@/types'

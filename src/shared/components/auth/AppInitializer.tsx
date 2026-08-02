@@ -1,34 +1,57 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuthStore } from '@/shared/store/authStore'
+import { PageLoader } from '@/shared/components/feedback/LoadingSpinner'
 
-/**
- * PRD-08: AppInitializer
- *
- * Mounts once at app startup. If a token exists in localStorage,
- * calls GET /auth/me to fetch the LATEST user + role from the database.
- *
- * This ensures:
- * - Page refresh preserves login (tokens are read from localStorage)
- * - Role changes in the DB take effect after the next login or page refresh
- * - Stale JWT roles are never used for routing decisions
- * - Expired tokens trigger logout automatically via the axios 401 interceptor
- */
+type InitStatus = 'loading' | 'done' | 'error'
+
 export function AppInitializer({ children }: { children: React.ReactNode }) {
-  const { tokens, refreshUser, setLoading } = useAuthStore()
-  const initialized = useRef(false)
+  const { tokens, logout, login } = useAuthStore()
+  const [status, setStatus] = useState<InitStatus>('loading')
 
   useEffect(() => {
-    if (initialized.current) return
-    initialized.current = true
+    let cancelled = false
 
-    if (tokens?.accessToken) {
-      // Fetch latest user from DB on every app load
-      refreshUser()
-    } else {
-      // No token — mark loading done immediately
-      setLoading(false)
+    async function initialize() {
+      const refreshToken = tokens?.refreshToken
+
+      if (!refreshToken) {
+        if (!cancelled) setStatus('done')
+        return
+      }
+
+      try {
+        const { default: axiosInstance } = await import('@/shared/lib/axios')
+
+        const refreshRes = await axiosInstance.post('/auth/refresh', { refreshToken })
+        const { accessToken, refreshToken: newRefreshToken } = refreshRes.data.data
+
+        const meRes = await axiosInstance.get('/auth/me', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+        const user = meRes.data.data
+
+        if (!cancelled) {
+          login(user, { accessToken, refreshToken: newRefreshToken })
+          setStatus('done')
+        }
+      } catch {
+        if (!cancelled) {
+          logout()
+          window.location.href = '/auth/login'
+        }
+      }
+    }
+
+    initialize()
+
+    return () => {
+      cancelled = true
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (status === 'loading') {
+    return <PageLoader />
+  }
 
   return <>{children}</>
 }

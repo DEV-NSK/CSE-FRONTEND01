@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LayoutGrid, List, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
@@ -11,15 +11,29 @@ import { EmptyLearningState } from '@/student/components/learning/EmptyLearningS
 import { useRoadmaps, useCategories } from '@/shared/hooks/useLearning'
 import { useLearningStore } from '@/shared/store/learningStore'
 import { debounce } from '@/shared/lib/utils'
-import type { Difficulty } from '@/shared/types/learning'
+import type { Difficulty, LearningCategory } from '@/shared/types/learning'
 
-const LIMIT = 12
+const LIMIT = 50
 
 const container = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { staggerChildren: 0.05 } },
 }
 const cardItem = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }
+
+const isPythonRoadmap = (r: { title: string; slug: string; category?: { name: string; slug: string } }) => {
+  const t = r.title.toLowerCase()
+  const s = r.slug.toLowerCase()
+  const cn = r.category?.name?.toLowerCase() ?? ''
+  const cs = r.category?.slug?.toLowerCase() ?? ''
+  return t.includes('python') || s.includes('python') || cn.includes('python') || cs.includes('python')
+}
+
+const isPythonCategory = (c: LearningCategory) => {
+  const n = c.name.toLowerCase()
+  const s = c.slug.toLowerCase()
+  return n.includes('python') || s.includes('python') || n.includes('programming') || s.includes('programming')
+}
 
 export function RoadmapsPage() {
   const {
@@ -47,19 +61,29 @@ export function RoadmapsPage() {
   // Reset page when filters change
   useEffect(() => { setPage(1) }, [roadmapFilters.difficulty, roadmapFilters.categoryId, roadmapFilters.status])
 
-  const { data: categories } = useCategories()
+  const { data: allCategories } = useCategories()
   const { data, isLoading, isError, refetch } = useRoadmaps({
     search: roadmapFilters.search,
     difficulty: roadmapFilters.difficulty !== 'all' ? roadmapFilters.difficulty : undefined,
     categoryId: roadmapFilters.categoryId !== 'all' ? roadmapFilters.categoryId : undefined,
     status: roadmapFilters.status !== 'all' ? roadmapFilters.status : undefined,
-    page,
+    page: 1,
     limit: LIMIT,
   })
 
-  const roadmaps = data?.data ?? []
-  const totalPages = data?.totalPages ?? 1
-  const total = data?.total ?? 0
+  const pythonCategories = useMemo(
+    () => allCategories?.filter(isPythonCategory) ?? [],
+    [allCategories]
+  )
+
+  const allRoadmaps = data?.data ?? []
+  const pythonRoadmaps = useMemo(
+    () => allRoadmaps.filter(isPythonRoadmap),
+    [allRoadmaps]
+  )
+
+  const totalPages = 1
+  const total = pythonRoadmaps.length
 
   const activeFilterCount = [
     roadmapFilters.difficulty !== 'all',
@@ -71,8 +95,8 @@ export function RoadmapsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Roadmaps"
-        description="Structured learning paths to master any topic."
+        title="Python Roadmaps"
+        description="Structured Python learning paths to master programming from basics to advanced."
         breadcrumbs={[
           { label: 'Learning', href: '/dashboard/learning' },
           { label: 'Roadmaps' },
@@ -108,18 +132,18 @@ export function RoadmapsPage() {
         onDifficultyChange={(v) => setRoadmapFilters({ difficulty: v as Difficulty | 'all' })}
         categoryId={roadmapFilters.categoryId}
         onCategoryChange={(v) => setRoadmapFilters({ categoryId: v })}
-        categories={categories}
+        categories={pythonCategories}
         status={roadmapFilters.status}
         onStatusChange={(v) => setRoadmapFilters({ status: v as typeof roadmapFilters.status })}
         onReset={resetRoadmapFilters}
         activeFilterCount={activeFilterCount}
-        placeholder="Search roadmaps..."
+        placeholder="Search Python roadmaps..."
       />
 
       {/* Results count */}
       {!isLoading && !isError && (
         <p className="text-sm text-muted-foreground">
-          {total} roadmap{total !== 1 ? 's' : ''} found
+          {total} Python roadmap{total !== 1 ? 's' : ''} found
         </p>
       )}
 
@@ -135,9 +159,9 @@ export function RoadmapsPage() {
           ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
           : 'space-y-3'
         }>
-          {Array.from({ length: 8 }).map((_, i) => <RoadmapCardSkeleton key={i} />)}
+          {Array.from({ length: 4 }).map((_, i) => <RoadmapCardSkeleton key={i} />)}
         </div>
-      ) : !roadmaps.length ? (
+      ) : !pythonRoadmaps.length ? (
         <EmptyLearningState
           variant="roadmaps"
           searchQuery={roadmapFilters.search}
@@ -155,7 +179,7 @@ export function RoadmapsPage() {
               : 'space-y-3'
             }
           >
-            {roadmaps.map((roadmap) => (
+            {pythonRoadmaps.map((roadmap) => (
               <motion.div key={roadmap.id} variants={cardItem}>
                 <RoadmapCard roadmap={roadmap} viewMode={roadmapsViewMode} />
               </motion.div>

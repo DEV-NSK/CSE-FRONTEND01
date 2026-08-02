@@ -57,9 +57,6 @@ import { FaqPage } from "@/shared/pages/FaqPage";
 // ── Pages - Auth ──────────────────────────────────────────────────────────────
 import { LoginPage } from "@/student/features/auth/pages/LoginPage";
 import { RegisterPage } from "@/student/features/auth/pages/RegisterPage";
-import { ForgotPasswordPage } from "@/student/features/auth/pages/ForgotPasswordPage";
-import { ResetPasswordPage } from "@/student/features/auth/pages/ResetPasswordPage";
-import { VerifyEmailPage } from "@/student/features/auth/pages/VerifyEmailPage";
 
 // ── Pages - Dashboard (Student) ───────────────────────────────────────────────
 import { DashboardPage } from "@/student/features/dashboard/pages/DashboardPage";
@@ -168,9 +165,6 @@ export const router = createBrowserRouter([
     children: [
       { path: "/auth/login", element: <LoginPage /> },
       { path: "/auth/register", element: <RegisterPage /> },
-      { path: "/auth/forgot-password", element: <ForgotPasswordPage /> },
-      { path: "/auth/reset-password", element: <ResetPasswordPage /> },
-      { path: "/auth/verify-email", element: <VerifyEmailPage /> },
     ],
   },
 
@@ -185,11 +179,11 @@ export const router = createBrowserRouter([
   },
 
   // ── Student dashboard routes (/dashboard/*) ────────────────────────────────
-  // PRD-08: allowedRoles enforced — STUDENT and MENTOR can access /dashboard
+  // Role-based protection — only STUDENT can access. Wrong role → /403 (not redirect)
   {
     path: "/dashboard",
     element: (
-      <ProtectedRoute allowedRoles={["STUDENT", "MENTOR"]}>
+      <ProtectedRoute allowedRoles={["STUDENT"]}>
         <DashboardLayout />
       </ProtectedRoute>
     ),
@@ -258,11 +252,11 @@ export const router = createBrowserRouter([
   },
 
   // ── Manager Console routes (/manager/*) ────────────────────────────────────
-  // PRD-08: allowedRoles enforced — only MANAGER and SUPER_ADMIN can access
+  // Role-based protection — only MANAGER can access. Wrong role → /403 (not redirect)
   {
     path: "/manager",
     element: (
-      <ProtectedRoute allowedRoles={["MANAGER", "SUPER_ADMIN"]}>
+      <ProtectedRoute allowedRoles={["MANAGER"]}>
         <LazyPage>
           <ManagerLayout />
         </LazyPage>
@@ -291,7 +285,7 @@ export const router = createBrowserRouter([
   },
 
   // ── Super Admin Console routes (/admin/*) ──────────────────────────────────
-  // PRD-08: allowedRoles enforced — only SUPER_ADMIN can access
+  // Role-based protection — only SUPER_ADMIN can access. Wrong role → /403 (not redirect)
   {
     path: "/admin",
     element: (

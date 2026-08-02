@@ -64,12 +64,17 @@ export interface Lesson {
   content?: string // markdown
   order: number
   estimatedMinutes: number
+  readingTimeMinutes?: number
+  difficulty?: Difficulty
   status?: LessonStatus
   isBookmarked?: boolean
   resources?: Resource[]
   roadmapId?: string
   sectionId?: string
   roadmapTitle?: string
+  roadmapSlug?: string
+  sectionTitle?: string
+  moduleTitle?: string
   nextLessonId?: string
   prevLessonId?: string
   createdAt: string
@@ -175,4 +180,53 @@ export interface BookmarkFilters {
   search: string
   sort: 'newest' | 'oldest'
   type: BookmarkType | 'all'
+}
+
+// ─── Practice Questions ──────────────────────────────────────────────────────
+
+export type PracticeQuestionType = 'coding' | 'theory' | 'fill-blank' | 'output'
+
+export interface PracticeQuestion {
+  id: string
+  lessonId: string
+  question: string
+  type: PracticeQuestionType
+  codeSnippet?: string
+  options?: string[]
+  answer: string
+  explanation?: string
+  hint?: string
+  difficulty: Difficulty
+  order: number
+}
+
+// ─── Quiz Questions ──────────────────────────────────────────────────────────
+
+export interface QuizQuestion {
+  id: string
+  lessonId: string
+  question: string
+  options: string[]
+  correctOption: number
+  explanation?: string
+  order: number
+}
+
+export interface QuizSubmission {
+  lessonId: string
+  score: number
+  total: number
+  percentage: number
+  passed: boolean
+  answers: Record<string, number>
+}
+
+// ─── Lesson Notes ────────────────────────────────────────────────────────────
+
+export interface LessonNote {
+  id: string
+  lessonId: string
+  content: string
+  createdAt: string
+  updatedAt: string
 }

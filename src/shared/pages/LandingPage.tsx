@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   BookOpen, Code2, FolderKanban, Briefcase, ArrowRight,
-  Users, Award, Star, CheckCircle2, Zap, Shield, TrendingUp,
+  Zap, Shield, TrendingUp, CheckCircle2, Sparkles,
 } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { Card, CardContent } from '@/shared/components/ui/card'
@@ -30,7 +30,7 @@ const features = [
   {
     icon: Briefcase,
     title: 'Placement Prep',
-    description: 'Mock interviews, aptitude tests, resume builder, and company-specific preparation guides.',
+    description: 'Interviews, aptitude tests, resume builder, and company-specific preparation guides.',
     color: 'bg-green-500/10 text-green-600 dark:text-green-400',
   },
   {
@@ -45,13 +45,6 @@ const features = [
     description: 'Works seamlessly on any device — mobile, tablet, or desktop.',
     color: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
   },
-]
-
-const stats = [
-  { value: '10K+', label: 'Students', icon: Users },
-  { value: '500+', label: 'Problems', icon: Code2 },
-  { value: '50+', label: 'Courses', icon: BookOpen },
-  { value: '95%', label: 'Placement Rate', icon: Award },
 ]
 
 const container = {
@@ -105,7 +98,7 @@ export function LandingPage() {
                 </Button>
               </div>
               <div className="flex items-center justify-center gap-6 mt-8 text-sm text-muted-foreground">
-                {['No credit card required', 'Free forever plan', 'Join 10K+ students'].map((text) => (
+                {['No credit card required', 'Free forever plan', 'Early access now'].map((text) => (
                   <div key={text} className="flex items-center gap-1.5">
                     <CheckCircle2 className="h-4 w-4 text-success" aria-hidden="true" />
                     {text}
@@ -117,30 +110,24 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="py-16 bg-muted/30 px-4 sm:px-6 lg:px-8" aria-label="Platform statistics">
+      {/* Platform Status / Coming Soon Stats */}
+      <section className="py-16 bg-muted/30 px-4 sm:px-6 lg:px-8" aria-label="Platform status">
         <div className="max-w-7xl mx-auto">
           <motion.div
-            variants={container}
-            initial="hidden"
-            whileInView="show"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="grid grid-cols-2 lg:grid-cols-4 gap-6"
+            className="text-center"
           >
-            {stats.map((stat) => {
-              const Icon = stat.icon
-              return (
-                <motion.div key={stat.label} variants={item} className="text-center">
-                  <div className="flex justify-center mb-3">
-                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Icon className="h-6 w-6 text-primary" aria-hidden="true" />
-                    </div>
-                  </div>
-                  <div className="text-3xl font-extrabold text-foreground mb-1">{stat.value}</div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
-                </motion.div>
-              )
-            })}
+            <div className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-background border border-border/60 shadow-sm">
+              <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
+              <span className="text-sm font-medium text-foreground">Platform launching soon</span>
+              <Badge variant="secondary" className="text-xs">Beta</Badge>
+            </div>
+            <p className="mt-4 text-sm text-muted-foreground max-w-xl mx-auto">
+              Real platform metrics and community stats will appear here as we grow. 
+              Be among the first students to join and shape the future of CSE learning.
+            </p>
           </motion.div>
         </div>
       </section>
@@ -188,38 +175,34 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials placeholder */}
-      <section className="py-20 bg-muted/30 px-4 sm:px-6 lg:px-8" aria-label="Testimonials">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
+      {/* Testimonials Coming Soon */}
+      <section className="py-20 bg-muted/30 px-4 sm:px-6 lg:px-8" aria-label="Student stories">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-primary/10 mb-6">
+              <Sparkles className="h-7 w-7 text-primary" aria-hidden="true" />
+            </div>
             <h2 className="text-heading-1 mb-4">What students say</h2>
-            <p className="text-muted-foreground">Testimonials coming soon as we grow our community.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="border-border/60">
-                <CardContent className="p-6">
-                  <div className="flex gap-1 mb-3">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <Star key={s} className="h-4 w-4 fill-amber-400 text-amber-400" aria-hidden="true" />
-                    ))}
-                  </div>
-                  <p className="text-sm text-muted-foreground italic mb-4">
-                    "This platform transformed the way I prepare for placements. Highly recommended!"
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                      S{i}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Student {i}</p>
-                      <p className="text-xs text-muted-foreground">CSE, Batch 2024</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+            <p className="text-muted-foreground text-body mb-8">
+              Student stories and testimonials are coming soon. 
+              Be the first to share your experience once you start your journey with us.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Button onClick={() => navigate('/auth/register')} className="gap-2">
+                Create Your Account
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/dashboard/learning/roadmaps/python">
+                  Explore Python Roadmap
+                </Link>
+              </Button>
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -234,7 +217,7 @@ export function LandingPage() {
             <Shield className="h-12 w-12 text-primary mx-auto mb-6 opacity-80" aria-hidden="true" />
             <h2 className="text-heading-1 mb-4">Ready to start your journey?</h2>
             <p className="text-muted-foreground text-body mb-8">
-              Join thousands of CSE students who are accelerating their careers with our platform.
+              Join CSE students who are accelerating their careers with our platform.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button size="xl" onClick={() => navigate('/auth/register')} className="gap-2 w-full sm:w-auto">

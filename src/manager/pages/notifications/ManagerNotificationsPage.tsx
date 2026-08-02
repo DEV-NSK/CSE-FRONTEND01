@@ -73,7 +73,6 @@ function ComposeTab() {
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
               <option value="">Everyone</option>
               <option value="STUDENT">Students</option>
-              <option value="MENTOR">Mentors</option>
               <option value="MANAGER">Managers</option>
             </select>
           </div>

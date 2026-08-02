@@ -17,8 +17,6 @@ const ROLE_COLORS: Record<string, string> = {
   manager: 'bg-amber-900/40 text-amber-300 border-amber-700/40',
   SUPER_ADMIN: 'bg-red-900/40 text-red-300 border-red-700/40',
   super_admin: 'bg-red-900/40 text-red-300 border-red-700/40',
-  MENTOR: 'bg-purple-900/40 text-purple-300 border-purple-700/40',
-  mentor: 'bg-purple-900/40 text-purple-300 border-purple-700/40',
 }
 
 function Skeleton({ className }: { className?: string }) {
@@ -131,7 +129,6 @@ export default function AdminUsersPage() {
               { label: 'All', value: '' },
               { label: 'Student', value: 'STUDENT' },
               { label: 'Manager', value: 'MANAGER' },
-              { label: 'Mentor', value: 'MENTOR' },
             ].map(({ label, value }) => (
               <button
                 key={label}

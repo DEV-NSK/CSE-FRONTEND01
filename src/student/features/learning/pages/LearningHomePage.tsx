@@ -1,26 +1,27 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  BookOpen, ArrowRight, TrendingUp, Clock, Target,
-  Flame, Award, Bookmark, Search, LayoutGrid,
+  BookOpen, ArrowRight, Clock, Target,
+  Flame, Bookmark, Search, PlayCircle, Award,
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
+import { Card, CardContent } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
-import { Input } from '@/shared/components/ui/input'
 import { PageHeader } from '@/shared/components/common/PageHeader'
 import { ErrorState } from '@/shared/components/feedback/ErrorState'
-import { CategoryCard, RoadmapCard } from '@/student/components/learning/LearningCard'
 import { ContinueLearningCard } from '@/student/components/learning/ContinueLearningCard'
 import { CategoryCardSkeleton, RoadmapCardSkeleton } from '@/student/components/learning/LearningSkeletons'
 import { EmptyLearningState } from '@/student/components/learning/EmptyLearningState'
+import { ProgressRing } from '@/student/components/learning/ProgressRing'
+import { DifficultyBadge } from '@/student/components/learning/DifficultyBadge'
 import {
   useCategories, useRoadmaps, useContinueLearning,
   useLearningStats, useRecentlyViewed, useBookmarks,
 } from '@/shared/hooks/useLearning'
 import { useAuthStore } from '@/shared/store/authStore'
-import { formatDate, debounce } from '@/shared/lib/utils'
+import { debounce } from '@/shared/lib/utils'
+import type { Roadmap } from '@/shared/types/learning'
 
 const container = {
   hidden: { opacity: 0 },
@@ -28,17 +29,56 @@ const container = {
 }
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }
 
+const isPythonCategory = (name: string, slug: string) => {
+  const n = name.toLowerCase()
+  const s = slug.toLowerCase()
+  return n.includes('python') || s.includes('python') || n.includes('programming') || s.includes('programming')
+}
+
+const isPythonRoadmap = (r: { title: string; slug: string; category?: { name: string; slug: string } }) => {
+  const t = r.title.toLowerCase()
+  const s = r.slug.toLowerCase()
+  const cn = r.category?.name?.toLowerCase() ?? ''
+  const cs = r.category?.slug?.toLowerCase() ?? ''
+  return t.includes('python') || s.includes('python') || cn.includes('python') || cs.includes('python')
+}
+
 export function LearningHomePage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const [searchValue, setSearchValue] = useState('')
 
   const { data: categories, isLoading: categoriesLoading, isError: categoriesError } = useCategories()
-  const { data: roadmapsData, isLoading: roadmapsLoading } = useRoadmaps({ limit: 4 })
+  const { data: roadmapsData, isLoading: roadmapsLoading } = useRoadmaps({ limit: 50 })
   const { data: continueLearning } = useContinueLearning()
   const { data: stats } = useLearningStats()
   const { data: recentlyViewed } = useRecentlyViewed(4)
   const { data: bookmarks } = useBookmarks()
+
+  const pythonCategories = useMemo(
+    () => categories?.filter((c) => isPythonCategory(c.name, c.slug)) ?? [],
+    [categories]
+  )
+  const pythonRoadmaps = useMemo(
+    () => roadmapsData?.data?.filter((r) => isPythonRoadmap(r)) ?? [],
+    [roadmapsData]
+  )
+  const pythonRoadmap: Roadmap | undefined = pythonRoadmaps[0]
+
+  const pythonContinueLearning = useMemo(() => {
+    if (!continueLearning) return null
+    if (isPythonRoadmap(continueLearning.roadmap)) return continueLearning
+    return null
+  }, [continueLearning])
+
+  const pythonRecentlyViewed = useMemo(
+    () => recentlyViewed?.filter((r) => r.roadmapTitle?.toLowerCase().includes('python') ?? true) ?? [],
+    [recentlyViewed]
+  )
+  const pythonBookmarks = useMemo(
+    () => bookmarks?.filter((b) => b.roadmapTitle?.toLowerCase().includes('python') ?? b.title.toLowerCase().includes('python') ?? true) ?? [],
+    [bookmarks]
+  )
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleSearch = useCallback(
@@ -70,8 +110,8 @@ export function LearningHomePage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Learning"
-        description="Browse roadmaps, track your progress, and level up your skills."
+        title="Python Learning"
+        description="Master Python from scratch. Structured lessons, practice problems, and quizzes to become a Python pro."
         breadcrumbs={[{ label: 'Learning' }]}
       />
 
@@ -80,50 +120,90 @@ export function LearningHomePage() {
         Skip to content
       </a>
 
-      {/* Hero Banner */}
+      {/* Hero Banner - Python only */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-primary/90 to-secondary/80 p-8 text-white"
+        className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-yellow-500 via-blue-500 to-indigo-600 p-8 md:p-12 text-white"
       >
         <div className="absolute inset-0 opacity-10" aria-hidden="true"
           style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)', backgroundSize: '40px 40px' }}
         />
-        <div className="relative z-10 max-w-2xl">
-          <h2 className="text-2xl font-bold mb-2">
-            Welcome back, {user?.name?.split(' ')[0]}! 📚
+        <div className="relative z-10 max-w-3xl">
+          <Badge className="mb-4 bg-white/20 text-white border-white/30">🐍 Python Programming</Badge>
+          <h2 className="text-3xl md:text-4xl font-bold mb-3">
+            Welcome back, {user?.fullName?.split(' ')[0] ?? 'Student'}!
           </h2>
-          <p className="text-white/80 mb-6 text-sm">
-            {continueLearning
-              ? `You're making great progress on "${continueLearning.roadmap.title}". Keep going!`
-              : 'Start your learning journey today. Pick a roadmap and begin building your skills.'}
+          <p className="text-white/90 mb-6 text-base">
+            {pythonContinueLearning
+              ? `You're ${pythonContinueLearning.progress}% through the Python course. Keep building!`
+              : 'Complete Python learning path — from basics to advanced. Start your journey now.'}
           </p>
 
           {/* Search bar */}
-          <form onSubmit={onSearchSubmit} role="search" aria-label="Search learning content">
-            <div className="relative max-w-md">
+          <form onSubmit={onSearchSubmit} role="search" aria-label="Search learning content" className="mb-6">
+            <div className="relative max-w-lg">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none" aria-hidden="true" />
               <input
                 type="search"
                 value={searchValue}
                 onChange={(e) => onSearchChange(e.target.value)}
-                placeholder="Search roadmaps, lessons, topics..."
+                placeholder="Search Python lessons: Variables, Functions, Loops..."
                 aria-label="Search"
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white/20 border border-white/30 text-white placeholder:text-white/60 text-sm focus:outline-none focus:ring-2 focus:ring-white/50 backdrop-blur"
+                className="w-full pl-9 pr-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder:text-white/60 text-sm focus:outline-none focus:ring-2 focus:ring-white/50 backdrop-blur"
               />
             </div>
           </form>
+
+          <div className="flex flex-wrap gap-3">
+            {pythonRoadmap ? (
+              <Button
+                size="lg"
+                asChild
+                className="bg-white text-blue-600 hover:bg-white/90 gap-2 shadow-lg"
+              >
+                <Link to={`/dashboard/learning/roadmaps/${pythonRoadmap.slug}`}>
+                  <PlayCircle className="h-5 w-5" />
+                  Open Python Course
+                </Link>
+              </Button>
+            ) : (
+              <Button
+                size="lg"
+                asChild
+                className="bg-white text-blue-600 hover:bg-white/90 gap-2 shadow-lg"
+              >
+                <Link to="/dashboard/learning/roadmaps/python">
+                  <PlayCircle className="h-5 w-5" />
+                  Open Python Course
+                </Link>
+              </Button>
+            )}
+            {pythonContinueLearning && (
+              <Button
+                size="lg"
+                variant="outline"
+                asChild
+                className="bg-white/10 border-white/40 text-white hover:bg-white/20 gap-2"
+              >
+                <Link to={`/dashboard/learning/lesson/${pythonContinueLearning.lesson.id}`}>
+                  <ArrowRight className="h-5 w-5" />
+                  Continue Learning
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
       </motion.div>
 
       <div id="main-learning-content" className="space-y-8">
         {/* Continue Learning */}
-        {continueLearning && (
+        {pythonContinueLearning && (
           <section aria-labelledby="continue-heading">
             <div className="flex items-center justify-between mb-4">
               <h2 id="continue-heading" className="text-lg font-semibold text-foreground">Continue Learning</h2>
             </div>
-            <ContinueLearningCard data={continueLearning} />
+            <ContinueLearningCard data={pythonContinueLearning} />
           </section>
         )}
 
@@ -152,66 +232,95 @@ export function LearningHomePage() {
           </motion.div>
         </section>
 
-        {/* Categories */}
-        <section aria-labelledby="categories-heading">
-          <div className="flex items-center justify-between mb-4">
-            <h2 id="categories-heading" className="text-lg font-semibold text-foreground">Browse Categories</h2>
-            <Button variant="ghost" size="sm" asChild className="gap-1 text-xs">
-              <Link to="/dashboard/learning/categories">
-                View all <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </Button>
-          </div>
-
-          {categoriesError ? (
-            <ErrorState title="Couldn't load categories" message="Please refresh the page." />
-          ) : categoriesLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => <CategoryCardSkeleton key={i} />)}
-            </div>
-          ) : !categories?.length ? (
-            <EmptyLearningState variant="categories" />
-          ) : (
-            <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {categories.slice(0, 6).map((cat) => (
-                <motion.div key={cat.id} variants={item}>
-                  <CategoryCard category={cat} />
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
-        </section>
-
-        {/* Popular Roadmaps */}
-        <section aria-labelledby="roadmaps-heading">
-          <div className="flex items-center justify-between mb-4">
-            <h2 id="roadmaps-heading" className="text-lg font-semibold text-foreground">Popular Roadmaps</h2>
-            <Button variant="ghost" size="sm" asChild className="gap-1 text-xs">
-              <Link to="/dashboard/learning/roadmaps">
-                View all <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </Button>
-          </div>
+        {/* Python Course Card - Featured */}
+        <section aria-labelledby="course-heading">
+          <h2 id="course-heading" className="text-lg font-semibold text-foreground mb-4">Your Python Course</h2>
 
           {roadmapsLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[1, 2, 3, 4].map((i) => <RoadmapCardSkeleton key={i} />)}
+            <div className="grid grid-cols-1 gap-4">
+              <RoadmapCardSkeleton />
             </div>
-          ) : !roadmapsData?.data?.length ? (
+          ) : !pythonRoadmap ? (
             <EmptyLearningState variant="roadmaps" />
           ) : (
-            <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {roadmapsData.data.map((roadmap) => (
-                <motion.div key={roadmap.id} variants={item}>
-                  <RoadmapCard roadmap={roadmap} />
-                </motion.div>
-              ))}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl overflow-hidden border border-border shadow-sm bg-gradient-to-br from-card via-card to-primary/[0.02]"
+            >
+              <div className="flex flex-col md:flex-row">
+                {/* Left visual */}
+                <div className="md:w-80 p-6 md:p-8 flex flex-col justify-center bg-gradient-to-br from-yellow-50 via-blue-50 to-indigo-50 dark:from-yellow-950/20 dark:via-blue-950/20 dark:to-indigo-950/20">
+                  <div className="text-6xl mb-4">🐍</div>
+                  <h3 className="text-2xl font-bold mb-2">{pythonRoadmap.title}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">{pythonRoadmap.description}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <DifficultyBadge difficulty={pythonRoadmap.difficulty} />
+                    <Badge variant="outline" className="gap-1">
+                      <Clock className="h-3 w-3" />
+                      {pythonRoadmap.estimatedHours}h
+                    </Badge>
+                    <Badge variant="outline" className="gap-1">
+                      <BookOpen className="h-3 w-3" />
+                      {pythonRoadmap.lessonCount} lessons
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Right progress + CTA */}
+                <div className="flex-1 p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-8">
+                  <div className="flex items-center gap-5">
+                    <ProgressRing progress={pythonRoadmap.progress ?? 0} size={120} strokeWidth={10} />
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Course Progress</p>
+                      <p className="text-lg font-semibold">
+                        {pythonRoadmap.completedLessons ?? 0} / {pythonRoadmap.lessonCount} Lessons
+                      </p>
+                      {pythonRoadmap.progress === 100 ? (
+                        <Badge variant="success" className="mt-2 gap-1">
+                          <Award className="h-3 w-3" /> Completed! Certificate Coming Soon
+                        </Badge>
+                      ) : pythonRoadmap.progress ?? 0 > 0 ? (
+                        <Badge variant="info" className="mt-2">In Progress</Badge>
+                      ) : (
+                        <Badge variant="secondary" className="mt-2">Not Started</Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex-1 flex md:flex-col items-stretch md:items-end gap-3">
+                    <Button
+                      size="lg"
+                      asChild
+                      className="gap-2 flex-1 md:flex-none md:min-w-[200px]"
+                    >
+                      <Link to={`/dashboard/learning/roadmaps/${pythonRoadmap.slug}`}>
+                        <PlayCircle className="h-5 w-5" />
+                        Open Course
+                      </Link>
+                    </Button>
+                    {pythonContinueLearning && (
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        asChild
+                        className="gap-2 flex-1 md:flex-none md:min-w-[200px]"
+                      >
+                        <Link to={`/dashboard/learning/lesson/${pythonContinueLearning.lesson.id}`}>
+                          <ArrowRight className="h-5 w-5" />
+                          Resume
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </motion.div>
           )}
         </section>
 
         {/* Recently Viewed */}
-        {recentlyViewed && recentlyViewed.length > 0 && (
+        {pythonRecentlyViewed.length > 0 && (
           <section aria-labelledby="recent-heading">
             <div className="flex items-center justify-between mb-4">
               <h2 id="recent-heading" className="text-lg font-semibold text-foreground">Recently Viewed</h2>
@@ -222,7 +331,7 @@ export function LearningHomePage() {
               </Button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {recentlyViewed.slice(0, 4).map((item) => (
+              {pythonRecentlyViewed.slice(0, 4).map((item) => (
                 <Card key={item.id} className="hover:shadow-sm transition-shadow">
                   <CardContent className="p-4 flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -243,7 +352,7 @@ export function LearningHomePage() {
         )}
 
         {/* Bookmarks Preview */}
-        {bookmarks && bookmarks.length > 0 && (
+        {pythonBookmarks.length > 0 && (
           <section aria-labelledby="bookmarks-heading">
             <div className="flex items-center justify-between mb-4">
               <h2 id="bookmarks-heading" className="text-lg font-semibold text-foreground flex items-center gap-2">
@@ -257,7 +366,7 @@ export function LearningHomePage() {
               </Button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {bookmarks.slice(0, 3).map((bm) => (
+              {pythonBookmarks.slice(0, 3).map((bm) => (
                 <Card key={bm.id} className="hover:shadow-sm transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
