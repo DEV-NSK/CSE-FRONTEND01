@@ -53,3 +53,28 @@ export function slugify(str: string): string {
     .replace(/--+/g, '-')
     .trim()
 }
+
+/**
+ * Creates a stable, CSS-safe heading ID from a title string.
+ *
+ * Rules:
+ * - Always prefixes with "section-" so the result can never start with a digit
+ *   (CSS selectors like `#1-foo` are invalid; `#section-1-foo` is safe)
+ * - Lowercases the entire string
+ * - Replaces any run of characters that are not a–z, 0–9, or hyphen with a single hyphen
+ * - Strips leading/trailing hyphens from the slug portion
+ *
+ * Examples:
+ *   "Variables"              → "section-variables"
+ *   "1. Easy to Read & Write" → "section-1-easy-to-read-write"
+ *   "For Loops (basics)"    → "section-for-loops-basics"
+ *   "I/O Operations"        → "section-i-o-operations"
+ *   "What is Python?"       → "section-what-is-python"
+ */
+export function createHeadingId(title: string): string {
+  const slug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+  return `section-${slug}`
+}

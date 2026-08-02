@@ -50,7 +50,7 @@ import {
   useBookmarks, useRemoveBookmark,
 } from '@/shared/hooks/useLearning'
 import { useLearningStore } from '@/shared/store/learningStore'
-import { cn, debounce } from '@/shared/lib/utils'
+import { cn, debounce, createHeadingId } from '@/shared/lib/utils'
 import type { Difficulty, QuizQuestion, PracticeQuestion, RoadmapSection } from '@/shared/types/learning'
 
 const MarkdownRenderer = lazy(() => import('@/student/components/learning/MarkdownRenderer'))
@@ -253,13 +253,18 @@ interface TocEntry { id: string; text: string; level: number }
 
 function extractToc(md: string): TocEntry[] {
   const entries: TocEntry[] = []
+  const seenIds = new Map<string, number>()
   const lines = md.split('\n')
   for (const line of lines) {
     const m = line.match(/^(#{1,3}) (.+)$/)
     if (m) {
       const level = m[1].length
       const text = m[2].trim()
-      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+      let id = createHeadingId(text)
+      // Handle duplicate headings by appending a counter
+      const count = seenIds.get(id) ?? 0
+      seenIds.set(id, count + 1)
+      if (count > 0) id = `${id}-${count}`
       entries.push({ id, text, level })
     }
   }
@@ -273,6 +278,7 @@ type ParsedSection = { heading: string | null; level: number; body: string; id: 
 function parseSections(md: string): ParsedSection[] {
   const lines = md.split('\n')
   const sections: ParsedSection[] = []
+  const seenIds = new Map<string, number>()
   let current: ParsedSection = { heading: null, level: 0, body: '', id: '' }
 
   for (const line of lines) {
@@ -280,11 +286,16 @@ function parseSections(md: string): ParsedSection[] {
     if (h) {
       if (current.heading !== null || current.body.trim()) sections.push(current)
       const text = h[2].trim()
+      let id = createHeadingId(text)
+      // Match the same dedup logic as extractToc so IDs stay in sync
+      const count = seenIds.get(id) ?? 0
+      seenIds.set(id, count + 1)
+      if (count > 0) id = `${id}-${count}`
       current = {
         heading: text,
         level: h[1].length,
         body: '',
-        id: text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+        id,
       }
     } else {
       current.body += (current.body ? '\n' : '') + line
@@ -350,8 +361,9 @@ function TableOfContents({ entries, scrollRef }: { entries: TocEntry[]; scrollRe
       const scrollTop = el.scrollTop + 120
       let current = entries[0]?.id ?? ''
       for (const entry of entries) {
-        const dom = el.querySelector(`#${entry.id}`)
-        if (dom && (dom as HTMLElement).offsetTop <= scrollTop) current = entry.id
+        // Use getElementById — safe for any id including those starting with digits
+        const dom = document.getElementById(entry.id)
+        if (dom && dom.offsetTop <= scrollTop) current = entry.id
       }
       setActive(current)
     }
@@ -371,10 +383,8 @@ function TableOfContents({ entries, scrollRef }: { entries: TocEntry[]; scrollRe
           <li key={e.id}>
             <button
               onClick={() => {
-                const el = scrollRef.current
-                if (!el) return
-                const dom = el.querySelector(`#${e.id}`)
-                if (dom) (dom as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'start' })
+                const dom = document.getElementById(e.id)
+                if (dom) dom.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }}
               className={cn(
                 'w-full text-left text-xs py-1.5 px-2 rounded-md transition-all',
