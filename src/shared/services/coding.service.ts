@@ -21,12 +21,39 @@ import type {
   Language,
 } from '@/shared/types/coding'
 
+/**
+ * Strip filter values that mean "no filter" before sending to the API.
+ * "all", "", null, undefined, and empty arrays are all removed.
+ */
+function sanitizeFilters(filters?: Partial<ProblemFilters>): Record<string, unknown> {
+  if (!filters) return {}
+  const clean: Record<string, unknown> = {}
+  for (const [key, val] of Object.entries(filters)) {
+    if (val === undefined || val === null || val === '' || val === 'all') continue
+    if (Array.isArray(val)) {
+      // tagIds → send first element as tagId (backend accepts single tagId)
+      if (key === 'tagIds') {
+        if (val.length > 0) clean['tagId'] = val[0]
+        continue
+      }
+      if (val.length === 0) continue
+    }
+    // difficulty → backend Prisma enum is uppercase
+    if (key === 'difficulty') {
+      clean[key] = (val as string).toUpperCase()
+      continue
+    }
+    clean[key] = val
+  }
+  return clean
+}
+
 export const codingService = {
   // ─── Problems ──────────────────────────────────────────────────────────────
 
   getProblems: (filters?: Partial<ProblemFilters>) =>
     axiosInstance.get<ApiResponse<PaginatedResponse<ProblemListItem>>>('/coding/problems', {
-      params: filters,
+      params: sanitizeFilters(filters),
     }),
 
   getProblemBySlug: (slug: string) =>

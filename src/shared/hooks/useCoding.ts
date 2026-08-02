@@ -38,7 +38,23 @@ export const codingKeys = {
 export function useProblems(filters?: Partial<ProblemFilters>) {
   return useQuery({
     queryKey: codingKeys.problems(filters),
-    queryFn: () => codingService.getProblems(filters).then((r) => r.data.data),
+    queryFn: async () => {
+      const res = await codingService.getProblems(filters)
+      const raw = res.data?.data
+      // Normalise to a safe paginated shape regardless of API response format
+      if (!raw || typeof raw !== 'object') {
+        return { data: [], total: 0, page: 1, limit: 20, totalPages: 0, hasNext: false, hasPrevious: false }
+      }
+      return {
+        data: Array.isArray((raw as any).data) ? (raw as any).data : [],
+        total: (raw as any).total ?? 0,
+        page: (raw as any).page ?? 1,
+        limit: (raw as any).limit ?? 20,
+        totalPages: (raw as any).totalPages ?? 0,
+        hasNext: (raw as any).hasNext ?? false,
+        hasPrevious: (raw as any).hasPrevious ?? false,
+      }
+    },
     staleTime: 1000 * 60 * 5,
     placeholderData: (prev) => prev,
   })

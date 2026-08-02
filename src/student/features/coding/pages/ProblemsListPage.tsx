@@ -76,7 +76,9 @@ export function ProblemsListPage() {
     limit: PAGE_SIZE,
   })
 
-  const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 1
+  // Always derive a safe list — never call .map() on a potentially non-array value
+  const problems = Array.isArray(data?.data) ? data.data : []
+  const totalPages = data?.totalPages ?? (data?.total ? Math.ceil(data.total / PAGE_SIZE) : 1)
 
   const hasActiveFilters =
     problemFilters.difficulty !== 'all' ||
@@ -238,7 +240,7 @@ export function ProblemsListPage() {
       {/* Results count */}
       {data && (
         <p className="text-sm text-muted-foreground" aria-live="polite">
-          {data.total} problem{data.total !== 1 ? 's' : ''} found
+          {data.total ?? 0} problem{(data.total ?? 0) !== 1 ? 's' : ''} found
         </p>
       )}
 
@@ -259,7 +261,7 @@ export function ProblemsListPage() {
             ))}
           </div>
         )
-      ) : !data?.data?.length ? (
+      ) : problems.length === 0 ? (
         <EmptyState
           icon={<Code2 className="h-12 w-12" />}
           title="No problems found"
@@ -271,7 +273,7 @@ export function ProblemsListPage() {
           }
         />
       ) : problemsViewMode === 'table' ? (
-        <ProblemTable problems={data.data} />
+        <ProblemTable problems={problems} />
       ) : (
         <motion.div
           variants={container}
@@ -279,7 +281,7 @@ export function ProblemsListPage() {
           animate="show"
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
         >
-          {data.data.map((prob) => (
+          {problems.map((prob) => (
             <motion.div key={prob.id} variants={item}>
               <ProblemCard problem={prob} />
             </motion.div>
@@ -288,7 +290,7 @@ export function ProblemsListPage() {
       )}
 
       {/* Pagination */}
-      {data && data.totalPages > 1 && (
+      {data && totalPages > 1 && (
         <div className="flex items-center justify-center gap-3 pt-2" role="navigation" aria-label="Pagination">
           <Button
             variant="outline"

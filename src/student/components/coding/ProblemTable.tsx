@@ -13,8 +13,10 @@ interface ProblemTableProps {
   className?: string
 }
 
-export function ProblemTable({ problems, className }: ProblemTableProps) {
+export function ProblemTable({ problems: problemsProp, className }: ProblemTableProps) {
   const { mutate: toggleFavorite, isPending } = useToggleFavorite()
+  // Guard: always iterate an array, never crash on undefined/null
+  const problems = Array.isArray(problemsProp) ? problemsProp : []
 
   return (
     <div className={cn('overflow-x-auto rounded-lg border border-border', className)}>

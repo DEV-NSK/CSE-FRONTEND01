@@ -40,6 +40,12 @@ export function CodingHomePage() {
   const { data: favoritesData } = useFavorites({ limit: 4 })
   const { data: analytics } = useCodingAnalytics()
 
+  // Defensive: ensure array types before rendering
+  const recommendedList = Array.isArray(recommended) ? recommended : []
+  const recentlySolvedList = Array.isArray(recentlySolved) ? recentlySolved : []
+  const continueSolvingList = Array.isArray(continueSolving) ? continueSolving : []
+  const favoritesList = Array.isArray(favoritesData?.data) ? favoritesData!.data : []
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleSearch = useCallback(
     debounce((q: string) => {
@@ -129,8 +135,8 @@ export function CodingHomePage() {
             Welcome back, {user?.fullName?.split(' ')[0] ?? 'there'}! 🚀
           </h2>
           <p className="text-white/80 mb-6 text-sm">
-            {continueSolving && continueSolving.length > 0
-              ? `You have ${continueSolving.length} problem${continueSolving.length > 1 ? 's' : ''} in progress. Keep going!`
+            {continueSolvingList && continueSolvingList.length > 0
+              ? `You have ${continueSolvingList.length} problem${continueSolvingList.length > 1 ? 's' : ''} in progress. Keep going!`
               : 'Start solving problems and build your algorithmic thinking skills.'}
           </p>
 
@@ -171,7 +177,7 @@ export function CodingHomePage() {
         </section>
 
         {/* Continue Solving */}
-        {continueSolving && continueSolving.length > 0 && (
+        {continueSolvingList.length > 0 && (
           <section aria-labelledby="continue-heading">
             <div className="flex items-center justify-between mb-4">
               <h2 id="continue-heading" className="text-lg font-semibold text-foreground">
@@ -179,7 +185,7 @@ export function CodingHomePage() {
               </h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {continueSolving.map((prob) => (
+              {continueSolvingList.map((prob) => (
                 <Card key={prob.id} className="hover:shadow-sm transition-shadow">
                   <CardContent className="p-4 flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -238,7 +244,7 @@ export function CodingHomePage() {
         </section>
 
         {/* Recently Solved */}
-        {recentlySolved && recentlySolved.length > 0 && (
+        {recentlySolvedList.length > 0 && (
           <section aria-labelledby="recent-solved-heading">
             <div className="flex items-center justify-between mb-4">
               <h2 id="recent-solved-heading" className="text-lg font-semibold text-foreground">
@@ -251,7 +257,7 @@ export function CodingHomePage() {
               </Button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {recentlySolved.slice(0, 5).map((prob) => (
+              {recentlySolvedList.slice(0, 5).map((prob) => (
                 <Card key={prob.id} className="hover:shadow-sm transition-shadow">
                   <CardContent className="p-3 flex items-center gap-3">
                     <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" aria-hidden="true" />
@@ -292,7 +298,7 @@ export function CodingHomePage() {
                 <ProblemCardSkeleton key={i} />
               ))}
             </div>
-          ) : !recommended?.length ? (
+          ) : recommendedList.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
                 <BookOpen className="h-10 w-10 text-muted-foreground/50 mx-auto mb-3" />
@@ -309,7 +315,7 @@ export function CodingHomePage() {
               animate="show"
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
             >
-              {recommended.map((prob) => (
+              {recommendedList.map((prob) => (
                 <motion.div key={prob.id} variants={item}>
                   <ProblemCard problem={prob} />
                 </motion.div>
@@ -319,7 +325,7 @@ export function CodingHomePage() {
         </section>
 
         {/* Favorite Problems */}
-        {favoritesData && favoritesData.data && favoritesData.data.length > 0 && (
+        {favoritesList.length > 0 && (
           <section aria-labelledby="favorites-heading">
             <div className="flex items-center justify-between mb-4">
               <h2 id="favorites-heading" className="text-lg font-semibold text-foreground">
@@ -332,7 +338,7 @@ export function CodingHomePage() {
               </Button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {favoritesData.data.slice(0, 3).map((fav) => (
+              {favoritesList.slice(0, 3).map((fav) => (
                 <ProblemCard key={fav.id} problem={fav.problem} />
               ))}
             </div>
