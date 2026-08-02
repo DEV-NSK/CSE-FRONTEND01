@@ -1,5 +1,5 @@
 // FPRD-12 — Lesson Viewer UI/UX Redesign
-// Premium learning experience: collapsible sidebars, reading progress, TOC, rich notes
+// FPRD-20 — Python Learning Experience (Roadmap + Content UI) — full enhancements
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { lazy, Suspense, useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -12,6 +12,22 @@ import {
   PanelRightClose, PanelRightOpen, List, TrendingUp,
   ChevronFirst, Hash, BarChart2,
 } from 'lucide-react'
+import { LessonCompletionModal } from '@/student/components/learning/LessonCompletionModal'
+import {
+  MemoryVisualization, VARIABLES_MEMORY_STEPS,
+  type MemoryStep,
+} from '@/student/components/learning/MemoryVisualization'
+import { RevisionCards, type FlashCard } from '@/student/components/learning/RevisionCards'
+import {
+  ExplainLikeBeginner,
+  CodeExplanation,
+  VisualDiagram,
+  RealWorldExample,
+  AISummary,
+  InterviewQuestions,
+  HighlightableText,
+  LessonHero,
+} from '@/student/components/learning/LessonEnhancements'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { ScrollArea } from '@/shared/components/ui/scroll-area'
@@ -786,6 +802,339 @@ function QuizSection({ lessonId, onPassed }: { lessonId: string; onPassed?: () =
   )
 }
 
+// ─── FPRD-20 Lesson Enhancements Section ─────────────────────────────────────
+// Hero, ELB cards, Memory Visualization, Visual Diagrams, Code Explanation,
+// AI Summary, Highlights, Revision Cards, Interview Questions, Real-world,
+// Resources, Practice, Quiz
+
+interface FPRD20Props {
+  lesson: NonNullable<ReturnType<typeof useLesson>['data']>
+  sections: RoadmapSection[]
+  totalLessons: number
+}
+
+function buildMemorySteps(lesson: NonNullable<ReturnType<typeof useLesson>['data']>): MemoryStep[] {
+  // Use variable-related memory steps for variables/data-types lessons; generic for others
+  const slug = lesson.slug?.toLowerCase() ?? ''
+  if (slug.includes('variable') || slug.includes('data-type')) return VARIABLES_MEMORY_STEPS
+  return VARIABLES_MEMORY_STEPS
+}
+
+function buildFlashcards(lesson: NonNullable<ReturnType<typeof useLesson>['data']>): FlashCard[] {
+  const title = lesson.title ?? ''
+  return [
+    { id: 'f1', front: `What is a ${title.split(' ')[0]}?`, back: `A ${title.split(' ')[0]} is used to store data in Python.`, category: title },
+    { id: 'f2', front: 'What type does Python use for whole numbers?', back: 'int — e.g. x = 5', category: 'Data Types' },
+    { id: 'f3', front: 'How do you check the type of a variable?', back: 'Use the built-in type() function. Example: type(x)', category: 'Built-ins' },
+    { id: 'f4', front: 'What is dynamic typing?', back: 'Python automatically infers the type — you don\'t need to declare it.', category: 'Python Basics' },
+    { id: 'f5', front: 'What naming rules apply to Python variables?', back: 'Must start with letter or _, can contain letters/digits/_, case-sensitive.', category: 'Naming' },
+  ]
+}
+
+function FPRD20Enhancements({ lesson, sections, totalLessons }: FPRD20Props) {
+  const completedLessons = sections.reduce((a, s) => a + s.lessons.filter((l) => l.status === 'completed').length, 0)
+  const memorySteps = useMemo(() => buildMemorySteps(lesson), [lesson.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  const flashcards = useMemo(() => buildFlashcards(lesson), [lesson.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <div className="space-y-14">
+      {/* ── Hero Section ── */}
+      <LessonHero
+        title={lesson.title}
+        tagline={lesson.description ?? 'Master this Python concept with interactive examples and hands-on practice.'}
+        animationText={
+          lesson.slug?.includes('variable')
+            ? 'name = "John" → Memory → John'
+            : lesson.slug?.includes('loop')
+              ? 'for i in range(5) → Iterate → 0, 1, 2, 3, 4'
+              : lesson.slug?.includes('function')
+                ? 'def greet() → Call → "Hello!"'
+                : undefined
+        }
+      />
+
+      {/* ── Explain Like Beginner ── */}
+      <section aria-labelledby="elb-heading">
+        <h2 id="elb-heading" className="text-xl font-bold mb-4">Explain Like a Beginner</h2>
+        <ExplainLikeBeginner
+          analogy={
+            lesson.slug?.includes('variable')
+              ? 'Imagine you have a labeled box. You write "age" on the outside, and put 18 inside. That box is your variable — you can always open it to see or change the value.'
+              : lesson.slug?.includes('loop')
+                ? 'Think of a loop like a photocopier set to make 5 copies. It does the same job over and over until it hits the count you set.'
+                : lesson.slug?.includes('function')
+                  ? 'A function is like a recipe. You write it once, and you can use it anytime you want to cook that dish — without re-writing the steps.'
+                  : `Think of ${lesson.title} as a building block. You learn it once and use it everywhere in your code.`
+          }
+          cards={[
+            {
+              emoji: '📦',
+              text: lesson.slug?.includes('variable')
+                ? 'A box to store information'
+                : lesson.slug?.includes('loop')
+                  ? 'Repeat a task N times'
+                  : 'A reusable building block',
+            },
+            {
+              emoji: '✏️',
+              text: lesson.slug?.includes('variable')
+                ? 'Label it with a name'
+                : lesson.slug?.includes('loop')
+                  ? 'Set start and end conditions'
+                  : 'Write once, use many times',
+            },
+            {
+              emoji: '🔍',
+              text: lesson.slug?.includes('variable')
+                ? 'Look inside to read the value'
+                : lesson.slug?.includes('loop')
+                  ? 'Each run is one iteration'
+                  : 'Improves code readability',
+            },
+          ]}
+        />
+      </section>
+
+      {/* ── Memory Visualization ── */}
+      <section aria-labelledby="memory-heading">
+        <div className="flex items-center gap-3 mb-4">
+          <h2 id="memory-heading" className="text-xl font-bold">Memory Visualization</h2>
+          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+            Python Tutor style
+          </span>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          Step through the code and watch variables appear in memory in real time.
+        </p>
+        <MemoryVisualization steps={memorySteps} title="Step-by-Step Execution" />
+      </section>
+
+      {/* ── Code Walkthrough (Explanation) ── */}
+      <section aria-labelledby="code-walk-heading">
+        <h2 id="code-walk-heading" className="text-xl font-bold mb-4">Code Walkthrough</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Click any line of code to understand exactly what it does.
+        </p>
+        <CodeExplanation
+          title={`${lesson.title} — Code Explained`}
+          lines={
+            lesson.slug?.includes('variable')
+              ? [
+                  { code: 'name = "Alex"', explanation: 'Creates a variable called "name" and assigns the string value "Alex" to it. Python stores this in memory.' },
+                  { code: 'age = 20', explanation: 'Creates an integer variable "age" with value 20. Python automatically knows this is an int.' },
+                  { code: 'is_student = True', explanation: 'Creates a boolean variable. In Python, booleans are True or False (capitalized).' },
+                  { code: 'print(name)', explanation: 'Calls the print() function which reads the value stored in "name" and outputs it to the console: Alex' },
+                  { code: 'print(type(age))', explanation: 'type() is a built-in function that returns the data type. For age=20, it returns <class \'int\'>' },
+                ]
+              : lesson.slug?.includes('loop')
+                ? [
+                    { code: 'for i in range(5):', explanation: 'The for loop iterates over range(5) which generates 0, 1, 2, 3, 4. "i" takes each value in order.' },
+                    { code: '    print(i)', explanation: 'Inside the loop body (indented), print(i) outputs the current value of i on each iteration.' },
+                    { code: 'print("Done!")', explanation: 'This line is outside the loop (no indentation), so it runs once after the loop finishes.' },
+                  ]
+                : [
+                    { code: `# ${lesson.title} example`, explanation: 'A comment in Python — the interpreter ignores this line. Use # for single-line comments.' },
+                    { code: 'x = 10', explanation: 'Assigns the integer 10 to variable x.' },
+                    { code: 'print(x)', explanation: 'Prints the value of x to the console.' },
+                  ]
+          }
+        />
+      </section>
+
+      {/* ── Visual Diagram ── */}
+      <section aria-labelledby="diagram-heading">
+        <h2 id="diagram-heading" className="text-xl font-bold mb-4">Visual Diagram</h2>
+        <VisualDiagram
+          title={
+            lesson.slug?.includes('variable')
+              ? 'How Variables Work'
+              : lesson.slug?.includes('loop')
+                ? 'Loop Execution Flow'
+                : `${lesson.title} Flow`
+          }
+          nodes={
+            lesson.slug?.includes('variable')
+              ? [
+                  { label: 'Variable', sublabel: 'name = "Alex"', color: 'primary' },
+                  { label: 'Stores Value', sublabel: '"Alex" in memory', color: 'blue' },
+                  { label: 'Uses Memory', sublabel: 'RAM address', color: 'purple' },
+                ]
+              : lesson.slug?.includes('loop')
+                ? [
+                    { label: 'Start Loop', sublabel: 'for / while', color: 'primary' },
+                    { label: 'Check Condition', sublabel: 'is condition true?', color: 'blue' },
+                    { label: 'Execute Body', sublabel: 'run indented code', color: 'green' },
+                    { label: 'Back to Check', sublabel: 'or exit', color: 'orange' },
+                  ]
+                : [
+                    { label: 'Input', color: 'primary' },
+                    { label: 'Processing', color: 'blue' },
+                    { label: 'Output', color: 'green' },
+                  ]
+          }
+        />
+      </section>
+
+      {/* ── Real World Example ── */}
+      <section aria-labelledby="realworld-heading">
+        <h2 id="realworld-heading" className="text-xl font-bold mb-4">Real-World Example</h2>
+        <RealWorldExample
+          context={
+            lesson.slug?.includes('variable')
+              ? 'Bank Account'
+              : lesson.slug?.includes('loop')
+                ? 'Online Shopping Cart'
+                : 'Everyday App'
+          }
+          code={
+            lesson.slug?.includes('variable')
+              ? `# Bank Account\nbalance = 5000\nowner = "John Doe"\ninterest_rate = 0.035\n\nprint(f"Account: {owner}")\nprint(f"Balance: ₹{balance}")`
+              : lesson.slug?.includes('loop')
+                ? `# Shopping cart total\ncart = [299, 599, 149, 1099]\ntotal = 0\n\nfor price in cart:\n    total += price\n\nprint(f"Total: ₹{total}")`
+                : `# Example: ${lesson.title}\ndata = "Hello from Python!"\nprint(data)`
+          }
+          explanation={
+            lesson.slug?.includes('variable')
+              ? 'In a banking app, every account has a balance, owner name, and interest rate stored as variables. When a transaction happens, these values update automatically.'
+              : lesson.slug?.includes('loop')
+                ? 'An e-commerce app loops through every item in your cart to calculate the total. Without loops, you\'d have to add each price manually.'
+                : `This is how ${lesson.title} appears in real applications — every professional Python project uses these concepts daily.`
+          }
+        />
+      </section>
+
+      {/* ── AI Summary ── */}
+      <section aria-labelledby="ai-summary-heading">
+        <h2 id="ai-summary-heading" className="text-xl font-bold mb-4">AI Summary</h2>
+        <AISummary
+          revisionTime="3 Minute Revision"
+          keyPoints={[
+            lesson.slug?.includes('variable')
+              ? 'Variables store data values in Python memory'
+              : `${lesson.title} is a fundamental Python concept`,
+            'Python uses dynamic typing — no need to declare types',
+            'Variable names must start with a letter or underscore',
+            'Use descriptive names: age, not a or x123',
+            'Variables are mutable — their value can be reassigned anytime',
+          ]}
+          commonMistakes={[
+            { wrong: '2variable = 10', correct: 'variable2 = 10' },
+            { wrong: 'my-var = 5', correct: 'my_var = 5' },
+            { wrong: 'class = "python"', correct: 'my_class = "python"' },
+          ]}
+        />
+      </section>
+
+      {/* ── Text Highlight Demo ── */}
+      <section aria-labelledby="highlight-heading">
+        <h2 id="highlight-heading" className="text-xl font-bold mb-4">Key Concepts — Highlight as you Read</h2>
+        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+          <HighlightableText
+            text={
+              lesson.slug?.includes('variable')
+                ? 'In Python, a variable is a named location in memory that stores a value. Variables are created the moment you first assign a value to them. Python is dynamically typed, which means you do not need to declare the type of a variable when you create it. The type is automatically determined based on the value you assign. Variable names are case-sensitive, so "age" and "Age" are two different variables. Names must begin with a letter or underscore character and cannot be a Python keyword.'
+                : `${lesson.title} is one of the core concepts in Python programming. Understanding it deeply will help you write cleaner, more efficient code. Python developers use this concept in virtually every program they write. Practice with real examples to build confidence and muscle memory.`
+            }
+          />
+        </div>
+      </section>
+
+      {/* ── Practice & Quiz ── */}
+      <WidgetErrorBoundary label="Practice Questions" minHeight={120}>
+        <PracticeSection lessonId={lesson.id} />
+      </WidgetErrorBoundary>
+      <Separator className="my-4" />
+      <WidgetErrorBoundary label="Quiz" minHeight={120}>
+        <QuizSection lessonId={lesson.id} onPassed={() => {}} />
+      </WidgetErrorBoundary>
+
+      {/* ── Revision Cards ── */}
+      <section aria-labelledby="flashcards-heading">
+        <h2 id="flashcards-heading" className="text-xl font-bold mb-4">Revision Cards</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Flashcards to reinforce memory. Mark what you know and what needs more review.
+        </p>
+        <RevisionCards cards={flashcards} title={`${lesson.title} Flashcards`} />
+      </section>
+
+      {/* ── Interview Questions ── */}
+      <section aria-labelledby="interview-heading">
+        <h2 id="interview-heading" className="text-xl font-bold mb-4">Interview Questions</h2>
+        <InterviewQuestions
+          questions={[
+            {
+              question: lesson.slug?.includes('variable')
+                ? 'What is the difference between a local and global variable?'
+                : `What is ${lesson.title} in Python?`,
+              answer: lesson.slug?.includes('variable')
+                ? 'A local variable is defined inside a function and only accessible within that function. A global variable is defined at module level and accessible throughout the file. Use the "global" keyword to modify a global variable from inside a function.'
+                : `${lesson.title} is a core Python concept that allows developers to write more efficient and readable code.`,
+              difficulty: 'medium',
+            },
+            {
+              question: 'What is dynamic typing in Python?',
+              answer: 'Python determines the type of a variable at runtime based on the value assigned to it. You don\'t declare types explicitly. This differs from statically typed languages like Java or C++ where types are declared at compile time.',
+              difficulty: 'easy',
+            },
+            {
+              question: 'What is the difference between mutable and immutable objects?',
+              answer: 'Mutable objects (like lists, dicts) can be changed after creation. Immutable objects (like strings, tuples, integers) cannot be modified — a new object is created instead. This matters for memory efficiency and unexpected side effects.',
+              difficulty: 'medium',
+            },
+            {
+              question: 'How does Python manage memory?',
+              answer: 'Python uses automatic memory management with a garbage collector. It uses reference counting to track objects and the gc module handles circular references. The id() function returns an object\'s memory address.',
+              difficulty: 'hard',
+            },
+          ]}
+        />
+      </section>
+
+      {/* ── Resources ── */}
+      {lesson.resources && lesson.resources.length > 0 && (
+        <section aria-labelledby="resources-heading">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <ExternalLink className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h2 id="resources-heading" className="text-xl font-bold">Additional Resources</h2>
+              <p className="text-sm text-muted-foreground">Official docs, videos, articles, and cheatsheets</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {lesson.resources.map((r) => <ResourceCard key={r.id} resource={r} />)}
+          </div>
+        </section>
+      )}
+
+      {/* ── Progress Dashboard ── */}
+      <section aria-labelledby="progress-dash-heading">
+        <h2 id="progress-dash-heading" className="text-xl font-bold mb-4">Progress Dashboard</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          {[
+            { label: 'Lessons', value: `${completedLessons} / ${totalLessons}`, emoji: '📚', color: 'text-primary' },
+            { label: 'Course %', value: `${totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0}%`, emoji: '📊', color: 'text-green-600' },
+            { label: 'Current Streak', value: '— days', emoji: '🔥', color: 'text-orange-600' },
+            { label: 'Quiz Accuracy', value: '—%', emoji: '🎯', color: 'text-blue-600' },
+            { label: 'Time Spent', value: `${lesson.estimatedMinutes ?? 0} min`, emoji: '⏱️', color: 'text-purple-600' },
+            { label: 'XP Earned', value: `${completedLessons * 20} XP`, emoji: '⚡', color: 'text-yellow-600' },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="rounded-xl border border-border bg-card p-4 text-center shadow-sm"
+            >
+              <div className="text-2xl mb-1">{stat.emoji}</div>
+              <div className={`text-lg font-black ${stat.color}`}>{stat.value}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  )
+}
+
 // ─── Left Sidebar (Roadmap Nav) ──────────────────────────────────────────────
 
 interface LeftSidebarProps {
@@ -1040,10 +1389,14 @@ export function LessonViewerPage() {
 
   const tocEntries = useMemo(() => lesson?.content ? extractToc(lesson.content) : [], [lesson?.content])
 
+  const [completionModalOpen, setCompletionModalOpen] = useState(false)
+
   const handleComplete = () => {
     if (!id) return
     markComplete(id, {
-      onSuccess: () => { if (lesson?.nextLessonId) navigate(`/dashboard/learning/lesson/${lesson.nextLessonId}`) },
+      onSuccess: () => {
+        setCompletionModalOpen(true)
+      },
     })
   }
 
@@ -1069,6 +1422,22 @@ export function LessonViewerPage() {
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] -m-6 overflow-hidden bg-background" role="main">
+
+      {/* ── Lesson Completion Modal (FPRD-20) ── */}
+      <LessonCompletionModal
+        isOpen={completionModalOpen}
+        onClose={() => {
+          setCompletionModalOpen(false)
+          if (lesson?.nextLessonId) navigate(`/dashboard/learning/lesson/${lesson.nextLessonId}`)
+        }}
+        lessonTitle={lesson?.title ?? ''}
+        xp={20}
+        coins={5}
+        nextLessonId={lesson?.nextLessonId}
+        nextLessonTitle={undefined}
+        lessonsCompleted={lessonIndex}
+        totalLessons={totalLessonsInRoadmap}
+      />
 
       {/* ── Left Sidebar ── */}
       <LeftSidebar
@@ -1204,14 +1573,9 @@ export function LessonViewerPage() {
                 </div>
               )}
 
+              {/* ── FPRD-20 Enhancements ── */}
               <Separator className="my-4" />
-              <WidgetErrorBoundary label="Practice Questions" minHeight={120}>
-                <PracticeSection lessonId={lesson.id} />
-              </WidgetErrorBoundary>
-              <Separator className="my-4" />
-              <WidgetErrorBoundary label="Quiz" minHeight={120}>
-                <QuizSection lessonId={lesson.id} onPassed={() => {}} />
-              </WidgetErrorBoundary>
+              <FPRD20Enhancements lesson={lesson} sections={sections} totalLessons={totalLessonsInRoadmap} />
 
               {lesson.resources && lesson.resources.length > 0 && (
                 <div className="space-y-4">

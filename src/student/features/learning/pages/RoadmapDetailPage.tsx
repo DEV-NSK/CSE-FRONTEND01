@@ -1,17 +1,19 @@
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  Clock, BookOpen, ArrowRight, Share2, Tag, Calendar,
+  Clock, BookOpen, ArrowRight, Share2, Tag, Calendar, Map,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/components/ui/tabs'
 import { PageHeader } from '@/shared/components/common/PageHeader'
 import { ErrorState } from '@/shared/components/feedback/ErrorState'
 import { ProgressRing } from '@/student/components/learning/ProgressRing'
 import { DifficultyBadge } from '@/student/components/learning/DifficultyBadge'
 import { BookmarkButton } from '@/student/components/learning/BookmarkButton'
 import { RoadmapTimeline } from '@/student/components/learning/RoadmapTimeline'
+import { PythonRoadmapVisual } from '@/student/components/learning/PythonRoadmapVisual'
 import { RoadmapDetailSkeleton } from '@/student/components/learning/LearningSkeletons'
 import { useRoadmap, useToggleRoadmapBookmark } from '@/shared/hooks/useLearning'
 import { formatDate } from '@/shared/lib/utils'
@@ -125,22 +127,47 @@ export function RoadmapDetailPage() {
             </Card>
           </motion.div>
 
-          {/* Timeline */}
+          {/* Roadmap View (visual + timeline tabs) */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
             <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-base">Learning Path</CardTitle>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">Learning Path</CardTitle>
+                </div>
               </CardHeader>
               <CardContent className="pt-0">
                 {sections.length > 0 ? (
-                  <RoadmapTimeline
-                    sections={sections}
-                    currentLessonId={currentLessonId}
-                  />
+                  <Tabs defaultValue="visual">
+                    <TabsList className="mb-4">
+                      <TabsTrigger value="visual" className="gap-1.5 text-xs">
+                        <Map className="h-3.5 w-3.5" />
+                        Visual Roadmap
+                      </TabsTrigger>
+                      <TabsTrigger value="list" className="gap-1.5 text-xs">
+                        <BookOpen className="h-3.5 w-3.5" />
+                        List View
+                      </TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="visual">
+                      <PythonRoadmapVisual
+                        sections={sections}
+                        currentLessonId={currentLessonId}
+                        completedLessons={completedLessons}
+                        totalLessons={roadmap.lessonCount}
+                        progress={progress}
+                      />
+                    </TabsContent>
+                    <TabsContent value="list">
+                      <RoadmapTimeline
+                        sections={sections}
+                        currentLessonId={currentLessonId}
+                      />
+                    </TabsContent>
+                  </Tabs>
                 ) : (
                   <p className="text-sm text-muted-foreground text-center py-8">
                     No sections available yet.
