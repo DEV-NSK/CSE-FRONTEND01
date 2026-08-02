@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Code2, ArrowRight, Target, Flame, TrendingUp, Award,
-  CheckCircle2, Search, BookOpen,
+  CheckCircle2, Search, BookOpen, Library, Star,
+  MessageSquare, BarChart2, Calendar, Trophy,
 } from 'lucide-react'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
@@ -22,6 +23,18 @@ import {
 } from '@/shared/hooks/useCoding'
 import { useAuthStore } from '@/shared/store/authStore'
 import { debounce } from '@/shared/lib/utils'
+import { cn } from '@/shared/lib/utils'
+
+// ─── Coding sub-navigation (Phase 1) ─────────────────────────────────────────
+const codingSubNav = [
+  { label: 'Home',          href: '/dashboard/coding',               icon: Code2 },
+  { label: 'Question Bank', href: '/dashboard/coding/question-bank', icon: Library },
+  { label: 'Daily Challenge',href: '/dashboard/coding/daily',        icon: Calendar },
+  { label: 'Contests',      href: '/dashboard/coding/contests',      icon: Trophy },
+  { label: 'Favorites',     href: '/dashboard/coding/favorites',     icon: Star },
+  { label: 'Discussions',   href: '/dashboard/coding/discussions',   icon: MessageSquare },
+  { label: 'Analytics',     href: '/dashboard/coding/analytics',     icon: BarChart2 },
+]
 
 const container = {
   hidden: { opacity: 0 },
@@ -31,6 +44,7 @@ const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }
 
 export function CodingHomePage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuthStore()
   const [searchValue, setSearchValue] = useState('')
 
@@ -106,6 +120,36 @@ export function CodingHomePage() {
         breadcrumbs={[{ label: 'Coding' }]}
       />
 
+      {/* ── Phase 1: Sub-navigation ──────────────────────────────────────── */}
+      <div
+        className="flex items-center gap-1 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide"
+        role="navigation"
+        aria-label="Coding sub-navigation"
+      >
+        {codingSubNav.map(({ label, href, icon: Icon }) => {
+          const isActive =
+            href === '/dashboard/coding'
+              ? location.pathname === '/dashboard/coding'
+              : location.pathname.startsWith(href)
+          return (
+            <Link
+              key={href}
+              to={href}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors shrink-0',
+                isActive
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-accent/10 hover:text-foreground',
+              )}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              <Icon className="h-4 w-4" aria-hidden="true" />
+              {label}
+            </Link>
+          )
+        })}
+      </div>
+
       {/* Skip to main content */}
       <a
         href="#main-coding-content"
@@ -140,23 +184,37 @@ export function CodingHomePage() {
               : 'Start solving problems and build your algorithmic thinking skills.'}
           </p>
 
-          {/* Search */}
-          <form onSubmit={onSearchSubmit} role="search" aria-label="Search problems">
-            <div className="relative max-w-md">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none"
-                aria-hidden="true"
-              />
-              <input
-                type="search"
-                value={searchValue}
-                onChange={(e) => onSearchChange(e.target.value)}
-                placeholder="Search problems by title, tag, company..."
-                aria-label="Search"
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white/20 border border-white/30 text-white placeholder:text-white/60 text-sm focus:outline-none focus:ring-2 focus:ring-white/50 backdrop-blur"
-              />
-            </div>
-          </form>
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Search */}
+            <form onSubmit={onSearchSubmit} role="search" aria-label="Search problems" className="flex-1">
+              <div className="relative">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none"
+                  aria-hidden="true"
+                />
+                <input
+                  type="search"
+                  value={searchValue}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  placeholder="Search problems by title, tag, company..."
+                  aria-label="Search"
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white/20 border border-white/30 text-white placeholder:text-white/60 text-sm focus:outline-none focus:ring-2 focus:ring-white/50 backdrop-blur"
+                />
+              </div>
+            </form>
+
+            {/* Question Bank CTA */}
+            <Button
+              variant="secondary"
+              asChild
+              className="shrink-0 gap-2 font-semibold"
+            >
+              <Link to="/dashboard/coding/question-bank">
+                <Library className="h-4 w-4" />
+                Question Bank
+              </Link>
+            </Button>
+          </div>
         </div>
       </motion.div>
 

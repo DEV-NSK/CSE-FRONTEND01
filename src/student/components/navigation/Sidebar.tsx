@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, BookOpen, Code2, FolderKanban, Briefcase,
-  Calendar, BarChart3, Bell, User, Settings, ChevronLeft, X, GraduationCap, Shield,
+  Calendar, BarChart3, Bell, User, Settings, ChevronLeft, X,
+  GraduationCap, ChevronDown, Library, Trophy, Star,
+  MessageSquare, BarChart2,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 import { useSidebarStore } from '@/shared/store/sidebarStore'
@@ -15,20 +18,28 @@ import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip'
 import { getInitials } from '@/shared/lib/utils'
 
+// ─── FPRD-16: Coding sub-nav (Phase 1) ────────────────────────────────────────
+const codingSubItems = [
+  { label: 'Home',            href: '/dashboard/coding',               exact: true },
+  { label: 'Question Bank',   href: '/dashboard/coding/question-bank',             icon: Library },
+  { label: 'Daily Challenge', href: '/dashboard/coding/daily',                     icon: Calendar },
+  { label: 'Contests',        href: '/dashboard/coding/contests',                  icon: Trophy },
+  { label: 'Favorites',       href: '/dashboard/coding/favorites',                 icon: Star },
+  { label: 'Discussions',     href: '/dashboard/coding/discussions',               icon: MessageSquare },
+  { label: 'Analytics',       href: '/dashboard/coding/analytics',                 icon: BarChart2 },
+]
+
 const baseNavItems = [
-  // ── MVP modules ─────────────────────────────────────────────────────────────
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Learning', href: '/dashboard/learning', icon: BookOpen },
-  { label: 'Coding', href: '/dashboard/coding', icon: Code2 },
-  // ── Non-MVP modules — navigate to Launching Soon ────────────────────────────
-  { label: 'Projects', href: '/dashboard/launching-soon/projects', icon: FolderKanban, launchingSoon: true },
-  { label: 'Placement', href: '/dashboard/launching-soon/placement', icon: Briefcase, launchingSoon: true },
-  { label: 'Events', href: '/dashboard/launching-soon/events', icon: Calendar, launchingSoon: true },
-  { label: 'Analytics', href: '/dashboard/launching-soon/analytics', icon: BarChart3, launchingSoon: true },
-  // ── MVP modules (continued) ──────────────────────────────────────────────────
-  { label: 'Notifications', href: '/dashboard/notifications', icon: Bell, badge: true },
-  { label: 'Profile', href: '/dashboard/profile', icon: User },
-  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+  { label: 'Dashboard',  href: '/dashboard',                          icon: LayoutDashboard },
+  { label: 'Learning',   href: '/dashboard/learning',                 icon: BookOpen },
+  { label: 'Coding',     href: '/dashboard/coding',                   icon: Code2 },
+  { label: 'Projects',   href: '/dashboard/launching-soon/projects',  icon: FolderKanban, launchingSoon: true },
+  { label: 'Placement',  href: '/dashboard/launching-soon/placement', icon: Briefcase,    launchingSoon: true },
+  { label: 'Events',     href: '/dashboard/launching-soon/events',    icon: Calendar,     launchingSoon: true },
+  { label: 'Analytics',  href: '/dashboard/launching-soon/analytics', icon: BarChart3,    launchingSoon: true },
+  { label: 'Notifications', href: '/dashboard/notifications',         icon: Bell, badge: true },
+  { label: 'Profile',    href: '/dashboard/profile',                  icon: User },
+  { label: 'Settings',   href: '/dashboard/settings',                 icon: Settings },
 ]
 
 interface SidebarContentProps {
@@ -40,14 +51,19 @@ function SidebarContent({ collapsed }: SidebarContentProps) {
   const { user } = useAuthStore()
   const { unreadCount } = useNotificationStore()
 
-  // PRD-08: Sidebar shows only student pages — role-gated routes are enforced at the router level
-  // Admin panel link removed: SUPER_ADMIN uses /admin/* layout, not /dashboard/admin
-  const navItems = baseNavItems
+  // Keep coding sub-nav open whenever we're inside /dashboard/coding
+  const isCodingActive = location.pathname.startsWith('/dashboard/coding')
+  const [codingOpen, setCodingOpen] = useState(isCodingActive)
 
   return (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className={cn('flex items-center gap-3 px-4 py-5 border-b border-border', collapsed && 'justify-center px-2')}>
+      <div
+        className={cn(
+          'flex items-center gap-3 px-4 py-5 border-b border-border',
+          collapsed && 'justify-center px-2',
+        )}
+      >
         <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary text-primary-foreground shrink-0">
           <GraduationCap className="h-5 w-5" />
         </div>
@@ -70,15 +86,87 @@ function SidebarContent({ collapsed }: SidebarContentProps) {
       <ScrollArea className="flex-1 px-2 py-3">
         <nav aria-label="Main navigation">
           <ul className="space-y-1">
-            {navItems.map((item) => {
+            {baseNavItems.map((item) => {
               const Icon = item.icon
+              const isCoding = item.href === '/dashboard/coding'
+
+              // Active logic
               const isActive =
                 item.href === '/dashboard'
                   ? location.pathname === '/dashboard'
                   : location.pathname.startsWith(item.href) &&
-                    // Prevent /dashboard/learning from matching /dashboard/learning-something
-                    (location.pathname === item.href || location.pathname.startsWith(item.href + '/'))
+                    (location.pathname === item.href ||
+                      location.pathname.startsWith(item.href + '/'))
 
+              // ── Coding item: renders with collapsible sub-nav ─────────────
+              if (isCoding && !collapsed) {
+                return (
+                  <li key={item.href}>
+                    {/* Coding toggle row */}
+                    <button
+                      type="button"
+                      onClick={() => setCodingOpen((v) => !v)}
+                      className={cn(
+                        'w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
+                        isCodingActive
+                          ? 'bg-primary/10 text-primary'
+                          : 'text-muted-foreground hover:bg-accent/10 hover:text-foreground',
+                      )}
+                      aria-expanded={codingOpen}
+                    >
+                      <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                      <span className="flex-1 text-left">Coding</span>
+                      <motion.div
+                        animate={{ rotate: codingOpen ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ChevronDown className="h-4 w-4 opacity-60" aria-hidden="true" />
+                      </motion.div>
+                    </button>
+
+                    {/* Sub-nav */}
+                    <AnimatePresence initial={false}>
+                      {codingOpen && (
+                        <motion.ul
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.22, ease: 'easeInOut' }}
+                          className="overflow-hidden ml-3 mt-0.5 pl-3 border-l border-border/60 space-y-0.5"
+                        >
+                          {codingSubItems.map((sub) => {
+                            const subActive = sub.exact
+                              ? location.pathname === sub.href
+                              : location.pathname.startsWith(sub.href)
+                            const SubIcon = sub.icon
+                            return (
+                              <li key={sub.href}>
+                                <Link
+                                  to={sub.href}
+                                  className={cn(
+                                    'flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors',
+                                    subActive
+                                      ? 'bg-primary/10 text-primary'
+                                      : 'text-muted-foreground hover:bg-accent/10 hover:text-foreground',
+                                  )}
+                                  aria-current={subActive ? 'page' : undefined}
+                                >
+                                  {SubIcon && (
+                                    <SubIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                                  )}
+                                  {sub.label}
+                                </Link>
+                              </li>
+                            )
+                          })}
+                        </motion.ul>
+                      )}
+                    </AnimatePresence>
+                  </li>
+                )
+              }
+
+              // ── Regular nav item ──────────────────────────────────────────
               const navLink = (
                 <Link
                   to={item.href}
@@ -87,9 +175,8 @@ function SidebarContent({ collapsed }: SidebarContentProps) {
                     isActive
                       ? 'bg-primary text-primary-foreground'
                       : 'text-muted-foreground hover:bg-accent/10 hover:text-foreground',
-                    // Launching-soon items are slightly dimmer when not active
                     'launchingSoon' in item && item.launchingSoon && !isActive && 'opacity-70',
-                    collapsed && 'justify-center px-2'
+                    collapsed && 'justify-center px-2',
                   )}
                   aria-current={isActive ? 'page' : undefined}
                 >
@@ -154,7 +241,7 @@ function SidebarContent({ collapsed }: SidebarContentProps) {
             to="/dashboard/profile"
             className={cn(
               'flex items-center gap-3 rounded-md px-2 py-2 hover:bg-accent/10 transition-colors',
-              collapsed && 'justify-center'
+              collapsed && 'justify-center',
             )}
           >
             <Avatar className="h-8 w-8 shrink-0">

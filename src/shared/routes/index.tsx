@@ -86,6 +86,11 @@ import { DailyChallengePage } from "@/student/features/coding/pages/DailyChallen
 import { FavoritesPage } from "@/student/features/coding/pages/FavoritesPage";
 import { DiscussionsPage } from "@/student/features/coding/pages/DiscussionsPage";
 import { CodingAnalyticsPage } from "@/student/features/coding/pages/CodingAnalyticsPage";
+// FPRD-16: Question Bank
+import { QuestionBankPage } from "@/student/features/coding/pages/QuestionBankPage";
+import { TopicDetailPage } from "@/student/features/coding/pages/TopicDetailPage";
+import { QuestionDetailPage } from "@/student/features/coding/pages/QuestionDetailPage";
+import { ContestsPage } from "@/student/features/coding/pages/ContestsPage";
 
 // ── Pages - Notifications ─────────────────────────────────────────────────────
 import { NotificationsPage } from "@/student/features/notifications/pages/NotificationsPage";
@@ -201,6 +206,13 @@ export const router = createBrowserRouter([
       { path: "coding/daily", element: <DailyChallengePage /> },
       { path: "coding/favorites", element: <FavoritesPage /> },
       { path: "coding/analytics", element: <CodingAnalyticsPage /> },
+      // FPRD-16: Question Bank routes
+      { path: "coding/question-bank", element: <QuestionBankPage /> },
+      { path: "coding/question-bank/:slug", element: <TopicDetailPage /> },
+      { path: "coding/question-bank/:slug/:problemSlug", element: <QuestionDetailPage /> },
+      { path: "coding/contests", element: <ContestsPage /> },
+      // Legacy /coding/problems route still works — ProblemsListPage is the advanced filter view
+      // DiscussionsPage also routed from problem detail page link
 
       // ── FPRD-13: Non-MVP modules redirect to Launching Soon ─────────────────
       // Projects → /launching-soon/projects
