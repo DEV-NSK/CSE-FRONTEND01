@@ -15,6 +15,7 @@ import { RoadmapTimeline } from '@/student/components/learning/RoadmapTimeline'
 import { RoadmapDetailSkeleton } from '@/student/components/learning/LearningSkeletons'
 import { useRoadmap, useToggleRoadmapBookmark } from '@/shared/hooks/useLearning'
 import { formatDate } from '@/shared/lib/utils'
+import { normalizeTags } from '@/shared/utils'
 
 export function RoadmapDetailPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -53,6 +54,9 @@ export function RoadmapDetailPage() {
   const progress = roadmap.progress ?? 0
   const completedLessons = roadmap.completedLessons ?? 0
   const sections = roadmap.sections ?? []
+
+  // Normalize tags defensively — backend stores as comma-separated String?
+  const tags = normalizeTags(roadmap.tags)
 
   // Find current lesson (first in_progress or first not_started)
   let currentLessonId: string | undefined
@@ -104,10 +108,10 @@ export function RoadmapDetailPage() {
                   <Badge variant="outline">{roadmap.category.name}</Badge>
                 </div>
 
-                {roadmap.tags?.length > 0 && (
+                {tags.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     <Tag className="h-3.5 w-3.5 text-muted-foreground mt-0.5" aria-label="Tags" />
-                    {roadmap.tags.map((tag) => (
+                    {tags.map((tag) => (
                       <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
                     ))}
                   </div>

@@ -25,3 +25,32 @@ export function slugify(str: string): string {
     .replace(/--+/g, '-')
     .trim()
 }
+
+/**
+ * Safely converts any value into a string array.
+ * - Already an array  → returned as-is (filtered to strings)
+ * - Comma-separated string → split, trimmed, empty values removed
+ * - null / undefined / other → empty array
+ *
+ * Logs a warning in development when an unexpected type is received.
+ */
+export function normalizeArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((v): v is string => typeof v === 'string')
+  }
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean)
+  }
+  if (value !== null && value !== undefined) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[normalizeArray] Unexpected value type:', typeof value, value)
+    }
+  }
+  return []
+}
+
+/** Alias for normalizeArray — semantically clearer when the field is `tags`. */
+export const normalizeTags = normalizeArray

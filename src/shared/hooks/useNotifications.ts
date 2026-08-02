@@ -86,10 +86,20 @@ export function useUnreadCount(
 ) {
   return useQuery({
     queryKey: notificationKeys.unreadCount(),
-    queryFn: () =>
-      notificationsService.getUnreadCount().then((r) => r.data.data.count),
+    queryFn: async () => {
+      try {
+        return await notificationsService
+          .getUnreadCount()
+          .then((r) => r.data.data.count)
+      } catch {
+        // Endpoint may not be available — silently return 0 so the app keeps running
+        return 0
+      }
+    },
     staleTime: 1000 * 30,
     refetchInterval: 1000 * 60,
+    // Never let a failed unread-count call propagate as an error
+    retry: false,
     ...options,
   });
 }
