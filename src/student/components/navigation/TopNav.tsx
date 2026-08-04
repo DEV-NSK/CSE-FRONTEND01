@@ -164,15 +164,7 @@ export function TopNav() {
   }
 
   return (
-    <header
-      className="h-14 flex items-center justify-between px-4 gap-4 sticky top-0 z-30"
-      style={{
-        background: 'rgba(7,11,23,0.92)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-      }}
-    >
+    <header className="h-14 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-between px-4 gap-4 sticky top-0 z-30">
       {/* ── Left: hamburger + logo + breadcrumb ── */}
       <div className="flex items-center gap-3 min-w-0">
         {/* Mobile hamburger */}

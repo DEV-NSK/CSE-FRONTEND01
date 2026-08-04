@@ -1,64 +1,49 @@
 import { memo, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Zap } from 'lucide-react'
-import type { OverallAnalytics } from '@/shared/types/analytics'
+import type { LearningStats } from '@/shared/types/learning'
+import type { CodingAnalyticsSummary } from '@/shared/types/analytics'
 
-// XP_PER_LEVEL: 500 XP per level (simple linear progression)
 const XP_PER_LEVEL = 500
 
-function getLevel(xp: number) {
-  return Math.floor(xp / XP_PER_LEVEL) + 1
-}
+function getLevel(xp: number) { return Math.floor(xp / XP_PER_LEVEL) + 1 }
+function getXpInLevel(xp: number) { return xp % XP_PER_LEVEL }
+function getXpToNext(xp: number) { return XP_PER_LEVEL - getXpInLevel(xp) }
 
-function getXpInCurrentLevel(xp: number) {
-  return xp % XP_PER_LEVEL
-}
-
-function getXpToNextLevel(xp: number) {
-  return XP_PER_LEVEL - getXpInCurrentLevel(xp)
-}
-
-// Animated counter hook
 function useAnimatedCounter(target: number, duration = 800) {
   const [value, setValue] = useState(0)
-  const prevTarget = useRef(0)
-
+  const prev = useRef(0)
   useEffect(() => {
-    if (target === prevTarget.current) return
-    const start = prevTarget.current
-    prevTarget.current = target
-    const startTime = performance.now()
-
+    if (target === prev.current) return
+    const start = prev.current
+    prev.current = target
+    const t0 = performance.now()
     function tick(now: number) {
-      const elapsed = now - startTime
-      const progress = Math.min(elapsed / duration, 1)
-      // Ease out
-      const eased = 1 - Math.pow(1 - progress, 3)
+      const p = Math.min((now - t0) / duration, 1)
+      const eased = 1 - Math.pow(1 - p, 3)
       setValue(Math.round(start + (target - start) * eased))
-      if (progress < 1) requestAnimationFrame(tick)
+      if (p < 1) requestAnimationFrame(tick)
     }
     requestAnimationFrame(tick)
   }, [target, duration])
-
   return value
 }
 
 interface XpCardProps {
-  analytics?: OverallAnalytics
+  learningStats?: LearningStats
+  codingStats?: CodingAnalyticsSummary
   isLoading?: boolean
 }
 
-export const XpCard = memo(function XpCard({ analytics, isLoading }: XpCardProps) {
-  // XP comes from learning streak/hours as a proxy; real XP from analytics if available
-  // Using coding + learning totalCompleted as XP source
-  const rawXp = analytics
-    ? (analytics.learning?.totalCompleted ?? 0) * 10 +
-      (analytics.coding?.totalSolved ?? 0) * 20
-    : 0
+export const XpCard = memo(function XpCard({ learningStats, codingStats, isLoading }: XpCardProps) {
+  // XP = completed lessons × 10  +  accepted problems × 20
+  const completedLessons = learningStats?.totalLessonsCompleted ?? 0
+  const problemsSolved   = codingStats?.totalSolved ?? 0
+  const rawXp = completedLessons * 10 + problemsSolved * 20
 
-  const level = getLevel(rawXp)
-  const xpInLevel = getXpInCurrentLevel(rawXp)
-  const xpToNext = getXpToNextLevel(rawXp)
+  const level      = getLevel(rawXp)
+  const xpInLevel  = getXpInLevel(rawXp)
+  const xpToNext   = getXpToNext(rawXp)
   const percentage = Math.round((xpInLevel / XP_PER_LEVEL) * 100)
   const animatedXp = useAnimatedCounter(rawXp)
 
@@ -67,64 +52,46 @@ export const XpCard = memo(function XpCard({ analytics, isLoading }: XpCardProps
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: 0.06 }}
-      className="rounded-[18px] p-5 flex flex-col gap-3 h-full"
-      style={{
-        background: '#0F1629',
-        border: '1px solid rgba(255,255,255,0.06)',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
-      }}
+      className="rounded-[18px] p-5 flex flex-col gap-3 h-full bg-card border border-border shadow-sm"
       role="region"
       aria-label="XP Score"
     >
       {/* Header */}
       <div className="flex items-center gap-2">
-        <div
-          className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
-          style={{ background: 'rgba(124,92,252,0.15)' }}
-          aria-hidden="true"
-        >
-          <Zap className="h-4 w-4" style={{ color: '#7C5CFC' }} />
+        <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 bg-violet-500/15" aria-hidden="true">
+          <Zap className="h-4 w-4 text-violet-500" />
         </div>
-        <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.45)' }}>
+        <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           XP SCORE
         </span>
       </div>
 
       {isLoading ? (
         <div className="flex flex-col gap-2 animate-pulse">
-          <div className="h-9 w-28 rounded-lg" style={{ background: 'rgba(255,255,255,0.07)' }} />
-          <div className="h-2 w-full rounded-full" style={{ background: 'rgba(255,255,255,0.07)' }} />
-          <div className="h-3 w-24 rounded" style={{ background: 'rgba(255,255,255,0.07)' }} />
+          <div className="h-9 w-28 rounded-lg bg-muted" />
+          <div className="h-2 w-full rounded-full bg-muted" />
+          <div className="h-3 w-24 rounded bg-muted" />
         </div>
       ) : (
         <>
           {/* XP number */}
           <div className="flex items-end gap-2">
-            <span
-              className="text-3xl font-extrabold tabular-nums leading-none"
-              style={{ color: '#fff' }}
-              aria-live="polite"
-            >
+            <span className="text-3xl font-extrabold tabular-nums leading-none text-foreground" aria-live="polite">
               {animatedXp.toLocaleString()}
             </span>
-            <span className="text-sm font-semibold pb-0.5" style={{ color: '#7C5CFC' }}>
-              XP
-            </span>
+            <span className="text-sm font-semibold pb-0.5 text-violet-500">XP</span>
           </div>
 
-          {/* Progress to next level */}
+          {/* Progress bar */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              <span className="text-xs text-muted-foreground">
                 {xpToNext.toLocaleString()} XP to Level {level + 1}
               </span>
-              <span className="text-xs font-bold" style={{ color: '#7C5CFC' }}>
-                {percentage}%
-              </span>
+              <span className="text-xs font-bold text-violet-500">{percentage}%</span>
             </div>
             <div
-              className="w-full h-2 rounded-full overflow-hidden"
-              style={{ background: 'rgba(255,255,255,0.08)' }}
+              className="w-full h-2 rounded-full overflow-hidden bg-muted"
               role="progressbar"
               aria-valuenow={percentage}
               aria-valuemin={0}
@@ -135,18 +102,14 @@ export const XpCard = memo(function XpCard({ analytics, isLoading }: XpCardProps
                 initial={{ width: 0 }}
                 animate={{ width: `${percentage}%` }}
                 transition={{ duration: 0.9, ease: 'easeOut' }}
-                className="h-full rounded-full"
-                style={{ background: 'linear-gradient(90deg, #7C5CFC, #A78BFA)' }}
+                className="h-full rounded-full bg-gradient-to-r from-violet-500 to-purple-400"
               />
             </div>
           </div>
 
           {/* Level badge */}
-          <div className="flex items-center gap-1.5">
-            <span
-              className="text-xs font-bold px-2 py-0.5 rounded-full"
-              style={{ background: 'rgba(124,92,252,0.18)', color: '#A78BFA' }}
-            >
+          <div>
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-500">
               Level {level}
             </span>
           </div>

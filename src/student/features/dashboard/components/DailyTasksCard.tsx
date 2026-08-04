@@ -7,16 +7,19 @@ import type { DailyChallenge } from '@/shared/types/coding'
 
 interface DailyTasksCardProps {
   data?: DailyTasksResponse
-  /** Optional fallback from the /coding/daily endpoint */
   dailyChallenge?: DailyChallenge
-  continueLearning?: { lesson?: { id: string; title: string } | null; roadmap?: { title: string } | null; progress?: number }
+  continueLearning?: {
+    lesson?: { id: string; title: string } | null
+    roadmap?: { title: string } | null
+    progress?: number
+  }
   isLoading?: boolean
 }
 
-const difficultyColor: Record<string, string> = {
-  Easy: '#22C55E',
-  Medium: '#FACC15',
-  Hard: '#EF4444',
+const difficultyClass: Record<string, string> = {
+  Easy:   'bg-green-500/15 text-green-600 dark:text-green-400',
+  Medium: 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400',
+  Hard:   'bg-red-500/15 text-red-500',
 }
 
 function TaskRow({
@@ -24,7 +27,7 @@ function TaskRow({
   label,
   title,
   badge,
-  badgeColor,
+  badgeClass,
   href,
   completed,
 }: {
@@ -32,57 +35,44 @@ function TaskRow({
   label: string
   title: string
   badge?: string
-  badgeColor?: string
+  badgeClass?: string
   href: string
   completed?: boolean
 }) {
   return (
-    <div
-      className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 transition-all duration-200"
-      style={{
-        background: 'rgba(255,255,255,0.03)',
-        border: '1px solid rgba(255,255,255,0.05)',
-      }}
-    >
+    <div className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 bg-muted/50 border border-border/60">
+      {/* Left */}
       <div className="flex items-center gap-2.5 min-w-0">
-        <div
-          className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
-          style={{ background: completed ? 'rgba(34,197,94,0.15)' : 'rgba(124,92,252,0.12)' }}
-          aria-hidden="true"
-        >
-          {completed ? (
-            <CheckCircle2 className="h-4 w-4" style={{ color: '#22C55E' }} />
-          ) : (
-            <Icon className="h-4 w-4" style={{ color: '#7C5CFC' }} />
-          )}
+        <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${completed ? 'bg-green-500/15' : 'bg-violet-500/12'}`} aria-hidden="true">
+          {completed
+            ? <CheckCircle2 className="h-4 w-4 text-green-500" />
+            : <Icon className="h-4 w-4 text-violet-500" />}
         </div>
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-widest mb-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-0.5">
             {label}
           </p>
-          <p className="text-xs font-medium truncate" style={{ color: completed ? 'rgba(255,255,255,0.45)' : '#fff' }}>
+          <p className={`text-xs font-medium truncate ${completed ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
             {title}
           </p>
         </div>
       </div>
+
+      {/* Right */}
       <div className="flex items-center gap-2 shrink-0">
         {badge && (
-          <span
-            className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-            style={{ background: `${badgeColor}18`, color: badgeColor }}
-          >
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${badgeClass}`}>
             {badge}
           </span>
         )}
         {completed ? (
-          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(34,197,94,0.12)', color: '#22C55E' }}>
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-500/12 text-green-600 dark:text-green-400">
             ✓ Done
           </span>
         ) : (
           <Link
             to={href}
-            className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg transition-all duration-200"
-            style={{ background: 'rgba(124,92,252,0.15)', color: '#9377FF' }}
+            className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-violet-500/15 text-violet-500 hover:bg-violet-500/25 transition-colors duration-150"
             aria-label={`Go to ${label.toLowerCase()}`}
           >
             {label === "Today's Lesson" ? 'Continue' : 'Solve'}
@@ -111,13 +101,8 @@ export const DailyTasksCard = memo(function DailyTasksCard({
       }
     : null)
 
-  // Resolve today's lesson
   const lesson = data?.lesson ?? (continueLearning?.lesson
-    ? {
-        id: continueLearning.lesson.id,
-        title: continueLearning.lesson.title,
-        completed: false,
-      }
+    ? { id: continueLearning.lesson.id, title: continueLearning.lesson.title, completed: false }
     : null)
 
   const allDone = (codingChallenge?.completed ?? false) && (lesson?.completed ?? false)
@@ -127,12 +112,7 @@ export const DailyTasksCard = memo(function DailyTasksCard({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: 0.14 }}
-      className="rounded-[18px] p-5 flex flex-col gap-3 h-full"
-      style={{
-        background: '#0F1629',
-        border: '1px solid rgba(255,255,255,0.06)',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
-      }}
+      className="rounded-[18px] p-5 flex flex-col gap-3 h-full bg-card border border-border shadow-sm"
       role="region"
       aria-label="Daily tasks"
     >
@@ -140,18 +120,16 @@ export const DailyTasksCard = memo(function DailyTasksCard({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-base">📋</span>
-          <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Daily Tasks
           </span>
         </div>
         {!isLoading && (
-          <span
-            className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-            style={{
-              background: allDone ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.06)',
-              color: allDone ? '#22C55E' : 'rgba(255,255,255,0.4)',
-            }}
-          >
+          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+            allDone
+              ? 'bg-green-500/12 text-green-600 dark:text-green-400'
+              : 'bg-muted text-muted-foreground'
+          }`}>
             {allDone ? 'All done 🎉' : 'Today'}
           </span>
         )}
@@ -160,19 +138,13 @@ export const DailyTasksCard = memo(function DailyTasksCard({
       {isLoading ? (
         <div className="flex flex-col gap-2 animate-pulse">
           {[0, 1].map((i) => (
-            <div
-              key={i}
-              className="h-14 rounded-xl"
-              style={{ background: 'rgba(255,255,255,0.05)' }}
-            />
+            <div key={i} className="h-14 rounded-xl bg-muted" />
           ))}
         </div>
       ) : allDone ? (
         <div className="flex flex-col items-center justify-center py-4 gap-2">
           <span className="text-3xl">🎉</span>
-          <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>
-            You're all caught up!
-          </p>
+          <p className="text-sm font-medium text-muted-foreground">You're all caught up!</p>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
@@ -182,17 +154,12 @@ export const DailyTasksCard = memo(function DailyTasksCard({
               label="Today's Coding Question"
               title={codingChallenge.title}
               badge={codingChallenge.difficulty}
-              badgeColor={difficultyColor[codingChallenge.difficulty]}
+              badgeClass={difficultyClass[codingChallenge.difficulty] ?? ''}
               href={`/dashboard/coding/problems/${codingChallenge.slug}`}
               completed={codingChallenge.completed}
             />
           ) : (
-            <TaskRow
-              icon={Code2}
-              label="Today's Coding Question"
-              title="Daily Challenge"
-              href="/dashboard/coding/daily"
-            />
+            <TaskRow icon={Code2} label="Today's Coding Question" title="Daily Challenge" href="/dashboard/coding/daily" />
           )}
           {lesson ? (
             <TaskRow
@@ -203,12 +170,7 @@ export const DailyTasksCard = memo(function DailyTasksCard({
               completed={lesson.completed}
             />
           ) : (
-            <TaskRow
-              icon={BookOpen}
-              label="Today's Lesson"
-              title="Continue Learning"
-              href="/dashboard/learning/continue"
-            />
+            <TaskRow icon={BookOpen} label="Today's Lesson" title="Continue Learning" href="/dashboard/learning/continue" />
           )}
         </div>
       )}

@@ -4,35 +4,21 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import type { DashboardActivityDay } from '@/shared/services/dashboard.service'
 
 const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January','February','March','April','May','June',
+  'July','August','September','October','November','December',
 ]
-const DAY_NAMES = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+const DAY_NAMES = ['Su','Mo','Tu','We','Th','Fr','Sa']
 
 interface ActivityCalendarProps {
   activityData?: DashboardActivityDay[]
   isLoading?: boolean
 }
 
-function getDaysInMonth(year: number, month: number) {
-  return new Date(year, month + 1, 0).getDate()
+function fmtKey(y: number, m: number, d: number) {
+  return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
 }
 
-function getFirstDayOfMonth(year: number, month: number) {
-  return new Date(year, month, 1).getDay()
-}
-
-function formatDateKey(year: number, month: number, day: number) {
-  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-}
-
-interface PopupProps {
-  date: string
-  count: number
-  onClose: () => void
-}
-
-function ActivityPopup({ date, count, onClose }: PopupProps) {
+function ActivityPopup({ date, count, onClose }: { date: string; count: number; onClose: () => void }) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.92, y: 8 }}
@@ -43,38 +29,23 @@ function ActivityPopup({ date, count, onClose }: PopupProps) {
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label={`Activity for ${date}`}
     >
       <div
-        className="rounded-[18px] p-5 min-w-[220px] relative"
-        style={{
-          background: '#0F1629',
-          border: '1px solid rgba(255,255,255,0.1)',
-          boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
-        }}
-        onClick={(e) => e.stopPropagation()}
+        className="rounded-[18px] p-5 min-w-[220px] relative bg-card border border-border shadow-xl"
+        onClick={e => e.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 p-1 rounded-lg transition-colors duration-150"
-          style={{ color: 'rgba(255,255,255,0.4)' }}
+          className="absolute top-3 right-3 p-1 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
           aria-label="Close"
         >
           <X className="h-4 w-4" />
         </button>
-        <p className="text-sm font-semibold mb-3" style={{ color: '#fff' }}>
-          {date}
-        </p>
+        <p className="text-sm font-semibold text-foreground mb-3">{date}</p>
         <div className="flex items-center gap-2">
-          <span
-            className="h-2.5 w-2.5 rounded-full"
-            style={{ background: count > 0 ? '#22C55E' : 'rgba(255,255,255,0.2)' }}
-            aria-hidden="true"
-          />
-          <span className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
-            {count > 0
-              ? `${count} ${count === 1 ? 'activity' : 'activities'}`
-              : 'No activities recorded'}
+          <span className={`h-2.5 w-2.5 rounded-full ${count > 0 ? 'bg-green-500' : 'bg-muted-foreground/30'}`} aria-hidden="true" />
+          <span className="text-sm text-muted-foreground">
+            {count > 0 ? `${count} ${count === 1 ? 'activity' : 'activities'}` : 'No activities recorded'}
           </span>
         </div>
       </div>
@@ -82,57 +53,42 @@ function ActivityPopup({ date, count, onClose }: PopupProps) {
   )
 }
 
-export const ActivityCalendar = memo(function ActivityCalendar({
-  activityData,
-  isLoading,
-}: ActivityCalendarProps) {
+export const ActivityCalendar = memo(function ActivityCalendar({ activityData, isLoading }: ActivityCalendarProps) {
   const today = new Date()
   const [viewYear, setViewYear] = useState(today.getFullYear())
   const [viewMonth, setViewMonth] = useState(today.getMonth())
-  const [selectedDate, setSelectedDate] = useState<{ date: string; count: number } | null>(null)
+  const [selected, setSelected] = useState<{ date: string; count: number } | null>(null)
 
   const activityMap = useMemo(() => {
     const m = new Map<string, number>()
-    if (activityData) {
-      activityData.forEach((d) => m.set(d.date, d.count))
-    }
+    activityData?.forEach(d => m.set(d.date, d.count))
     return m
   }, [activityData])
 
-  const daysInMonth = getDaysInMonth(viewYear, viewMonth)
-  const firstDay = getFirstDayOfMonth(viewYear, viewMonth)
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
+  const firstDay    = new Date(viewYear, viewMonth, 1).getDay()
 
-  const prevMonth = () => {
-    if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1) }
-    else setViewMonth((m) => m - 1)
-  }
-  const nextMonth = () => {
-    if (viewMonth === 11) { setViewMonth(0); setViewYear((y) => y + 1) }
-    else setViewMonth((m) => m + 1)
-  }
+  const prevMonth = () => viewMonth === 0
+    ? (setViewMonth(11), setViewYear(y => y - 1))
+    : setViewMonth(m => m - 1)
+  const nextMonth = () => viewMonth === 11
+    ? (setViewMonth(0), setViewYear(y => y + 1))
+    : setViewMonth(m => m + 1)
 
-  const handleDayClick = (day: number) => {
-    const key = formatDateKey(viewYear, viewMonth, day)
-    const count = activityMap.get(key) ?? 0
-    const displayDate = new Date(viewYear, viewMonth, day).toLocaleDateString('en-US', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  const handleDay = (day: number) => {
+    const dt = new Date(viewYear, viewMonth, day)
+    if (dt > today) return
+    setSelected({
+      date: dt.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+      count: activityMap.get(fmtKey(viewYear, viewMonth, day)) ?? 0,
     })
-    setSelectedDate({ date: displayDate, count })
   }
-
-  // Blank cells before month starts
-  const blanks = Array.from({ length: firstDay })
-  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
 
   return (
     <>
       <AnimatePresence>
-        {selectedDate && (
-          <ActivityPopup
-            date={selectedDate.date}
-            count={selectedDate.count}
-            onClose={() => setSelectedDate(null)}
-          />
+        {selected && (
+          <ActivityPopup date={selected.date} count={selected.count} onClose={() => setSelected(null)} />
         )}
       </AnimatePresence>
 
@@ -140,33 +96,26 @@ export const ActivityCalendar = memo(function ActivityCalendar({
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: 0.22 }}
-        className="rounded-[18px] p-5 flex flex-col gap-4 h-full"
-        style={{
-          background: '#0F1629',
-          border: '1px solid rgba(255,255,255,0.06)',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
-        }}
+        className="rounded-[18px] p-5 flex flex-col gap-4 h-full bg-card border border-border shadow-sm"
         role="region"
         aria-label="Activity calendar"
       >
         {/* Header */}
         <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold" style={{ color: '#fff' }}>
+          <span className="text-sm font-semibold text-foreground">
             {MONTH_NAMES[viewMonth]} {viewYear}
           </span>
           <div className="flex items-center gap-1">
             <button
               onClick={prevMonth}
-              className="h-7 w-7 rounded-lg flex items-center justify-center transition-colors duration-150"
-              style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)' }}
+              className="h-7 w-7 rounded-lg flex items-center justify-center bg-muted text-muted-foreground hover:text-foreground transition-colors"
               aria-label="Previous month"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <button
               onClick={nextMonth}
-              className="h-7 w-7 rounded-lg flex items-center justify-center transition-colors duration-150"
-              style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)' }}
+              className="h-7 w-7 rounded-lg flex items-center justify-center bg-muted text-muted-foreground hover:text-foreground transition-colors"
               aria-label="Next month"
             >
               <ChevronRight className="h-4 w-4" />
@@ -177,40 +126,29 @@ export const ActivityCalendar = memo(function ActivityCalendar({
         {isLoading ? (
           <div className="animate-pulse grid grid-cols-7 gap-1">
             {Array.from({ length: 35 }).map((_, i) => (
-              <div key={i} className="h-8 rounded-lg" style={{ background: 'rgba(255,255,255,0.05)' }} />
+              <div key={i} className="h-8 rounded-lg bg-muted" />
             ))}
           </div>
         ) : (
           <>
             {/* Day headers */}
             <div className="grid grid-cols-7 gap-1" aria-hidden="true">
-              {DAY_NAMES.map((d) => (
-                <div
-                  key={d}
-                  className="text-center text-[10px] font-semibold uppercase"
-                  style={{ color: 'rgba(255,255,255,0.35)' }}
-                >
+              {DAY_NAMES.map(d => (
+                <div key={d} className="text-center text-[10px] font-semibold uppercase text-muted-foreground">
                   {d}
                 </div>
               ))}
             </div>
 
-            {/* Calendar grid */}
+            {/* Grid */}
             <div className="grid grid-cols-7 gap-1" role="grid" aria-label={`${MONTH_NAMES[viewMonth]} ${viewYear}`}>
-              {blanks.map((_, i) => (
-                <div key={`blank-${i}`} role="gridcell" aria-hidden="true" />
+              {Array.from({ length: firstDay }).map((_, i) => (
+                <div key={`b${i}`} role="gridcell" aria-hidden="true" />
               ))}
-              {days.map((day) => {
-                const key = formatDateKey(viewYear, viewMonth, day)
-                const count = activityMap.get(key) ?? 0
-                const isToday =
-                  today.getFullYear() === viewYear &&
-                  today.getMonth() === viewMonth &&
-                  today.getDate() === day
-                const hasActivity = count > 0
-                // Future date check
-                const thisDate = new Date(viewYear, viewMonth, day)
-                const isFuture = thisDate > today
+              {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
+                const count   = activityMap.get(fmtKey(viewYear, viewMonth, day)) ?? 0
+                const isToday = today.getFullYear() === viewYear && today.getMonth() === viewMonth && today.getDate() === day
+                const future  = new Date(viewYear, viewMonth, day) > today
 
                 return (
                   <button
@@ -218,30 +156,19 @@ export const ActivityCalendar = memo(function ActivityCalendar({
                     role="gridcell"
                     aria-label={`${day} ${MONTH_NAMES[viewMonth]}${count > 0 ? `, ${count} activities` : ''}`}
                     aria-current={isToday ? 'date' : undefined}
-                    onClick={() => handleDayClick(day)}
-                    className="relative h-8 rounded-lg flex items-center justify-center text-[12px] font-medium transition-all duration-150"
-                    style={{
-                      background: isToday
-                        ? '#7C5CFC'
-                        : 'transparent',
-                      color: isToday
-                        ? '#fff'
-                        : isFuture
-                        ? 'rgba(255,255,255,0.2)'
-                        : 'rgba(255,255,255,0.75)',
-                      cursor: isFuture ? 'default' : 'pointer',
-                      outline: 'none',
-                    }}
-                    disabled={isFuture}
+                    onClick={() => handleDay(day)}
+                    disabled={future}
+                    className={[
+                      'relative h-8 rounded-lg flex items-center justify-center text-[12px] font-medium transition-all duration-150 outline-none',
+                      isToday  ? 'bg-violet-500 text-white'
+                      : future ? 'text-muted-foreground/30 cursor-default'
+                      :          'text-foreground hover:bg-muted cursor-pointer',
+                    ].join(' ')}
                   >
                     {day}
-                    {/* Indicator dots */}
-                    {!isToday && hasActivity && (
-                      <span
-                        className="absolute bottom-1 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full"
-                        style={{ background: '#22C55E' }}
-                        aria-hidden="true"
-                      />
+                    {/* Activity dot */}
+                    {!isToday && count > 0 && (
+                      <span className="absolute bottom-1 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-green-500" aria-hidden="true" />
                     )}
                   </button>
                 )
@@ -251,14 +178,12 @@ export const ActivityCalendar = memo(function ActivityCalendar({
         )}
 
         {/* Legend */}
-        <div className="flex items-center gap-3 text-[10px] flex-wrap" style={{ color: 'rgba(255,255,255,0.35)' }} aria-label="Calendar legend">
+        <div className="flex items-center gap-3 text-[10px] text-muted-foreground flex-wrap">
           <div className="flex items-center gap-1">
-            <span className="h-3 w-3 rounded-sm inline-block" style={{ background: '#7C5CFC' }} aria-hidden="true" />
-            Today
+            <span className="h-3 w-3 rounded-sm inline-block bg-violet-500" aria-hidden="true" />Today
           </div>
           <div className="flex items-center gap-1">
-            <span className="h-1.5 w-1.5 rounded-full inline-block" style={{ background: '#22C55E' }} aria-hidden="true" />
-            Activity
+            <span className="h-1.5 w-1.5 rounded-full inline-block bg-green-500" aria-hidden="true" />Activity
           </div>
         </div>
       </motion.div>
