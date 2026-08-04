@@ -1,17 +1,25 @@
-import { memo, useMemo, useState, useRef } from 'react'
+import { memo, useMemo, useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import type { DashboardActivityDay } from '@/shared/services/dashboard.service'
 
-// GitHub contribution color levels — these stay the same in both themes
-// (they are content colors, not UI surface colors)
-const LEVEL_COLORS = ['#161B22', '#0E4429', '#006D32', '#26A641', '#39D353']
+// Activity heatmap color levels — level 0 uses a neutral muted tone visible in both light and dark
+const LEVEL_COLORS_LIGHT = ['#E2E8F0', '#0E4429', '#006D32', '#26A641', '#39D353']
+const LEVEL_COLORS_DARK  = ['#2D3748', '#0E4429', '#006D32', '#26A641', '#39D353']
 
-function getColor(count: number): string {
-  if (count === 0) return LEVEL_COLORS[0]
-  if (count === 1) return LEVEL_COLORS[1]
-  if (count === 2) return LEVEL_COLORS[2]
-  if (count === 3) return LEVEL_COLORS[3]
-  return LEVEL_COLORS[4]
+// We read the theme from the document class at render time
+function getThemeLevelColors(): string[] {
+  if (typeof document !== 'undefined' && document.documentElement.classList.contains('dark')) {
+    return LEVEL_COLORS_DARK
+  }
+  return LEVEL_COLORS_LIGHT
+}
+
+function getColor(count: number, levelColors: string[]): string {
+  if (count === 0) return levelColors[0]
+  if (count === 1) return levelColors[1]
+  if (count === 2) return levelColors[2]
+  if (count === 3) return levelColors[3]
+  return levelColors[4]
 }
 
 const MONTHS  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -61,6 +69,14 @@ function getMonthLabels(grid: { date: Date; count: number }[][]) {
 export const ActivityHeatmap = memo(function ActivityHeatmap({ data, isLoading }: ActivityHeatmapProps) {
   const [tooltip, setTooltip] = useState<TooltipState>({ visible: false, x: 0, y: 0, date: '', count: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
+  // Track theme changes so we re-derive colors on dark/light toggle
+  const [, setThemeTick] = useState(0)
+  useEffect(() => {
+    const obs = new MutationObserver(() => setThemeTick(t => t + 1))
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => obs.disconnect()
+  }, [])
+  const LEVEL_COLORS = getThemeLevelColors()
 
   const activityMap = useMemo(() => {
     const m = new Map<string, number>()
@@ -171,7 +187,7 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({ data, isLoading }
                         key={`${wi}-${di}`}
                         x={x} y={y}
                         width={SQ} height={SQ} rx={2}
-                        fill={future ? 'transparent' : getColor(count)}
+                        fill={future ? 'transparent' : getColor(count, LEVEL_COLORS)}
                         style={{ cursor: count > 0 ? 'pointer' : 'default' }}
                         onMouseEnter={e => !future && handleEnter(e, date, count)}
                         onMouseLeave={() => setTooltip(t => ({ ...t, visible: false }))}

@@ -152,15 +152,15 @@ function HeroBanner({ user, onAvatarChange, uploading, uploadProgress, onDeleteA
       <div className="absolute inset-0 opacity-10"
         style={{ backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(255,255,255,.1) 40px,rgba(255,255,255,.1) 41px),repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(255,255,255,.1) 40px,rgba(255,255,255,.1) 41px)' }} />
 
-      <div className="relative z-10 p-6 md:p-8">
-        <div className="flex flex-col md:flex-row gap-6 items-start">
+      <div className="relative z-10 p-4 md:p-6">
+        <div className="flex flex-col md:flex-row gap-5 items-start">
           {/* Avatar */}
           <div className="shrink-0">
             <div className="relative">
-              <div className="w-28 h-28 md:w-36 md:h-36 rounded-full p-1 bg-white/20">
+              <div className="w-24 h-24 md:w-28 md:h-28 rounded-full p-1 bg-white/20">
                 <Avatar className="w-full h-full border-4 border-white/30">
                   <AvatarImage src={user.profileImage} alt={user.fullName} className="object-cover" />
-                  <AvatarFallback className="text-3xl bg-primary-foreground/10 text-white">
+                  <AvatarFallback className="text-2xl bg-primary-foreground/10 text-white">
                     {getInitials(user.fullName)}
                   </AvatarFallback>
                 </Avatar>
@@ -474,15 +474,15 @@ function AchievementsCard({ achievements }: { achievements: ReturnType<typeof us
             Solve problems and complete lessons to earn achievements!
           </p>
         ) : (
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-5 gap-1.5">
             {achievements.map((b) => (
-              <motion.div key={b.id} whileHover={b.earned ? { scale: 1.12, y: -2 } : {}} title={b.name}
-                className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all cursor-default ${
+              <motion.div key={b.id} whileHover={b.earned ? { scale: 1.1, y: -2 } : {}} title={b.name}
+                className={`flex flex-col items-center gap-1 p-1.5 rounded-xl border transition-all cursor-default ${
                   b.earned
                     ? 'bg-primary/10 border-primary/20'
                     : 'bg-muted border-border opacity-40 grayscale'
                 }`}>
-                <span className="text-xl leading-none">{b.icon}</span>
+                <span className="text-lg leading-none">{b.icon}</span>
                 <span className="text-[9px] text-center text-muted-foreground leading-tight">{b.name}</span>
               </motion.div>
             ))}
@@ -899,7 +899,7 @@ export function ProfilePage() {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Upload error */}
       <AnimatePresence>
         {uploadError && (
@@ -924,7 +924,7 @@ export function ProfilePage() {
       <CompletionBar user={user} />
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {stats.map((s) => (
           <StatCard key={s.label} icon={s.icon} label={s.label} value={s.value}
             delta={s.delta} color={s.color} />
@@ -932,9 +932,9 @@ export function ProfilePage() {
       </div>
 
       {/* Main content grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left column */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           <CompletionCard completion={completion} />
           <ResumeCard
             user={user}
@@ -959,13 +959,16 @@ export function ProfilePage() {
         </div>
 
         {/* Middle + right */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="lg:col-span-2 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <CodingCard analytics={analytics} />
             <ActivityCard activity={activity} isLoading={isActivityLoading} />
           </div>
-          <ProjectsCard projects={projects} />
-          <AchievementsCard achievements={achievements} />
+          {/* Projects & Achievements side by side */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ProjectsCard projects={projects} />
+            <AchievementsCard achievements={achievements} />
+          </div>
         </div>
       </div>
     </div>

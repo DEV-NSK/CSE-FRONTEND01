@@ -13,7 +13,6 @@ import { useAuthStore } from '@/shared/store/authStore'
 import { useNotificationStore } from '@/shared/store/notificationStore'
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar'
 import { Badge } from '@/shared/components/ui/badge'
-import { Button } from '@/shared/components/ui/button'
 import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip'
 import { getInitials } from '@/shared/lib/utils'
@@ -21,13 +20,13 @@ import { getInitials } from '@/shared/lib/utils'
 // ─── Nav structure ────────────────────────────────────────────────────────────
 
 const codingSubItems = [
-  { label: 'Overview',       href: '/dashboard/coding',               exact: true },
-  { label: 'Question Bank',  href: '/dashboard/coding/question-bank', icon: Library },
-  { label: 'Daily Challenge',href: '/dashboard/coding/daily',         icon: Calendar },
-  { label: 'Contests',       href: '/dashboard/coding/contests',      icon: Trophy },
-  { label: 'Favorites',      href: '/dashboard/coding/favorites',     icon: Star },
-  { label: 'Discussions',    href: '/dashboard/coding/discussions',   icon: MessageSquare },
-  { label: 'Analytics',      href: '/dashboard/coding/analytics',     icon: BarChart2 },
+  { label: 'Overview',        href: '/dashboard/coding',               exact: true },
+  { label: 'Question Bank',   href: '/dashboard/coding/question-bank', icon: Library },
+  { label: 'Daily Challenge', href: '/dashboard/coding/daily',         icon: Calendar },
+  { label: 'Contests',        href: '/dashboard/coding/contests',      icon: Trophy },
+  { label: 'Favorites',       href: '/dashboard/coding/favorites',     icon: Star },
+  { label: 'Discussions',     href: '/dashboard/coding/discussions',   icon: MessageSquare },
+  { label: 'Analytics',       href: '/dashboard/coding/analytics',     icon: BarChart2 },
 ]
 
 interface NavItem {
@@ -40,16 +39,16 @@ interface NavItem {
 }
 
 const mainNavItems: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard',        icon: LayoutDashboard },
+  { label: 'Dashboard', href: '/dashboard',          icon: LayoutDashboard },
   { label: 'Learning',  href: '/dashboard/learning', icon: BookOpen },
   { label: 'Coding',    href: '/dashboard/coding',   icon: Code2, subItems: codingSubItems },
 ]
 
 const comingSoonItems: NavItem[] = [
-  { label: 'Projects',   href: '/dashboard/launching-soon/projects',  icon: FolderKanban, launchingSoon: true },
-  { label: 'Placement',  href: '/dashboard/launching-soon/placement', icon: Briefcase,    launchingSoon: true },
-  { label: 'Events',     href: '/dashboard/launching-soon/events',    icon: Calendar,     launchingSoon: true },
-  { label: 'Analytics',  href: '/dashboard/launching-soon/analytics', icon: BarChart3,    launchingSoon: true },
+  { label: 'Projects',  href: '/dashboard/launching-soon/projects',  icon: FolderKanban, launchingSoon: true },
+  { label: 'Placement', href: '/dashboard/launching-soon/placement', icon: Briefcase,    launchingSoon: true },
+  { label: 'Events',    href: '/dashboard/launching-soon/events',    icon: Calendar,     launchingSoon: true },
+  { label: 'Analytics', href: '/dashboard/launching-soon/analytics', icon: BarChart3,    launchingSoon: true },
 ]
 
 const bottomNavItems: NavItem[] = [
@@ -68,7 +67,7 @@ interface NavRowProps {
 }
 
 function NavRow({ item, collapsed, unreadCount, depth = 0 }: NavRowProps) {
-  const location   = useLocation()
+  const location = useLocation()
   const [open, setOpen] = useState(() =>
     location.pathname.startsWith(item.href + '/') || location.pathname === item.href,
   )
@@ -81,25 +80,33 @@ function NavRow({ item, collapsed, unreadCount, depth = 0 }: NavRowProps) {
         location.pathname.startsWith(item.href + '/')
 
   const isGroupActive = hasChildren && location.pathname.startsWith(item.href)
-
   const Icon = item.icon
 
   const baseClasses = cn(
-    'group relative flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all duration-150 select-none',
-    depth === 0 ? 'px-3 py-2.5' : 'px-2.5 py-1.5 ml-3 text-[12px]',
-    collapsed && 'justify-center px-0 py-2.5',
-    // Active state
+    'group relative flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 select-none w-full',
+    depth === 0 ? 'px-2.5 py-2' : 'px-2 py-1.5 text-[12px]',
+    collapsed && 'justify-center px-0 py-2',
     isActive && !hasChildren
-      ? 'bg-primary/12 text-primary'
+      ? 'bg-primary/10 text-primary'
       : isGroupActive && hasChildren
       ? 'text-primary'
-      : 'text-muted-foreground hover:text-foreground hover:bg-muted/70',
+      : 'text-muted-foreground hover:text-foreground hover:bg-accent/60',
     item.launchingSoon && !isActive && 'opacity-50',
+  )
+
+  const iconClasses = cn(
+    'shrink-0 flex items-center justify-center rounded-md transition-colors duration-150',
+    depth === 0 ? 'h-7 w-7' : 'h-5 w-5',
+    isActive && !hasChildren
+      ? 'bg-primary/15 text-primary'
+      : isGroupActive && hasChildren
+      ? 'text-primary'
+      : 'text-muted-foreground group-hover:text-foreground',
   )
 
   const linkContent = (
     <>
-      {/* Active pill indicator */}
+      {/* Active left pill */}
       {isActive && !hasChildren && !collapsed && (
         <motion.span
           layoutId="active-pill"
@@ -110,16 +117,8 @@ function NavRow({ item, collapsed, unreadCount, depth = 0 }: NavRowProps) {
       )}
 
       {/* Icon */}
-      <span className={cn(
-        'shrink-0 flex items-center justify-center rounded-lg transition-colors duration-150',
-        depth === 0 ? 'h-8 w-8' : 'h-6 w-6',
-        isActive && !hasChildren
-          ? 'bg-primary/15 text-primary'
-          : isGroupActive && hasChildren
-          ? 'text-primary'
-          : 'text-muted-foreground group-hover:text-foreground',
-      )}>
-        <Icon className={depth === 0 ? 'h-[18px] w-[18px]' : 'h-3.5 w-3.5'} aria-hidden="true" />
+      <span className={iconClasses}>
+        <Icon className={depth === 0 ? 'h-[16px] w-[16px]' : 'h-3 w-3'} aria-hidden="true" />
       </span>
 
       {/* Label */}
@@ -141,7 +140,7 @@ function NavRow({ item, collapsed, unreadCount, depth = 0 }: NavRowProps) {
       {!collapsed && (
         <>
           {item.launchingSoon && (
-            <span className="ml-auto text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground/60 shrink-0">
+            <span className="ml-auto text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground/70 shrink-0">
               Soon
             </span>
           )}
@@ -156,7 +155,7 @@ function NavRow({ item, collapsed, unreadCount, depth = 0 }: NavRowProps) {
               transition={{ duration: 0.2 }}
               className="ml-auto shrink-0 text-muted-foreground/50"
             >
-              <ChevronDown className="h-3.5 w-3.5" />
+              <ChevronDown className="h-3 w-3" />
             </motion.span>
           )}
         </>
@@ -164,7 +163,7 @@ function NavRow({ item, collapsed, unreadCount, depth = 0 }: NavRowProps) {
 
       {/* Collapsed: notification dot */}
       {collapsed && item.badge && unreadCount > 0 && (
-        <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive" aria-hidden="true" />
+        <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" aria-hidden="true" />
       )}
     </>
   )
@@ -175,7 +174,7 @@ function NavRow({ item, collapsed, unreadCount, depth = 0 }: NavRowProps) {
       <TooltipProvider delayDuration={0}>
         <Tooltip>
           <TooltipTrigger asChild>{node as React.ReactElement}</TooltipTrigger>
-          <TooltipContent side="right" className="text-xs">
+          <TooltipContent side="right" className="text-xs font-medium">
             {item.label}
             {item.launchingSoon && <span className="ml-1.5 opacity-60">· Soon</span>}
           </TooltipContent>
@@ -191,7 +190,7 @@ function NavRow({ item, collapsed, unreadCount, depth = 0 }: NavRowProps) {
           <button
             type="button"
             onClick={() => setOpen(v => !v)}
-            className={cn(baseClasses, 'w-full text-left')}
+            className={cn(baseClasses, 'text-left')}
             aria-expanded={open}
           >
             {linkContent}
@@ -203,8 +202,8 @@ function NavRow({ item, collapsed, unreadCount, depth = 0 }: NavRowProps) {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.22, ease: 'easeInOut' }}
-              className="overflow-hidden mt-0.5 space-y-0.5 border-l border-border/50 ml-6"
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+              className="overflow-hidden mt-0.5 space-y-0.5 border-l border-border/40 ml-[22px]"
             >
               {item.subItems!.map(sub => {
                 const SubIcon = sub.icon
@@ -216,10 +215,10 @@ function NavRow({ item, collapsed, unreadCount, depth = 0 }: NavRowProps) {
                     <Link
                       to={sub.href}
                       className={cn(
-                        'relative flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[12px] font-medium transition-all duration-150 ml-2',
+                        'relative flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[12px] font-medium transition-all duration-150 ml-1',
                         subActive
                           ? 'bg-primary/10 text-primary'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/70',
+                          : 'text-muted-foreground hover:text-foreground hover:bg-accent/60',
                       )}
                       aria-current={subActive ? 'page' : undefined}
                     >
@@ -231,7 +230,7 @@ function NavRow({ item, collapsed, unreadCount, depth = 0 }: NavRowProps) {
                           aria-hidden="true"
                         />
                       )}
-                      {SubIcon && <SubIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
+                      {SubIcon && <SubIcon className="h-3 w-3 shrink-0" aria-hidden="true" />}
                       {sub.label}
                     </Link>
                   </li>
@@ -267,13 +266,13 @@ function SidebarSection({
   children: React.ReactNode
 }) {
   return (
-    <div className="mt-4 first:mt-0">
+    <div className="mt-3 first:mt-0">
       {!collapsed && (
-        <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+        <p className="px-2.5 mb-1 text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground/40">
           {label}
         </p>
       )}
-      {collapsed && <div className="mx-3 mb-1 h-px bg-border/60" />}
+      {collapsed && <div className="mx-2 mb-1 h-px bg-border/40" />}
       <ul className="space-y-0.5">{children}</ul>
     </div>
   )
@@ -287,17 +286,17 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* ── Logo ─────────────────────────────────────────────────────────── */}
+      {/* ── Logo ── */}
       <div className={cn(
-        'flex items-center gap-3 px-4 py-4 border-b border-border',
+        'flex items-center gap-2.5 px-3 py-3 border-b border-border',
         collapsed && 'justify-center px-2',
       )}>
         <motion.div
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary text-primary-foreground shrink-0 shadow-sm"
+          whileHover={{ scale: 1.06 }}
+          whileTap={{ scale: 0.94 }}
+          className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary text-primary-foreground shrink-0 shadow-sm"
         >
-          <GraduationCap className="h-5 w-5" />
+          <GraduationCap className="h-4.5 w-4.5" />
         </motion.div>
         <AnimatePresence>
           {!collapsed && (
@@ -308,31 +307,28 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
               transition={{ duration: 0.18 }}
               className="overflow-hidden"
             >
-              <p className="font-bold text-foreground text-sm tracking-tight leading-none">CAMPUSRANK</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Student Platform</p>
+              <p className="font-bold text-foreground text-[13px] tracking-tight leading-none">CAMPUSRANK</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5 leading-none">Student Platform</p>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* ── Nav ──────────────────────────────────────────────────────────── */}
-      <ScrollArea className="flex-1 px-2 py-3">
+      {/* ── Nav ── */}
+      <ScrollArea className="flex-1 px-2 py-2">
         <nav aria-label="Main navigation" className="space-y-0">
-          {/* Main */}
-          <SidebarSection label="Menu" collapsed={collapsed}>
+          <SidebarSection label="Main" collapsed={collapsed}>
             {mainNavItems.map(item => (
               <NavRow key={item.href} item={item} collapsed={collapsed} unreadCount={unreadCount} />
             ))}
           </SidebarSection>
 
-          {/* Coming soon */}
           <SidebarSection label="Coming Soon" collapsed={collapsed}>
             {comingSoonItems.map(item => (
               <NavRow key={item.href} item={item} collapsed={collapsed} unreadCount={0} />
             ))}
           </SidebarSection>
 
-          {/* Account */}
           <SidebarSection label="Account" collapsed={collapsed}>
             {bottomNavItems.map(item => (
               <NavRow key={item.href} item={item} collapsed={collapsed} unreadCount={unreadCount} />
@@ -341,26 +337,25 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
         </nav>
       </ScrollArea>
 
-      {/* ── User footer ──────────────────────────────────────────────────── */}
+      {/* ── User footer ── */}
       {user && (
-        <div className={cn('border-t border-border p-3', collapsed && 'flex justify-center')}>
+        <div className={cn('border-t border-border p-2', collapsed && 'flex justify-center')}>
           <Link
             to="/dashboard/profile"
             className={cn(
-              'flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-muted/70 transition-all duration-150 group',
+              'flex items-center gap-2.5 rounded-lg px-2 py-2 hover:bg-accent/60 transition-all duration-150 group',
               collapsed && 'justify-center',
             )}
           >
             <div className="relative shrink-0">
-              <Avatar className="h-8 w-8 ring-2 ring-border group-hover:ring-primary/40 transition-all duration-150">
-                <AvatarImage src={user.profileImage} alt={user.fullName} />
-                <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
+              <Avatar className="h-7 w-7 ring-1 ring-border group-hover:ring-primary/40 transition-all duration-150">
+                <AvatarImage src={user.profileImage} alt={user.fullName} className="object-cover" />
+                <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-semibold">
                   {getInitials(user.fullName)}
                 </AvatarFallback>
               </Avatar>
-              {/* Online dot */}
               <span
-                className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-background"
+                className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-green-500 border-[1.5px] border-background"
                 aria-hidden="true"
               />
             </div>
@@ -373,15 +368,15 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                   transition={{ duration: 0.18 }}
                   className="overflow-hidden min-w-0 flex-1"
                 >
-                  <p className="text-sm font-semibold text-foreground truncate leading-tight">
+                  <p className="text-[12px] font-semibold text-foreground truncate leading-tight">
                     {user.fullName}
                   </p>
-                  <p className="text-[11px] text-muted-foreground truncate">{user.email}</p>
+                  <p className="text-[10px] text-muted-foreground truncate leading-tight">{user.email}</p>
                 </motion.div>
               )}
             </AnimatePresence>
             {!collapsed && (
-              <Zap className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary/60 transition-colors shrink-0" aria-hidden="true" />
+              <Zap className="h-3 w-3 text-muted-foreground/30 group-hover:text-primary/50 transition-colors shrink-0" aria-hidden="true" />
             )}
           </Link>
         </div>
@@ -399,8 +394,8 @@ export function Sidebar() {
     <>
       {/* Desktop */}
       <motion.aside
-        animate={{ width: isCollapsed ? 68 : 256 }}
-        transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+        animate={{ width: isCollapsed ? 60 : 220 }}
+        transition={{ duration: 0.26, ease: [0.4, 0, 0.2, 1] }}
         className="hidden lg:flex flex-col h-full bg-card border-r border-border relative shrink-0 overflow-hidden"
         aria-label="Sidebar"
       >
@@ -411,12 +406,12 @@ export function Sidebar() {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={toggleCollapsed}
-          className="absolute -right-3 top-[76px] h-6 w-6 rounded-full border border-border bg-background shadow-sm z-10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+          className="absolute -right-3 top-[64px] h-6 w-6 rounded-full border border-border bg-background shadow-sm z-10 flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           <motion.span
             animate={{ rotate: isCollapsed ? 180 : 0 }}
-            transition={{ duration: 0.28 }}
+            transition={{ duration: 0.26 }}
           >
             <ChevronLeft className="h-3.5 w-3.5" />
           </motion.span>
@@ -437,16 +432,16 @@ export function Sidebar() {
               aria-hidden="true"
             />
             <motion.aside
-              initial={{ x: -256 }}
+              initial={{ x: -220 }}
               animate={{ x: 0 }}
-              exit={{ x: -256 }}
-              transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-              className="fixed left-0 top-0 z-50 h-full w-64 bg-card border-r border-border lg:hidden flex flex-col"
+              exit={{ x: -220 }}
+              transition={{ duration: 0.26, ease: [0.4, 0, 0.2, 1] }}
+              className="fixed left-0 top-0 z-50 h-full w-[220px] bg-card border-r border-border lg:hidden flex flex-col"
               aria-label="Mobile sidebar"
             >
               <button
                 onClick={() => setMobileOpen(false)}
-                className="absolute right-3 top-4 z-10 h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                className="absolute right-3 top-3 z-10 h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                 aria-label="Close sidebar"
               >
                 <X className="h-4 w-4" />

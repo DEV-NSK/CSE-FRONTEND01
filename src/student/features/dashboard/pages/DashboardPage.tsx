@@ -20,7 +20,6 @@ import { XpCard }                from '../components/XpCard'
 import { LeaderboardCard }       from '../components/LeaderboardCard'
 import { DailyTasksCard }        from '../components/DailyTasksCard'
 import { ActivityHeatmap }       from '../components/ActivityHeatmap'
-import { ActivityCalendar }      from '../components/ActivityCalendar'
 import { StatisticsCards }       from '../components/StatisticsCards'
 import { LearningProgressCards } from '../components/LearningProgressCards'
 import { QuickAccessCards }      from '../components/QuickAccessCards'
@@ -101,22 +100,12 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {/* ── ROW 2: Activity Heatmap | Calendar ────────────────────────────
-           Both cards now share exactly the same height.                   */}
+      {/* ── ROW 2: Activity Heatmap (full width) ──────────────────────────── */}
       <section aria-label="Activity">
         <div className="mb-3"><SectionLabel>Activity</SectionLabel></div>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-          <Cell className="lg:col-span-8">
-            <WidgetErrorBoundary label="Activity Heatmap">
-              <ActivityHeatmap data={activityData} isLoading={activityLoading} />
-            </WidgetErrorBoundary>
-          </Cell>
-          <Cell className="lg:col-span-4">
-            <WidgetErrorBoundary label="Calendar">
-              <ActivityCalendar activityData={activityData} isLoading={activityLoading} />
-            </WidgetErrorBoundary>
-          </Cell>
-        </div>
+        <WidgetErrorBoundary label="Activity Heatmap">
+          <ActivityHeatmap data={activityData} isLoading={activityLoading} />
+        </WidgetErrorBoundary>
       </section>
 
       {/* ── ROW 3: Statistics ─────────────────────────────────────────────── */}
@@ -131,7 +120,7 @@ export function DashboardPage() {
         </WidgetErrorBoundary>
       </section>
 
-      {/* ── ROW 4: Learning Progress ───────────────────────────────────────── */}
+      {/* ── ROW 4: Learning Progress + Quick Access (4 cards in grid) ─────── */}
       <section aria-label="Learning progress">
         <div className="mb-3"><SectionLabel>Learning Progress</SectionLabel></div>
         <WidgetErrorBoundary label="Learning Progress">
@@ -144,13 +133,10 @@ export function DashboardPage() {
         </WidgetErrorBoundary>
       </section>
 
-      {/* ── ROW 5: Quick Access ────────────────────────────────────────────── */}
-      <section aria-label="Quick access">
-        <div className="mb-3"><SectionLabel>Quick Access</SectionLabel></div>
-        <WidgetErrorBoundary label="Quick Access">
-          <QuickAccessCards />
-        </WidgetErrorBoundary>
-      </section>
+      {/* ── ROW 5: Quick Access (no section label) ────────────────────────── */}
+      <WidgetErrorBoundary label="Quick Access">
+        <QuickAccessCards />
+      </WidgetErrorBoundary>
     </motion.div>
   )
 }
