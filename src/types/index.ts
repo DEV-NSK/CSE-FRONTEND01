@@ -38,6 +38,8 @@ export interface User {
   gfgUrl?: string
   mediumUrl?: string
   resumeUrl?: string
+  resumeFileName?: string
+  resumeUploadedAt?: string
   profileVisibility?: 'PUBLIC' | 'FRIENDS' | 'PRIVATE'
   lastSeen?: string
 }

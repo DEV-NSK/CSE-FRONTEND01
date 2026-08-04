@@ -111,6 +111,32 @@ export const profileService = {
   deleteAvatar: () =>
     axiosInstance.delete<ApiResponse<{ avatarUrl: null }>>('/profile/avatar'),
 
+  /** PATCH /api/profile/resume — upload or replace resume (PDF/DOCX) */
+  uploadResume: (file: File, onProgress?: (pct: number) => void) => {
+    const formData = new FormData()
+    formData.append('resume', file)
+    return axiosInstance.patch<ApiResponse<{ resumeUrl: string; resumeFileName: string; resumeUploadedAt: string }>>(
+      '/profile/resume',
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (e) => {
+          if (onProgress && e.total) {
+            onProgress(Math.round((e.loaded / e.total) * 100))
+          }
+        },
+      },
+    )
+  },
+
+  /** DELETE /api/profile/resume — remove resume */
+  deleteResume: () =>
+    axiosInstance.delete<ApiResponse<{ resumeUrl: null }>>('/profile/resume'),
+
+  /** GET /api/profile/resume — get resume metadata */
+  getResume: () =>
+    axiosInstance.get<ApiResponse<{ resumeUrl: string | null; resumeFileName: string | null; resumeUploadedAt: string | null }>>('/profile/resume'),
+
   /** PATCH /api/profile/socials — update social links only */
   updateSocials: (links: Partial<UpdateProfilePayload>) =>
     axiosInstance.patch<ApiResponse<User>>('/profile/socials', links),

@@ -13,8 +13,7 @@ import {
   Award, Activity, TrendingUp, Copy, Check, Loader2,
   BarChart2, Users, Lock, Eye, EyeOff, Trash2, RefreshCw,
   X as XIcon, PlayCircle,
-} from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
+} from 'lucide-react'import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar'
@@ -22,6 +21,7 @@ import { Progress } from '@/shared/components/ui/progress'
 import { useAuthStore } from '@/shared/store/authStore'
 import { getInitials } from '@/shared/lib/utils'
 import { useProfile } from '@/shared/hooks/useProfile'
+import { useCodingAnalytics } from '@/shared/hooks/useCoding'
 import { profileService } from '@/shared/services/profile.service'
 import type { User } from '@/types'
 
@@ -641,6 +641,199 @@ function CompletionCard({ completion }: { completion: ReturnType<typeof useProfi
   )
 }
 
+// ── Resume card ───────────────────────────────────────────────────────────────
+function ResumeCard({
+  user,
+  onUploadResume,
+  onDeleteResume,
+  isUploading,
+  uploadProgress,
+  setUploadProgress,
+  uploadError,
+  clearUploadError,
+}: {
+  user: User
+  onUploadResume: (file: File, onProgress: (pct: number) => void) => Promise<void>
+  onDeleteResume: () => void
+  isUploading: boolean
+  uploadProgress: number
+  setUploadProgress: (pct: number) => void
+  uploadError: string
+  clearUploadError: () => void
+}) {
+  const fileRef = useRef<HTMLInputElement>(null)
+  const hasResume = !!user.resumeUrl
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    clearUploadError()
+
+    const allowed = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ]
+    if (!allowed.includes(file.type)) {
+      clearUploadError()
+      alert('Only PDF and DOCX files are allowed.')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Resume must be under 10MB.')
+      return
+    }
+
+    setUploadProgress(0)
+    await onUploadResume(file, setUploadProgress)
+    e.target.value = ''
+  }
+
+  const uploadedDate = user.resumeUploadedAt
+    ? new Date(user.resumeUploadedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+    : null
+
+  const isPdf = user.resumeFileName?.toLowerCase().endsWith('.pdf')
+  const isDocx = user.resumeFileName?.toLowerCase().endsWith('.docx')
+
+  const handlePreview = () => {
+    if (!user.resumeUrl) return
+    if (isPdf) {
+      window.open(user.resumeUrl, '_blank', 'noopener')
+    } else {
+      // DOCX — trigger download
+      const a = document.createElement('a')
+      a.href = user.resumeUrl
+      a.download = user.resumeFileName ?? 'resume.docx'
+      a.click()
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+            <FileText className="h-4 w-4 text-primary" /> Resume
+          </CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {/* Error */}
+        {uploadError && (
+          <div className="p-2 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center justify-between">
+            {uploadError}
+            <button onClick={clearUploadError} className="ml-2 text-destructive/70 hover:text-destructive">✕</button>
+          </div>
+        )}
+
+        {hasResume ? (
+          <div className="space-y-3">
+            {/* Resume info */}
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border">
+              <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {user.resumeFileName ?? 'Resume'}
+                </p>
+                {uploadedDate && (
+                  <p className="text-[11px] text-muted-foreground">Uploaded {uploadedDate}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-xs"
+                onClick={handlePreview}
+                title={isPdf ? 'Open in new tab' : 'Download DOCX'}
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                {isPdf ? 'Preview' : 'Download'}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-xs"
+                onClick={() => {
+                  if (!user.resumeUrl) return
+                  const a = document.createElement('a')
+                  a.href = user.resumeUrl
+                  a.download = user.resumeFileName ?? 'resume'
+                  a.click()
+                }}
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Download
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-xs"
+                onClick={() => fileRef.current?.click()}
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <><Loader2 className="h-3.5 w-3.5 animate-spin" />{uploadProgress}%</>
+                ) : (
+                  <><RefreshCw className="h-3.5 w-3.5" />Replace</>
+                )}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="gap-1.5 text-xs text-destructive hover:text-destructive"
+                onClick={() => onDeleteResume()}
+                disabled={isUploading}
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Delete
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-4 space-y-3">
+            <div className="mx-auto h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+              <FileText className="h-6 w-6 text-muted-foreground/50" />
+            </div>
+            <p className="text-xs text-muted-foreground">No resume uploaded yet.</p>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => fileRef.current?.click()}
+              disabled={isUploading}
+              className="gap-1.5"
+            >
+              {isUploading ? (
+                <><Loader2 className="h-4 w-4 animate-spin" />Uploading… {uploadProgress}%</>
+              ) : (
+                <>Upload Resume</>
+              )}
+            </Button>
+          </div>
+        )}
+
+        <p className="text-[10px] text-muted-foreground">PDF or DOCX · Max 10MB</p>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          className="sr-only"
+          onChange={handleFileChange}
+          aria-label="Upload resume"
+        />
+      </CardContent>
+    </Card>
+  )
+}
+
 // ── Main ProfilePage ──────────────────────────────────────────────────────────
 export function ProfilePage() {
   const { user: authUser } = useAuthStore()
@@ -651,10 +844,17 @@ export function ProfilePage() {
     uploadAvatar, isUploadingAvatar,
     deleteAvatar,
     updatePrivacy,
+    uploadResume, isUploadingResume,
+    deleteResume,
   } = useProfile()
+
+  // Use the dedicated coding analytics for accurate distinct-problem counts
+  const { data: codingStats } = useCodingAnalytics()
 
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadError, setUploadError] = useState('')
+  const [resumeUploadProgress, setResumeUploadProgress] = useState(0)
+  const [resumeUploadError, setResumeUploadError] = useState('')
 
   const user = profile ?? authUser
   if (!user) return null
@@ -686,11 +886,15 @@ export function ProfilePage() {
     e.target.value = ''
   }
 
+  // Problems Solved = distinct accepted problems (from coding analytics)
+  // Falls back to profile analytics accepted count if coding analytics not yet loaded
+  const problemsSolved = codingStats?.stats?.totalSolved ?? analytics?.accepted ?? 0
+
   const stats = [
-    { icon: Code2,     label: 'Problems Solved', value: analytics?.accepted ?? 0, color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', delta: analytics?.accepted ? `${analytics.acceptanceRate}% rate` : undefined },
+    { icon: Code2,     label: 'Problems Solved', value: problemsSolved, color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', delta: codingStats?.stats?.acceptanceRate !== undefined ? `${codingStats.stats.acceptanceRate}% rate` : undefined },
     { icon: BookOpen,  label: 'Lessons Done',    value: analytics?.lessonsCompleted ?? 0, color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400' },
     { icon: FolderOpen,label: 'Projects',         value: projects.length, color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
-    { icon: Zap,       label: 'XP Earned',        value: (analytics?.accepted ?? 0) * 10, color: 'bg-purple-500/10 text-purple-500' },
+    { icon: Zap,       label: 'XP Earned',        value: problemsSolved * 20 + (analytics?.lessonsCompleted ?? 0) * 10, color: 'bg-purple-500/10 text-purple-500' },
   ]
 
   return (
@@ -731,6 +935,23 @@ export function ProfilePage() {
         {/* Left column */}
         <div className="space-y-6">
           <CompletionCard completion={completion} />
+          <ResumeCard
+            user={user}
+            onUploadResume={async (file, onProgress) => {
+              setResumeUploadError('')
+              try {
+                await uploadResume(file, onProgress)
+              } catch (err: any) {
+                setResumeUploadError(err?.response?.data?.message ?? 'Resume upload failed.')
+              }
+            }}
+            onDeleteResume={deleteResume}
+            isUploading={isUploadingResume}
+            uploadProgress={resumeUploadProgress}
+            setUploadProgress={setResumeUploadProgress}
+            uploadError={resumeUploadError}
+            clearUploadError={() => setResumeUploadError('')}
+          />
           <SocialsCard user={user} />
           <ShareCard user={user} />
           <PrivacyCard user={user} onUpdate={updatePrivacy} />

@@ -70,6 +70,33 @@ export function useProfile() {
     },
   })
 
+  // Upload resume
+  const uploadResumeMutation = useMutation({
+    mutationFn: ({ file, onProgress }: { file: File; onProgress?: (pct: number) => void }) =>
+      profileService.uploadResume(file, onProgress),
+    onSuccess: (res) => {
+      const { resumeUrl, resumeFileName, resumeUploadedAt } = res.data.data
+      updateUser({ resumeUrl, resumeFileName, resumeUploadedAt })
+      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: ['profile', 'resume'] })
+      toast({ title: 'Resume uploaded' })
+    },
+    onError: (err: any) => {
+      toast({ title: err?.response?.data?.message ?? 'Resume upload failed.', variant: 'destructive' })
+    },
+  })
+
+  // Delete resume
+  const deleteResumeMutation = useMutation({
+    mutationFn: () => profileService.deleteResume(),
+    onSuccess: () => {
+      updateUser({ resumeUrl: undefined, resumeFileName: undefined, resumeUploadedAt: undefined })
+      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: ['profile', 'resume'] })
+      toast({ title: 'Resume deleted' })
+    },
+  })
+
   // Update privacy
   const updatePrivacyMutation = useMutation({
     mutationFn: (visibility: 'PUBLIC' | 'FRIENDS' | 'PRIVATE') =>
@@ -149,6 +176,13 @@ export function useProfile() {
 
     deleteAvatar: () => deleteAvatarMutation.mutateAsync(),
     isDeletingAvatar: deleteAvatarMutation.isPending,
+
+    uploadResume: (file: File, onProgress?: (pct: number) => void) =>
+      uploadResumeMutation.mutateAsync({ file, onProgress }),
+    isUploadingResume: uploadResumeMutation.isPending,
+
+    deleteResume: () => deleteResumeMutation.mutateAsync(),
+    isDeletingResume: deleteResumeMutation.isPending,
 
     updatePrivacy: updatePrivacyMutation.mutateAsync,
     isUpdatingPrivacy: updatePrivacyMutation.isPending,
