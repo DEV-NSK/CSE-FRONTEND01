@@ -181,26 +181,30 @@ export function DashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <Card className="overflow-hidden bg-card border border-border shadow-sm">
-          <CardContent className="p-6 sm:p-8">
+        <Card className="overflow-hidden border border-border shadow-sm relative">
+          {/* Subtle gradient decoration */}
+          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+            <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-primary/5 blur-3xl translate-x-1/2 -translate-y-1/2" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-secondary/5 blur-2xl -translate-x-1/3 translate-y-1/3" />
+          </div>
+          <CardContent className="relative p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-2">
-                <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
                   Hello, {firstName} 👋
                 </h1>
-                <p className="text-muted-foreground text-base">
-                  Welcome Back
+                <p className="text-muted-foreground text-sm">
+                  Welcome back to CSE Ground
                 </p>
                 {learningStats && learningStats.currentStreak > 0 && (
-                  <p className="text-sm text-primary font-medium">
-                    🔥 {learningStats.currentStreak}-day learning streak — keep it going!
-                  </p>
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 text-sm font-medium w-fit">
+                    🔥 {learningStats.currentStreak}-day streak — keep it going!
+                  </div>
                 )}
               </div>
               <Button
                 asChild
-                size="lg"
-                className="gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
+                className="gap-2 rounded-full shadow-md shadow-primary/20 hover:shadow-primary/30 transition-shadow"
               >
                 <Link to={continueLearningHref}>
                   <Play className="h-4 w-4" aria-hidden="true" />

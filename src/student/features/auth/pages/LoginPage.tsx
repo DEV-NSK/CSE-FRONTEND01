@@ -3,16 +3,10 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ArrowRight, GraduationCap } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/shared/components/ui/card";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Label } from "@/shared/components/ui/label";
 import { authService } from "@/shared/services/auth.service";
@@ -24,7 +18,6 @@ const loginSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
   rememberMe: z.boolean().optional(),
 });
-
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
@@ -33,7 +26,6 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuthStore();
-
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
 
   const {
@@ -46,75 +38,87 @@ export function LoginPage() {
     resolver: zodResolver(loginSchema),
     defaultValues: { rememberMe: false },
   });
-
   const rememberMe = watch("rememberMe");
 
   const onSubmit = async (data: LoginFormValues) => {
     setError("");
     try {
-      const response = await authService.login({
-        email: data.email,
-        password: data.password,
-      });
+      const response = await authService.login({ email: data.email, password: data.password });
       const { user, accessToken, refreshToken } = response.data.data;
-
-      // PRD-08: Store user + tokens — role comes from backend, never from request
       login(user, { accessToken, refreshToken });
-
-      // PRD-08: Backend decided the role — frontend just routes accordingly
-      const defaultRedirect = getDashboardPath(user.role);
-      navigate(from || defaultRedirect, { replace: true });
+      navigate(from || getDashboardPath(user.role), { replace: true });
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };
-      setError(
-        axiosError?.response?.data?.message ||
-          "Invalid email or password. Please try again.",
-      );
+      setError(axiosError?.response?.data?.message || "Invalid email or password. Please try again.");
     }
   };
 
   return (
-    <Card className="w-full shadow-lg">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">
-          Welcome back
-        </CardTitle>
-        <CardDescription className="text-center">
-          Enter your credentials to access your account
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          noValidate
-          className="space-y-4"
-        >
-          {error && (
-            <div
-              role="alert"
-              className="p-3 rounded-md bg-destructive/10 border border-destructive/20 text-destructive text-sm"
-            >
-              {error}
-            </div>
-          )}
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="space-y-2">
+        <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Welcome back</h1>
+        <p className="text-muted-foreground text-sm">
+          Don't have an account?{" "}
+          <Link to="/auth/register" className="text-primary font-semibold hover:underline underline-offset-4">
+            Create one free
+          </Link>
+        </p>
+      </div>
 
+      {/* Error */}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+            animate={{ opacity: 1, height: "auto", marginBottom: 0 }}
+            exit={{ opacity: 0, height: 0 }}
+            role="alert"
+            className="p-3.5 rounded-xl bg-destructive/8 border border-destructive/20 text-destructive text-sm"
+          >
+            {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Form */}
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+        <div className="space-y-1.5">
+          <Label htmlFor="email" className="text-sm font-medium text-foreground">
+            Email address
+          </Label>
           <Input
-            label="Email"
+            id="email"
             type="email"
             placeholder="you@example.com"
             leftIcon={<Mail className="h-4 w-4" />}
             autoComplete="email"
             error={errors.email?.message}
+            className="h-11 rounded-xl border-border/70 focus:border-primary/60 bg-background"
             {...register("email")}
           />
+        </div>
 
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className="text-sm font-medium text-foreground">
+              Password
+            </Label>
+            <Link
+              to="/auth/forgot-password"
+              className="text-xs text-primary hover:underline underline-offset-4"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <Input
-            label="Password"
+            id="password"
             type={showPassword ? "text" : "password"}
             placeholder="••••••••"
             leftIcon={<Lock className="h-4 w-4" />}
             autoComplete="current-password"
             error={errors.password?.message}
+            className="h-11 rounded-xl border-border/70 focus:border-primary/60 bg-background"
             rightIcon={
               <button
                 type="button"
@@ -122,101 +126,82 @@ export function LoginPage() {
                 className="text-muted-foreground hover:text-foreground transition-colors"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             }
             {...register("password")}
           />
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="rememberMe"
-                checked={rememberMe}
-                onCheckedChange={(val) =>
-                  setValue("rememberMe", val as boolean)
-                }
-              />
-              <Label
-                htmlFor="rememberMe"
-                className="text-sm font-normal cursor-pointer"
-              >
-                Remember me
-              </Label>
-            </div>
-            <Link
-              to="/auth/forgot-password"
-              className="text-sm text-primary hover:underline"
-            >
-              Forgot password?
-            </Link>
-          </div>
-
-          <Button type="submit" className="w-full" loading={isSubmitting}>
-            Sign in
-          </Button>
-        </form>
-
-        <div className="mt-6 text-center text-sm text-muted-foreground">
-          Don't have an account?{" "}
-          <Link
-            to="/auth/register"
-            className="text-primary font-medium hover:underline"
-          >
-            Create one
-          </Link>
         </div>
 
-        {/* Dev-mode quick-login credentials */}
-        {import.meta.env.DEV && (
-          <div className="mt-5 p-3 rounded-lg border border-dashed border-border bg-muted/30">
-            <p className="text-xs font-medium text-muted-foreground mb-2">
-              Dev Quick Login
-            </p>
-            <div className="flex flex-wrap gap-2">
+        <div className="flex items-center gap-2.5">
+          <Checkbox
+            id="rememberMe"
+            checked={rememberMe}
+            onCheckedChange={(val) => setValue("rememberMe", val as boolean)}
+            className="rounded"
+          />
+          <Label htmlFor="rememberMe" className="text-sm text-muted-foreground font-normal cursor-pointer">
+            Remember me for 30 days
+          </Label>
+        </div>
+
+        <Button
+          type="submit"
+          className="w-full h-11 rounded-xl gap-2 text-sm font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 btn-glow transition-all active:scale-[0.98]"
+          loading={isSubmitting}
+        >
+          {!isSubmitting && (
+            <>
+              Sign in
+              <ArrowRight className="h-4 w-4" />
+            </>
+          )}
+        </Button>
+      </form>
+
+      {/* Divider */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-border/50" />
+        </div>
+        <div className="relative flex justify-center text-xs text-muted-foreground">
+          <span className="bg-background px-3">or</span>
+        </div>
+      </div>
+
+      {/* Sign up link */}
+      <p className="text-center text-sm text-muted-foreground">
+        New to CSE Ground?{" "}
+        <Link to="/auth/register" className="text-primary font-semibold hover:underline underline-offset-4">
+          Create your free account
+        </Link>
+      </p>
+
+      {/* Dev quick-login */}
+      {import.meta.env.DEV && (
+        <div className="mt-4 p-4 rounded-xl border border-dashed border-border bg-muted/30">
+          <p className="text-xs font-semibold text-muted-foreground mb-3 flex items-center gap-1.5">
+            <GraduationCap className="h-3.5 w-3.5" />
+            Dev Quick Login
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { label: "Super Admin", email: "bathulasaikiran2k2@gmail.com", password: "bathulasaikiran2k2", color: "bg-red-500/10 text-red-600 hover:bg-red-500/20" },
+              { label: "Manager", email: "manager@cse.dev", password: "Manager@123", color: "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20" },
+              { label: "Student", email: "student@cse.dev", password: "Student@123", color: "bg-primary/10 text-primary hover:bg-primary/20" },
+            ].map(({ label, email, password, color }) => (
               <button
+                key={label}
                 type="button"
-                onClick={() => {
-                  setValue("email", "bathulasaikiran2k2@gmail.com");
-                  setValue("password", "bathulasaikiran2k2");
-                }}
-                className="text-xs px-2.5 py-1 rounded bg-red-500/10 text-red-600 hover:bg-red-500/20 transition-colors font-medium"
+                onClick={() => { setValue("email", email); setValue("password", password); }}
+                className={`text-xs px-3 py-1.5 rounded-lg ${color} transition-colors font-medium`}
               >
-                Super Admin
+                {label}
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setValue("email", "manager@cse.dev");
-                  setValue("password", "Manager@123");
-                }}
-                className="text-xs px-2.5 py-1 rounded bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-colors font-medium"
-              >
-                Manager
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setValue("email", "student@cse.dev");
-                  setValue("password", "Student@123");
-                }}
-                className="text-xs px-2.5 py-1 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors font-medium"
-              >
-                Student
-              </button>
-            </div>
-            <p className="text-[10px] text-muted-foreground/70 mt-2">
-              Roles redirect: Student → <code className="font-mono">/dashboard</code> ·
-              Manager → <code className="font-mono">/manager/dashboard</code> ·
-              Admin → <code className="font-mono">/admin/dashboard</code>
-            </p>
+            ))}
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+    </div>
   );
 }
