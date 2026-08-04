@@ -37,7 +37,7 @@ export function AuthLayout() {
             <GraduationCap className="h-5 w-5" />
           </div>
           <div>
-            <p className="font-extrabold text-white text-sm leading-none tracking-tight">CSE Ground</p>
+            <p className="font-extrabold text-white text-sm leading-none tracking-tight">CAMPUSRANK</p>
             <p className="text-white/60 text-[11px] leading-none mt-0.5">Student Platform</p>
           </div>
         </Link>
@@ -73,7 +73,7 @@ export function AuthLayout() {
         {/* Quote */}
         <div className="relative">
           <blockquote className="border-l-2 border-white/30 pl-4 text-white/70 text-sm italic leading-relaxed">
-            "CSE Ground helped me crack my Google interview. The structured roadmaps made everything clear."
+            "CAMPUSRANK helped me crack my Google interview. The structured roadmaps made everything clear."
           </blockquote>
           <p className="mt-2 text-white/50 text-xs pl-4">— Aditya S., SDE at Google</p>
         </div>
@@ -113,7 +113,7 @@ export function AuthLayout() {
               <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary text-primary-foreground shadow-md">
                 <GraduationCap className="h-5 w-5" />
               </div>
-              <span className="font-extrabold text-sm text-foreground">CSE Ground</span>
+              <span className="font-extrabold text-sm text-foreground">CAMPUSRANK</span>
             </div>
 
             <Outlet />
@@ -121,7 +121,7 @@ export function AuthLayout() {
         </main>
 
         <footer className="py-4 px-6 text-center text-xs text-muted-foreground border-t border-border/50">
-          © {new Date().getFullYear()} CSE Ground · All rights reserved.
+          © {new Date().getFullYear()} CAMPUSRANK · All rights reserved.
         </footer>
       </div>
     </div>

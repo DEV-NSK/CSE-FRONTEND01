@@ -73,15 +73,12 @@ export function PublicLayout() {
             <Link
               to="/"
               className="flex items-center gap-2.5 font-bold text-foreground group"
-              aria-label="CSE Ground — Home"
+              aria-label="CAMPUSRANK — Home"
             >
               <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/25 group-hover:shadow-primary/40 transition-shadow duration-200">
                 <GraduationCap className="h-5 w-5" />
               </div>
-              <span className="text-sm tracking-tight">
-                <span className="font-extrabold">CSE</span>
-                <span className="font-medium text-muted-foreground"> Ground</span>
-              </span>
+              <span className="text-sm tracking-tight font-extrabold">CAMPUSRANK</span>
             </Link>
 
             {/* Desktop nav — centered */}
@@ -318,7 +315,7 @@ export function PublicLayout() {
 
           {/* Bottom bar */}
           <div className="border-t border-border mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-            <p>© {new Date().getFullYear()} CSE Ground. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} CAMPUSRANK. All rights reserved.</p>
             <div className="flex items-center gap-4">
               <Link to="/faq" className="hover:text-foreground transition-colors">Privacy</Link>
               <Link to="/faq" className="hover:text-foreground transition-colors">Terms</Link>

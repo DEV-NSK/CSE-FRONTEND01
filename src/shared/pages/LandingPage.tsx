@@ -80,7 +80,7 @@ const stats = [
 
 const testimonials = [
   {
-    quote: 'CSE Ground completely transformed how I approach coding interviews. The structured roadmaps made everything click.',
+    quote: 'CAMPUSRANK completely transformed how I approach coding interviews. The structured roadmaps made everything click.',
     name: 'Aditya Sharma',
     title: 'SDE at Google',
     initials: 'AS',
@@ -358,7 +358,7 @@ export function LandingPage() {
             <Badge variant="secondary" className="mb-4 px-3 py-1 text-sm">Student Stories</Badge>
             <h2 className="text-heading-1 mb-3">What our students say</h2>
             <p className="text-muted-foreground text-body max-w-xl mx-auto">
-              Real stories from real students who transformed their careers with CSE Ground.
+              Real stories from real students who transformed their careers with CAMPUSRANK.
             </p>
           </motion.div>
 

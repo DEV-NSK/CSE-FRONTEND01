@@ -308,7 +308,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
               transition={{ duration: 0.18 }}
               className="overflow-hidden"
             >
-              <p className="font-bold text-foreground text-sm tracking-tight leading-none">CSE Ground</p>
+              <p className="font-bold text-foreground text-sm tracking-tight leading-none">CAMPUSRANK</p>
               <p className="text-[10px] text-muted-foreground mt-0.5">Student Platform</p>
             </motion.div>
           )}

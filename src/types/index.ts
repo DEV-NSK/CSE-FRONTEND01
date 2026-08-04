@@ -2,8 +2,6 @@ export type Theme = 'light' | 'dark' | 'system'
 
 /**
  * PRD-08: Role enum matches backend exactly (UPPERCASE).
- * The backend Role enum is: STUDENT | MANAGER | SUPER_ADMIN
- * ADMIN and MENTOR roles are completely removed.
  */
 export type UserRole = 'STUDENT' | 'MANAGER' | 'SUPER_ADMIN'
 
@@ -26,8 +24,60 @@ export interface User {
   lastLoginAt?: string
   createdAt: string
   updatedAt: string
-  /** PRD-08: Module-level permissions for MANAGER role, included in JWT and /me response */
+  /** PRD-08: Module-level permissions for MANAGER role */
   permissions?: string[]
+  // FPRD-23: New profile fields
+  username?: string
+  headline?: string
+  twitterUrl?: string
+  youtubeUrl?: string
+  leetcodeUrl?: string
+  codechefUrl?: string
+  hackerrankUrl?: string
+  codeforcesUrl?: string
+  gfgUrl?: string
+  mediumUrl?: string
+  resumeUrl?: string
+  profileVisibility?: 'PUBLIC' | 'FRIENDS' | 'PRIVATE'
+  lastSeen?: string
+}
+
+/** FPRD-23: Public profile (no PII) */
+export interface PublicProfile {
+  username: string | null
+  fullName: string
+  headline: string | null
+  bio: string | null
+  profileImage: string | null
+  isVerified: boolean
+  branch: string | null
+  collegeName: string | null
+  currentYear: number | null
+  githubUrl: string | null
+  linkedinUrl: string | null
+  portfolioUrl: string | null
+  twitterUrl: string | null
+  youtubeUrl: string | null
+  leetcodeUrl: string | null
+  codechefUrl: string | null
+  hackerrankUrl: string | null
+  codeforcesUrl: string | null
+  gfgUrl: string | null
+  mediumUrl: string | null
+  profileVisibility: string | null
+  createdAt: string
+}
+
+/** FPRD-23: Profile completion detail */
+export interface ProfileCompletionDetail {
+  label: string
+  filled: boolean
+  weight: number
+}
+
+export interface ProfileCompletion {
+  percentage: number
+  details: ProfileCompletionDetail[]
 }
 
 export interface AuthTokens {
@@ -78,33 +128,20 @@ export interface NavItem {
   children?: NavItem[]
 }
 
-// ── PRD-08: Role helpers — always use these, never raw string comparison ───────
+// ── PRD-08: Role helpers ──────────────────────────────────────────────────────
 
-/**
- * Returns true if the user is a STUDENT.
- */
 export function isStudent(role?: UserRole | string): boolean {
   return role === 'STUDENT'
 }
 
-/**
- * Returns true if the user is a MANAGER.
- */
 export function isManager(role?: UserRole | string): boolean {
   return role === 'MANAGER'
 }
 
-/**
- * Returns true if the user is a SUPER_ADMIN (the single platform owner).
- */
 export function isSuperAdmin(role?: UserRole | string): boolean {
   return role === 'SUPER_ADMIN'
 }
 
-/**
- * Returns the correct dashboard path for a given role.
- * PRD-08: Backend decides the role, frontend just routes accordingly.
- */
 export function getDashboardPath(role?: UserRole | string): string {
   if (isSuperAdmin(role)) return '/admin/dashboard'
   if (isManager(role)) return '/manager/dashboard'

@@ -63,7 +63,7 @@ export function RegisterPage() {
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold text-center">Create your account</CardTitle>
         <CardDescription className="text-center">
-          Join the CSE Student Platform today
+          Join CAMPUSRANK today
         </CardDescription>
       </CardHeader>
       <CardContent>

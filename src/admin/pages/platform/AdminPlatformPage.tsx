@@ -71,7 +71,7 @@ export default function AdminPlatformPage() {
   const [placementsEnabled, setPlacementsEnabled] = useState(true);
   const [aiEnabled, setAiEnabled] = useState(false);
   const [betaFeatures, setBetaFeatures] = useState(false);
-  const [platformName, setPlatformName] = useState("CSE Student Platform");
+  const [platformName, setPlatformName] = useState("CAMPUSRANK");
   const [supportEmail, setSupportEmail] = useState("");
   const [maxUploadMb, setMaxUploadMb] = useState("10");
 

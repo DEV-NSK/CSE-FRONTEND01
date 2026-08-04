@@ -116,6 +116,7 @@ import { LaunchingSoonPage } from "@/shared/pages/LaunchingSoonPage";
 import { NotFoundPage } from "@/shared/pages/errors/NotFoundPage";
 import { ForbiddenPage } from "@/shared/pages/errors/ForbiddenPage";
 import { ServerErrorPage } from "@/shared/pages/errors/ServerErrorPage";
+import { PublicProfilePage } from "@/student/features/profile/pages/PublicProfilePage";
 
 // ── Suspense wrapper ──────────────────────────────────────────────────────────
 function LazyPage({ children }: { children: React.ReactNode }) {
@@ -315,5 +316,8 @@ export const router = createBrowserRouter([
   // ── Error pages ───────────────────────────────────────────────────────────
   { path: "/403", element: <ForbiddenPage /> },
   { path: "/500", element: <ServerErrorPage /> },
+  // ── FPRD-23: Public profile (/u/:username) ────────────────────────────────
+  { path: "/u/:username", element: <PublicProfilePage /> },
+  { path: "/profile/:username", element: <PublicProfilePage /> },
   { path: "*", element: <NotFoundPage /> },
 ]);

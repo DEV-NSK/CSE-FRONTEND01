@@ -36,6 +36,7 @@ function segmentToLabel(segment: string, index: number, allSegments: string[]): 
     recent: 'Recently Viewed',
     coding: 'Coding',
     profile: 'Profile',
+    edit: 'Edit Profile',
     settings: 'Settings',
     notifications: 'Notifications',
     admin: 'Admin Panel',
@@ -49,6 +50,8 @@ function segmentToLabel(segment: string, index: number, allSegments: string[]): 
     projects: 'Projects',
     placement: 'Placement',
     events: 'Events',
+    resume: 'Resume',
+    u: 'Profile',
   }
 
   if (map[segment]) return map[segment]
@@ -182,12 +185,12 @@ export function TopNav() {
         <Link
           to="/dashboard"
           className="hidden lg:flex items-center gap-2 shrink-0 group"
-          aria-label="CSE Ground — Go to Dashboard"
+          aria-label="CAMPUSRANK — Go to Dashboard"
         >
           <div className="flex items-center justify-center h-7 w-7 rounded-md bg-primary text-primary-foreground transition-opacity duration-150 group-hover:opacity-80">
             <GraduationCap className="h-4 w-4" />
           </div>
-          <span className="font-semibold text-sm text-foreground">CSE Ground</span>
+          <span className="font-semibold text-sm text-foreground">CAMPUSRANK</span>
         </Link>
 
         {/* Divider between logo and breadcrumb */}

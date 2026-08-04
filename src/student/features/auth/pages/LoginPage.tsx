@@ -171,7 +171,7 @@ export function LoginPage() {
 
       {/* Sign up link */}
       <p className="text-center text-sm text-muted-foreground">
-        New to CSE Ground?{" "}
+        New to CAMPUSRANK?{" "}
         <Link to="/auth/register" className="text-primary font-semibold hover:underline underline-offset-4">
           Create your free account
         </Link>

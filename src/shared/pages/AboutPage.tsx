@@ -23,7 +23,7 @@ export function AboutPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
         className="prose dark:prose-invert max-w-none mb-12 text-muted-foreground">
         <p className="text-body leading-relaxed">
-          CSE Student Platform was born from a simple observation: computer science students have incredible
+          CAMPUSRANK was born from a simple observation: computer science students have incredible
           potential, but lack a unified environment to develop and showcase their skills. From fragmented
           resources to disconnected tools, the journey from freshman to placement-ready professional is
           unnecessarily difficult.
