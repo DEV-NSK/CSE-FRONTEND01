@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { ArrowRight, BookOpen, Code2 } from 'lucide-react'
 import type { LearningStats } from '@/shared/types/learning'
-import type { CodingAnalyticsSummary } from '@/shared/types/analytics'
+import type { CodingAnalytics } from '@/shared/types/coding'
 
 // ── Active Progress Card ──────────────────────────────────────────────────────
 interface ActiveCardProps {
@@ -131,7 +131,7 @@ function SkeletonCard() {
 // ── Main Export ───────────────────────────────────────────────────────────────
 interface LearningProgressCardsProps {
   learningStats?: LearningStats
-  codingStats?: CodingAnalyticsSummary
+  codingAnalytics?: CodingAnalytics
   continueLearning?: {
     roadmap?: { title: string } | null
     progress?: number
@@ -141,14 +141,15 @@ interface LearningProgressCardsProps {
 
 export const LearningProgressCards = memo(function LearningProgressCards({
   learningStats,
-  codingStats,
+  codingAnalytics,
   continueLearning,
   isLoading,
 }: LearningProgressCardsProps) {
   const learningProgress = continueLearning?.progress ?? 0
-  const roadmapName = continueLearning?.roadmap?.title ?? 'Start a roadmap'
-  const problemsSolved = codingStats?.totalSolved ?? 0
-  const currentStreak = codingStats?.currentStreak ?? 0
+  const roadmapName      = continueLearning?.roadmap?.title ?? 'Start a roadmap'
+  // ── FIX: data lives inside codingAnalytics.stats ──
+  const problemsSolved   = codingAnalytics?.stats?.totalSolved  ?? 0
+  const currentStreak    = codingAnalytics?.stats?.currentStreak ?? 0
 
   if (isLoading) {
     return (

@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import { motion } from 'framer-motion'
 import type { LearningStats } from '@/shared/types/learning'
-import type { CodingAnalyticsSummary } from '@/shared/types/analytics'
+import type { CodingAnalytics } from '@/shared/types/coding'
 
 // ── Streak Card ───────────────────────────────────────────────────────────────
 function StreakCard({ streak, isLoading }: { streak: number; isLoading?: boolean }) {
@@ -10,7 +10,7 @@ function StreakCard({ streak, isLoading }: { streak: number; isLoading?: boolean
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: 0.28 }}
-      className="rounded-[18px] p-5 flex flex-col gap-3 bg-card border border-border shadow-sm"
+      className="rounded-[18px] p-5 flex flex-col gap-3 bg-card border border-border shadow-sm h-full"
       role="region"
       aria-label="Learning Streak"
     >
@@ -51,7 +51,7 @@ function ProblemsBreakdown({ easy, medium, hard, total, isLoading }: ProblemsBre
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: 0.32 }}
-      className="rounded-[18px] p-5 flex flex-col gap-3 bg-card border border-border shadow-sm"
+      className="rounded-[18px] p-5 flex flex-col gap-3 bg-card border border-border shadow-sm h-full"
       role="region"
       aria-label="Problems solved breakdown"
     >
@@ -75,23 +75,19 @@ function ProblemsBreakdown({ easy, medium, hard, total, isLoading }: ProblemsBre
             <span className="text-3xl font-extrabold tabular-nums leading-none text-foreground">
               {total}
             </span>
-            <span className="text-xs font-medium pb-0.5 text-muted-foreground">
-              total
-            </span>
+            <span className="text-xs font-medium pb-0.5 text-muted-foreground">total</span>
           </div>
 
           <div className="space-y-1.5">
             {[
-              { label: 'Easy', count: easy, color: 'bg-green-500', textColor: 'text-green-500' },
+              { label: 'Easy',   count: easy,   color: 'bg-green-500',  textColor: 'text-green-500'  },
               { label: 'Medium', count: medium, color: 'bg-yellow-500', textColor: 'text-yellow-500' },
-              { label: 'Hard', count: hard, color: 'bg-red-500', textColor: 'text-red-500' },
+              { label: 'Hard',   count: hard,   color: 'bg-red-500',    textColor: 'text-red-500'    },
             ].map(({ label, count, color, textColor }) => {
               const pct = total > 0 ? Math.round((count / total) * 100) : 0
               return (
                 <div key={label} className="flex items-center gap-2">
-                  <span className="text-[10px] w-12 shrink-0 text-muted-foreground">
-                    {label}
-                  </span>
+                  <span className="text-[10px] w-12 shrink-0 text-muted-foreground">{label}</span>
                   <div
                     className="flex-1 h-1.5 rounded-full overflow-hidden bg-muted"
                     role="progressbar"
@@ -107,7 +103,7 @@ function ProblemsBreakdown({ easy, medium, hard, total, isLoading }: ProblemsBre
                       className={`h-full rounded-full ${color}`}
                     />
                   </div>
-                  <span className={`text-[10px] w-5 text-right tabular-nums font-semibold ${textColor}`}>
+                  <span className={`text-[10px] w-6 text-right tabular-nums font-semibold ${textColor}`}>
                     {count}
                   </span>
                 </div>
@@ -127,17 +123,13 @@ function ComingSoonCard({ icon, label, delay = 0 }: { icon: string; label: strin
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay }}
-      className="rounded-[18px] p-5 flex flex-col items-center justify-center gap-2 bg-muted/40 border border-border/50"
+      className="rounded-[18px] p-5 flex flex-col items-center justify-center gap-2 bg-muted/40 border border-border/50 h-full"
       role="region"
       aria-label={`${label} — coming soon`}
     >
       <span className="text-2xl opacity-40" aria-hidden="true">{icon}</span>
-      <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
-        {label}
-      </span>
-      <span className="text-xs font-medium text-muted-foreground/50 flex items-center gap-1">
-        🚧 Coming Soon
-      </span>
+      <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">{label}</span>
+      <span className="text-xs text-muted-foreground/50">🚧 Coming Soon</span>
     </motion.div>
   )
 }
@@ -145,35 +137,32 @@ function ComingSoonCard({ icon, label, delay = 0 }: { icon: string; label: strin
 // ── Main Export ───────────────────────────────────────────────────────────────
 interface StatisticsCardsProps {
   learningStats?: LearningStats
-  codingStats?: CodingAnalyticsSummary
+  // Accept the full CodingAnalytics shape — stats live inside .stats
+  codingAnalytics?: CodingAnalytics
   isLoading?: boolean
 }
 
 export const StatisticsCards = memo(function StatisticsCards({
   learningStats,
-  codingStats,
+  codingAnalytics,
   isLoading,
 }: StatisticsCardsProps) {
   const streak = learningStats?.currentStreak ?? 0
 
-  // codingStats from /coding/analytics
-  const easy = codingStats?.easySolved ?? 0
-  const medium = codingStats?.mediumSolved ?? 0
-  const hard = codingStats?.hardSolved ?? 0
-  const total = codingStats?.totalSolved ?? 0
+  // ── FIX: data lives inside codingAnalytics.stats, not at the top level ──
+  const stats  = codingAnalytics?.stats
+  const easy   = stats?.easySolved   ?? 0
+  const medium = stats?.mediumSolved ?? 0
+  const hard   = stats?.hardSolved   ?? 0
+  const total  = stats?.totalSolved  ?? 0
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    // items-stretch ensures all 4 cards have the same height
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
       <StreakCard streak={streak} isLoading={isLoading} />
-      <ProblemsBreakdown
-        easy={easy}
-        medium={medium}
-        hard={hard}
-        total={total}
-        isLoading={isLoading}
-      />
-      <ComingSoonCard icon="📁" label="Projects" delay={0.36} />
-      <ComingSoonCard icon="🏢" label="Placement" delay={0.4} />
+      <ProblemsBreakdown easy={easy} medium={medium} hard={hard} total={total} isLoading={isLoading} />
+      <ComingSoonCard icon="📁" label="Projects"   delay={0.36} />
+      <ComingSoonCard icon="🏢" label="Placement"  delay={0.4}  />
     </div>
   )
 })

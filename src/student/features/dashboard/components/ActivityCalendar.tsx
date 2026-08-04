@@ -96,7 +96,7 @@ export const ActivityCalendar = memo(function ActivityCalendar({ activityData, i
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: 0.22 }}
-        className="rounded-[18px] p-5 flex flex-col gap-4 h-full bg-card border border-border shadow-sm"
+        className="rounded-[18px] p-5 flex flex-col gap-4 h-full w-full bg-card border border-border shadow-sm"
         role="region"
         aria-label="Activity calendar"
       >

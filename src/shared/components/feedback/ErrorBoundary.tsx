@@ -157,7 +157,7 @@ export class WidgetErrorBoundary extends Component<WidgetBoundaryProps, WidgetBo
 
     // Re-mount children on retry via key
     return (
-      <div key={this.state.retryKey}>
+      <div key={this.state.retryKey} className="contents">
         {this.props.children}
       </div>
     )

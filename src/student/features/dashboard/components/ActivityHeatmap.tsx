@@ -93,7 +93,7 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({ data, isLoading }
       initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4, delay: 0.2 }}
-      className="rounded-[18px] p-5 flex flex-col gap-4 bg-card border border-border shadow-sm"
+      className="rounded-[18px] p-5 flex flex-col gap-4 bg-card border border-border shadow-sm w-full h-full"
       role="region"
       aria-label="Activity heatmap"
     >

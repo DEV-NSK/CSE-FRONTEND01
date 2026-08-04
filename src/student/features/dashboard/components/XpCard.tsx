@@ -2,7 +2,7 @@ import { memo, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Zap } from 'lucide-react'
 import type { LearningStats } from '@/shared/types/learning'
-import type { CodingAnalyticsSummary } from '@/shared/types/analytics'
+import type { CodingAnalytics } from '@/shared/types/coding'
 
 const XP_PER_LEVEL = 500
 
@@ -31,14 +31,13 @@ function useAnimatedCounter(target: number, duration = 800) {
 
 interface XpCardProps {
   learningStats?: LearningStats
-  codingStats?: CodingAnalyticsSummary
+  codingAnalytics?: CodingAnalytics
   isLoading?: boolean
 }
 
-export const XpCard = memo(function XpCard({ learningStats, codingStats, isLoading }: XpCardProps) {
-  // XP = completed lessons × 10  +  accepted problems × 20
+export const XpCard = memo(function XpCard({ learningStats, codingAnalytics, isLoading }: XpCardProps) {
   const completedLessons = learningStats?.totalLessonsCompleted ?? 0
-  const problemsSolved   = codingStats?.totalSolved ?? 0
+  const problemsSolved   = codingAnalytics?.stats?.totalSolved  ?? 0
   const rawXp = completedLessons * 10 + problemsSolved * 20
 
   const level      = getLevel(rawXp)
@@ -52,7 +51,7 @@ export const XpCard = memo(function XpCard({ learningStats, codingStats, isLoadi
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: 0.06 }}
-      className="rounded-[18px] p-5 flex flex-col gap-3 h-full bg-card border border-border shadow-sm"
+      className="rounded-[18px] p-5 flex flex-col gap-3 h-full w-full bg-card border border-border shadow-sm"
       role="region"
       aria-label="XP Score"
     >

@@ -36,7 +36,7 @@ export const LeaderboardCard = memo(function LeaderboardCard({ data, isLoading }
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: 0.1 }}
-      className="rounded-[18px] p-5 flex flex-col gap-3 h-full bg-card border border-border shadow-sm"
+      className="rounded-[18px] p-5 flex flex-col gap-3 h-full w-full bg-card border border-border shadow-sm"
       role="region"
       aria-label="Leaderboard ranking"
     >
