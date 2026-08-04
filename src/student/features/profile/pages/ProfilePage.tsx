@@ -13,7 +13,8 @@ import {
   Award, Activity, TrendingUp, Copy, Check, Loader2,
   BarChart2, Users, Lock, Eye, EyeOff, Trash2, RefreshCw,
   X as XIcon, PlayCircle,
-} from 'lucide-react'import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
+} from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar'
