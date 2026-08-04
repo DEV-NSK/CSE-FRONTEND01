@@ -6,7 +6,7 @@ import { ErrorBoundary } from '@/shared/components/feedback/ErrorBoundary'
 
 export function DashboardLayout() {
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-screen overflow-hidden" style={{ background: '#070B17' }}>
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <TopNav />
@@ -23,9 +23,6 @@ export function DashboardLayout() {
             </ErrorBoundary>
           </motion.div>
         </main>
-        <footer className="border-t border-border py-3 px-6 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} CSE Student Platform. All rights reserved.
-        </footer>
       </div>
     </div>
   )

@@ -279,7 +279,8 @@ export function Sidebar() {
       <motion.aside
         animate={{ width: isCollapsed ? 64 : 280 }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="hidden lg:flex flex-col h-full bg-card border-r border-border relative shrink-0"
+        className="hidden lg:flex flex-col h-full relative shrink-0"
+        style={{ background: '#0A0F1E', borderRight: '1px solid rgba(255,255,255,0.06)' }}
         aria-label="Sidebar"
       >
         <SidebarContent collapsed={isCollapsed} />
@@ -316,7 +317,8 @@ export function Sidebar() {
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ duration: 0.3, ease: 'easeInOut' }}
-              className="fixed left-0 top-0 z-50 h-full w-[280px] bg-card border-r border-border lg:hidden flex flex-col"
+              className="fixed left-0 top-0 z-50 h-full w-[280px] lg:hidden flex flex-col"
+              style={{ background: '#0A0F1E', borderRight: '1px solid rgba(255,255,255,0.06)' }}
               aria-label="Mobile sidebar"
             >
               <Button
