@@ -931,9 +931,21 @@ export function ProfilePage() {
         ))}
       </div>
 
-      {/* Main content grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* Main two-column grid — equal weight, professional layout */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+
         {/* Left column */}
+        <div className="space-y-4">
+          {/* Coding + Activity side by side on wide screens, stacked on mobile */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 gap-4">
+            <CodingCard analytics={analytics} />
+            <ActivityCard activity={activity} isLoading={isActivityLoading} />
+          </div>
+          <ProjectsCard projects={projects} />
+          <AchievementsCard achievements={achievements} />
+        </div>
+
+        {/* Right column */}
         <div className="space-y-4">
           <CompletionCard completion={completion} />
           <ResumeCard
@@ -956,19 +968,6 @@ export function ProfilePage() {
           <SocialsCard user={user} />
           <ShareCard user={user} />
           <PrivacyCard user={user} onUpdate={updatePrivacy} />
-        </div>
-
-        {/* Middle + right */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <CodingCard analytics={analytics} />
-            <ActivityCard activity={activity} isLoading={isActivityLoading} />
-          </div>
-          {/* Projects & Achievements side by side */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <ProjectsCard projects={projects} />
-            <AchievementsCard achievements={achievements} />
-          </div>
         </div>
       </div>
     </div>

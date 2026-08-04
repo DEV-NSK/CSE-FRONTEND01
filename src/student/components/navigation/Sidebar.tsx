@@ -285,7 +285,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
   const { unreadCount } = useNotificationStore()
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* ── Logo ── */}
       <div className={cn(
         'flex items-center gap-2.5 px-3 py-3 border-b border-border',
@@ -394,19 +394,22 @@ export function Sidebar() {
     <>
       {/* Desktop */}
       <motion.aside
-        animate={{ width: isCollapsed ? 60 : 220 }}
+        animate={{ width: isCollapsed ? 60 : 224 }}
         transition={{ duration: 0.26, ease: [0.4, 0, 0.2, 1] }}
-        className="hidden lg:flex flex-col h-full bg-card border-r border-border relative shrink-0 overflow-hidden"
+        className="hidden lg:flex flex-col h-full bg-card border-r border-border relative shrink-0"
         aria-label="Sidebar"
       >
         <SidebarContent collapsed={isCollapsed} />
 
-        {/* Collapse toggle */}
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+        {/* Collapse toggle — sits on the border edge, always visible */}
+        <button
           onClick={toggleCollapsed}
-          className="absolute -right-3 top-[64px] h-6 w-6 rounded-full border border-border bg-background shadow-sm z-10 flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
+          className={cn(
+            'absolute top-[60px] -right-3 z-20',
+            'h-6 w-6 rounded-full border border-border bg-background shadow-md',
+            'flex items-center justify-center text-muted-foreground',
+            'hover:text-foreground hover:border-primary/40 hover:bg-primary/5 transition-colors',
+          )}
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           <motion.span
@@ -415,7 +418,7 @@ export function Sidebar() {
           >
             <ChevronLeft className="h-3.5 w-3.5" />
           </motion.span>
-        </motion.button>
+        </button>
       </motion.aside>
 
       {/* Mobile drawer */}

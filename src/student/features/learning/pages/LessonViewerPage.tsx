@@ -232,16 +232,21 @@ function MarkdownWrapper({ content }: { content: string }) {
       </div>
     }>
       <MarkdownRenderer content={content} className="
-        [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:tracking-tight [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:leading-tight
-        [&_h2]:text-3xl [&_h2]:font-semibold [&_h2]:tracking-tight [&_h2]:mt-8 [&_h2]:mb-3
-        [&_h3]:text-2xl [&_h3]:font-semibold [&_h3]:mt-6 [&_h3]:mb-3
-        [&_h4]:text-xl [&_h4]:font-semibold [&_h4]:mt-5 [&_h4]:mb-2
-        [&_p]:text-[17px] [&_p]:leading-[1.85] [&_p]:text-foreground/90 [&_p]:mb-4
-        [&_li]:text-[17px] [&_li]:leading-[1.75]
-        [&_pre]:bg-[#1e1e2e] [&_pre]:rounded-xl [&_pre]:p-6 [&_pre]:overflow-x-auto [&_pre]:my-4
-        [&_code]:text-[13px] [&_pre_code]:text-[#cdd6f4]
-        [&_img]:rounded-xl [&_img]:shadow-md [&_img]:my-4 [&_img]:cursor-zoom-in
-        [&_blockquote]:border-l-4 [&_blockquote]:border-primary/50 [&_blockquote]:pl-5 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_blockquote]:my-4 [&_blockquote]:text-lg
+        [&_h1]:text-[2.25rem] [&_h1]:font-bold [&_h1]:tracking-tight [&_h1]:mt-10 [&_h1]:mb-5 [&_h1]:leading-tight
+        [&_h2]:text-[1.75rem] [&_h2]:font-semibold [&_h2]:tracking-tight [&_h2]:mt-10 [&_h2]:mb-4
+        [&_h3]:text-[1.4rem] [&_h3]:font-semibold [&_h3]:mt-8 [&_h3]:mb-3
+        [&_h4]:text-[1.15rem] [&_h4]:font-semibold [&_h4]:mt-6 [&_h4]:mb-2
+        [&_p]:text-[1.05rem] [&_p]:leading-[1.9] [&_p]:text-foreground/85 [&_p]:mb-5
+        [&_li]:text-[1.05rem] [&_li]:leading-[1.8] [&_li]:mb-1
+        [&_ul]:mb-5 [&_ul]:space-y-1 [&_ol]:mb-5 [&_ol]:space-y-1
+        [&_pre]:bg-[#1e1e2e] [&_pre]:rounded-xl [&_pre]:p-6 [&_pre]:overflow-x-auto [&_pre]:my-6
+        [&_code]:text-[0.9rem] [&_pre_code]:text-[#cdd6f4]
+        [&_img]:rounded-xl [&_img]:shadow-md [&_img]:my-6 [&_img]:cursor-zoom-in
+        [&_blockquote]:border-l-4 [&_blockquote]:border-primary/50 [&_blockquote]:pl-6 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_blockquote]:my-6 [&_blockquote]:text-lg
+        [&_table]:w-full [&_table]:my-6 [&_table]:text-sm
+        [&_th]:bg-muted [&_th]:px-4 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:border [&_th]:border-border
+        [&_td]:px-4 [&_td]:py-2.5 [&_td]:border [&_td]:border-border [&_td]:leading-relaxed
+        [&_hr]:my-8 [&_hr]:border-border/50
       " />
     </Suspense>
   )
@@ -316,29 +321,29 @@ function SectionRenderer({ content }: { content: string }) {
   const sections = useMemo(() => parseSections(content), [content])
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-14">
       {sections.map((section, idx) => (
-        <section key={idx} id={section.id || `section-${idx}`} className="scroll-mt-28">
+        <section key={idx} id={section.id || `section-${idx}`} className="scroll-mt-32">
           {section.heading && (
-            <div className="flex items-start gap-3 mb-5">
+            <div className="flex items-start gap-3 mb-6">
               <div className={cn(
-                'mt-1 rounded-full shrink-0',
-                section.level === 1 ? 'w-1.5 h-8' : section.level === 2 ? 'w-1.5 h-6' : 'w-1 h-5',
+                'mt-1.5 rounded-full shrink-0',
+                section.level === 1 ? 'w-1.5 h-9' : section.level === 2 ? 'w-1.5 h-7' : 'w-1 h-5',
                 headingColors[section.level] || 'bg-primary',
               )} aria-hidden="true" />
               {section.level === 1 && (
                 <h1 className="text-[2.25rem] font-bold leading-tight tracking-tight text-foreground">{section.heading}</h1>
               )}
               {section.level === 2 && (
-                <h2 className="text-[1.85rem] font-semibold leading-tight tracking-tight text-foreground">{section.heading}</h2>
+                <h2 className="text-[1.75rem] font-semibold leading-tight tracking-tight text-foreground">{section.heading}</h2>
               )}
               {section.level === 3 && (
-                <h3 className="text-[1.5rem] font-semibold text-foreground">{section.heading}</h3>
+                <h3 className="text-[1.35rem] font-semibold text-foreground">{section.heading}</h3>
               )}
             </div>
           )}
           {section.body.trim() && (
-            <div className={cn(section.heading ? 'pl-5' : '')}>
+            <div className={cn(section.heading ? 'pl-5 text-[1.05rem] leading-[1.9]' : 'text-[1.05rem] leading-[1.9]')}>
               <MarkdownWrapper content={section.body} />
             </div>
           )}
@@ -1173,7 +1178,7 @@ function LeftSidebar({ open, onClose, sections, currentLessonId, lesson, navigat
 
       {/* Sidebar panel */}
       <motion.aside
-        animate={{ width: open ? 320 : 0 }}
+        animate={{ width: open ? 280 : 0 }}
         transition={{ duration: 0.28, ease: 'easeInOut' }}
         className={cn('relative flex flex-col shrink-0 overflow-hidden',
           'border-r border-border bg-card/80 backdrop-blur-sm',
@@ -1188,7 +1193,7 @@ function LeftSidebar({ open, onClose, sections, currentLessonId, lesson, navigat
           <X className="h-4 w-4" />
         </Button>
 
-        <div className="flex flex-col h-full w-80">
+        <div className="flex flex-col h-full w-[280px]">
           {/* Header */}
           <div className="p-4 border-b border-border/60 space-y-3 shrink-0">
             <div className="relative">
@@ -1248,13 +1253,13 @@ interface RightSidebarProps {
 function RightSidebar({ open, tab, onTabChange, lesson, sections, lessonIndex, totalLessons, tocEntries, scrollRef }: RightSidebarProps) {
   return (
     <motion.aside
-      animate={{ width: open ? 340 : 0 }}
+      animate={{ width: open ? 300 : 0 }}
       transition={{ duration: 0.28, ease: 'easeInOut' }}
       className="hidden xl:flex flex-col shrink-0 overflow-hidden border-l border-border bg-card/60 backdrop-blur-sm"
       aria-label="Lesson tools"
       style={{ minWidth: 0 }}
     >
-      <div className="flex flex-col h-full w-[340px]">
+      <div className="flex flex-col h-full w-[300px]">
         {/* Tab bar */}
         <div className="px-3 pt-3 pb-0 border-b border-border/60 shrink-0">
           <div className="flex items-center gap-1">
@@ -1467,7 +1472,7 @@ export function LessonViewerPage() {
           <ReadingProgressBar scrollRef={scrollRef} />
 
           {/* Toolbar row */}
-          <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-border/40">
+          <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border/40">
             <div className="flex items-center gap-2 min-w-0">
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
@@ -1528,7 +1533,7 @@ export function LessonViewerPage() {
           </div>
 
           {/* Lesson position + Prev/Next navigation */}
-          <div className="flex items-center justify-between px-6 lg:px-10 pt-3 pb-0 max-w-[900px] mx-auto w-full">
+          <div className="flex items-center justify-between px-8 lg:px-16 pt-4 pb-0 max-w-[860px] mx-auto w-full">
             <Button
               variant="ghost"
               size="sm"
@@ -1571,12 +1576,12 @@ export function LessonViewerPage() {
           </div>
 
           {/* Lesson header */}
-          <div className="px-6 lg:px-10 py-6 max-w-[900px] mx-auto w-full">
+          <div className="px-8 lg:px-16 py-6 pb-4 max-w-[860px] mx-auto w-full">
             <div className="flex flex-col gap-4">
-              <h1 className="text-3xl lg:text-[2.6rem] font-bold leading-tight tracking-tight text-foreground">
+              <h1 className="text-[2rem] lg:text-[2.4rem] font-bold leading-tight tracking-tight text-foreground">
                 {lesson.title}
               </h1>
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 border-b border-border/40 pb-4">
                 <DifficultyBadge difficulty={difficulty} />
                 <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
                   <Clock className="h-4 w-4" />{readingTime} min read
@@ -1613,8 +1618,8 @@ export function LessonViewerPage() {
         </header>
 
         {/* Scrollable content */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto" id="lesson-content-scroll">
-          <div className="max-w-[900px] mx-auto px-6 lg:px-10 py-10 pb-36">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto bg-background" id="lesson-content-scroll">
+          <div className="max-w-[860px] mx-auto px-8 lg:px-16 py-10 pb-36">
             <motion.div key={id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="space-y-14">
 
               {lesson.content ? (
@@ -1649,7 +1654,7 @@ export function LessonViewerPage() {
 
         {/* Sticky bottom nav */}
         <nav className="sticky bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur shrink-0" aria-label="Lesson navigation">
-          <div className="max-w-[900px] mx-auto w-full px-6 lg:px-10 py-3 flex items-center justify-between gap-3">
+          <div className="max-w-[860px] mx-auto w-full px-8 lg:px-16 py-3 flex items-center justify-between gap-3">
 
             {/* Previous */}
             <Button variant="outline" size="sm" asChild={!!lesson.prevLessonId} disabled={!lesson.prevLessonId}
