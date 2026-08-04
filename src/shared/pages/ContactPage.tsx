@@ -9,6 +9,8 @@ import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
 
+const SUPPORT_EMAIL = 'bathulasaikiran2k2@gmail.com'
+
 const schema = z.object({
   name: z.string().min(2, 'Name is required'),
   email: z.string().email('Please enter a valid email'),
@@ -25,9 +27,14 @@ export function ContactPage() {
     resolver: zodResolver(schema),
   })
 
-  const onSubmit = async (_data: FormValues) => {
-    // Simulate API call
-    await new Promise((res) => setTimeout(res, 1000))
+  const onSubmit = async (data: FormValues) => {
+    await new Promise((res) => setTimeout(res, 600))
+    // Open the user's email client pre-filled so the message lands in the inbox
+    const subject = encodeURIComponent(`[CampusRank] ${data.subject}`)
+    const body = encodeURIComponent(
+      `Name: ${data.name}\nFrom: ${data.email}\n\n${data.message}`
+    )
+    window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`
     setSent(true)
   }
 
@@ -43,12 +50,18 @@ export function ContactPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <Mail className="h-4 w-4 text-primary" aria-hidden="true" />
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Email</p>
-              <p className="text-sm font-medium">support@cseplatform.com</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground mb-1.5">Email us directly</p>
+              <a
+                href={`mailto:${SUPPORT_EMAIL}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity"
+              >
+                <Mail className="h-3 w-3" aria-hidden="true" />
+                Send Email
+              </a>
             </div>
           </CardContent>
         </Card>
