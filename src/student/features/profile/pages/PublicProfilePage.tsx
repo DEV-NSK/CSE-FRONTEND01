@@ -8,9 +8,9 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   CheckCircle, GraduationCap, BookOpen, Globe,
-  ExternalLink, Github, Twitter, Youtube,
-  Code2, FileText, MapPin, Lock, Users, Eye,
+  ExternalLink, Code2, FileText, MapPin, Lock, Users, Eye,
   ArrowLeft, Share2, Copy, Check,
+  X as XIcon, PlayCircle,
 } from 'lucide-react'
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
@@ -88,8 +88,8 @@ export function PublicProfilePage() {
     profile.linkedinUrl && { label: 'LinkedIn', url: profile.linkedinUrl, icon: LinkedinIcon, color: '#0077b5' },
     profile.githubUrl && { label: 'GitHub', url: profile.githubUrl, icon: GithubIcon, color: '#6e5494' },
     profile.portfolioUrl && { label: 'Portfolio', url: profile.portfolioUrl, icon: Globe, color: '#22c55e' },
-    profile.twitterUrl && { label: 'Twitter', url: profile.twitterUrl, icon: Twitter, color: '#1da1f2' },
-    profile.youtubeUrl && { label: 'YouTube', url: profile.youtubeUrl, icon: Youtube, color: '#ff0000' },
+    profile.twitterUrl && { label: 'Twitter', url: profile.twitterUrl, icon: XIcon, color: '#1da1f2' },
+    profile.youtubeUrl && { label: 'YouTube', url: profile.youtubeUrl, icon: PlayCircle, color: '#ff0000' },
     profile.leetcodeUrl && { label: 'LeetCode', url: profile.leetcodeUrl, icon: Code2, color: '#ffa116' },
     profile.gfgUrl && { label: 'GFG', url: profile.gfgUrl, icon: Code2, color: '#2f8d46' },
     profile.mediumUrl && { label: 'Medium', url: profile.mediumUrl, icon: FileText, color: '#000' },

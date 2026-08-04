@@ -11,8 +11,8 @@ import {
   FileText, ExternalLink, CheckCircle, Flame, Star, Trophy,
   Zap, Code2, BookOpen, FolderOpen, ChevronRight, Camera,
   Award, Activity, TrendingUp, Copy, Check, Loader2,
-  Github, Linkedin, Twitter, Youtube, BarChart2, Users,
-  Lock, Eye, EyeOff, Trash2, RefreshCw,
+  BarChart2, Users, Lock, Eye, EyeOff, Trash2, RefreshCw,
+  X as XIcon, PlayCircle,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
@@ -258,8 +258,8 @@ function SocialsCard({ user }: { user: User }) {
     user.linkedinUrl ? { label: 'LinkedIn', url: user.linkedinUrl, color: '#0077b5', icon: LinkedinIcon } : null,
     user.githubUrl ? { label: 'GitHub', url: user.githubUrl, color: '#6e5494', icon: GithubIcon } : null,
     user.portfolioUrl ? { label: 'Portfolio', url: user.portfolioUrl, color: '#22c55e', icon: Globe } : null,
-    user.twitterUrl ? { label: 'Twitter', url: user.twitterUrl, color: '#1da1f2', icon: Twitter } : null,
-    user.youtubeUrl ? { label: 'YouTube', url: user.youtubeUrl, color: '#ff0000', icon: Youtube } : null,
+    user.twitterUrl ? { label: 'Twitter', url: user.twitterUrl, color: '#1da1f2', icon: XIcon } : null,
+    user.youtubeUrl ? { label: 'YouTube', url: user.youtubeUrl, color: '#ff0000', icon: PlayCircle } : null,
     user.leetcodeUrl ? { label: 'LeetCode', url: user.leetcodeUrl, color: '#ffa116', icon: Code2 } : null,
     user.codechefUrl ? { label: 'CodeChef', url: user.codechefUrl, color: '#5b4638', icon: Code2 } : null,
     user.hackerrankUrl ? { label: 'HackerRank', url: user.hackerrankUrl, color: '#2ec866', icon: Code2 } : null,
@@ -531,7 +531,7 @@ function ShareCard({ user }: { user: User }) {
 
   const shareLinks = [
     { label: 'LinkedIn', href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(profileUrl)}`, color: '#0077b5', icon: LinkedinIcon },
-    { label: 'Twitter', href: `https://twitter.com/intent/tweet?url=${encodeURIComponent(profileUrl)}&text=${encodeURIComponent(`Check out my CAMPUSRANK profile!`)}`, color: '#1da1f2', icon: Twitter },
+    { label: 'Twitter', href: `https://twitter.com/intent/tweet?url=${encodeURIComponent(profileUrl)}&text=${encodeURIComponent(`Check out my CAMPUSRANK profile!`)}`, color: '#1da1f2', icon: XIcon },
     { label: 'WhatsApp', href: `https://wa.me/?text=${encodeURIComponent(`My CAMPUSRANK profile: ${profileUrl}`)}`, color: '#25d366', icon: Share2 },
   ]
 
