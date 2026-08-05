@@ -1176,58 +1176,63 @@ function LeftSidebar({ open, onClose, sections, currentLessonId, lesson, navigat
         )}
       </AnimatePresence>
 
-      {/* Sidebar panel */}
+      {/* Sidebar panel — W3Schools style: clean, white, always visible on desktop */}
       <motion.aside
         animate={{ width: open ? 280 : 0 }}
-        transition={{ duration: 0.28, ease: 'easeInOut' }}
+        transition={{ duration: 0.25, ease: 'easeInOut' }}
         className={cn('relative flex flex-col shrink-0 overflow-hidden',
-          'border-r border-border bg-card/80 backdrop-blur-sm',
+          'border-r border-border bg-background',
           'fixed lg:relative left-0 top-0 z-50 lg:z-auto h-full lg:h-auto',
         )}
         aria-label="Lesson navigation"
         style={{ minWidth: 0 }}
       >
-        {/* Close button mobile */}
+        {/* Close button — mobile only */}
         <Button variant="ghost" size="icon-sm" onClick={onClose}
           className="absolute right-2 top-2 z-10 lg:hidden" aria-label="Close navigation">
           <X className="h-4 w-4" />
         </Button>
 
         <div className="flex flex-col h-full w-[280px]">
-          {/* Header */}
-          <div className="p-4 border-b border-border/60 space-y-3 shrink-0">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-              <Input type="search" placeholder="Search lessons..." className="pl-9 h-8 text-xs"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    const val = (e.target as HTMLInputElement).value.trim()
-                    if (val.length >= 2) navigate(`/dashboard/learning/search?q=${encodeURIComponent(val)}`)
-                  }
-                }} />
-            </div>
-            <Link to="/dashboard/learning/roadmaps/python" className="flex items-center gap-2 text-xs font-semibold text-primary hover:underline">
-              <BookOpen className="h-3.5 w-3.5" />{lesson.roadmapTitle ?? 'Python Programming'}
+          {/* Course header */}
+          <div className="px-4 py-4 border-b border-border bg-muted/20 shrink-0">
+            <Link
+              to={`/dashboard/learning/roadmaps/${lesson.roadmapSlug ?? 'python'}`}
+              className="block text-[11px] font-bold uppercase tracking-widest text-primary mb-1 hover:underline"
+            >
+              🐍 Python Course
             </Link>
-            <div>
-              <div className="flex items-center justify-between text-[11px] mb-1.5">
-                <span className="text-muted-foreground">Overall progress</span>
-                <span className="font-semibold text-primary">{pct}%</span>
+            <p className="text-sm font-semibold text-foreground line-clamp-2 leading-snug">
+              {lesson.roadmapTitle ?? 'Python Programming'}
+            </p>
+            {/* Progress */}
+            <div className="mt-3">
+              <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                <span>{doneSec}/{totalSec} Lessons</span>
+                <span className="font-semibold text-foreground">{pct}%</span>
               </div>
               <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                <motion.div className="h-full bg-primary rounded-full" initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.5 }} />
+                <motion.div
+                  className="h-full bg-primary rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${pct}%` }}
+                  transition={{ duration: 0.5 }}
+                />
               </div>
-              <p className="text-[11px] text-muted-foreground mt-1">{doneSec} of {totalSec} lessons completed</p>
             </div>
           </div>
 
           {sections.length > 0 ? (
-            <LessonSidebar sections={sections} currentLessonId={currentLessonId}
+            <LessonSidebar
+              sections={sections}
+              currentLessonId={currentLessonId}
               roadmapTitle={lesson.roadmapTitle ?? 'Python Programming'}
-              roadmapSlug={lesson.roadmapSlug ?? 'python'} className="flex-1 min-h-0" />
+              roadmapSlug={lesson.roadmapSlug ?? 'python'}
+              className="flex-1 min-h-0 border-r-0"
+            />
           ) : (
-            <div className="p-4">
-              <p className="text-xs text-muted-foreground">Full lesson list appears when viewing a roadmap lesson.</p>
+            <div className="p-4 text-xs text-muted-foreground">
+              Full lesson list appears when viewing a roadmap lesson.
             </div>
           )}
         </div>
@@ -1359,6 +1364,15 @@ export function LessonViewerPage() {
     lessonRightTab, setLessonRightTab,
   } = useLearningStore()
 
+  // Default sidebar open on desktop (W3Schools style — always visible)
+  const [sidebarInitialized, setSidebarInitialized] = useState(false)
+  if (!sidebarInitialized) {
+    if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+      setLessonSidebarOpen(true)
+    }
+    setSidebarInitialized(true)
+  }
+
   const { data: lesson, isLoading, isError, refetch } = useLesson(id ?? '')
   const { mutate: markComplete, isPending: completing } = useMarkLessonComplete()
   const { mutate: markStarted } = useMarkLessonStarted()
@@ -1454,7 +1468,7 @@ export function LessonViewerPage() {
         totalLessons={totalLessonsInRoadmap}
       />
 
-      {/* ── Left Sidebar ── */}
+      {/* ── Left Sidebar — always visible on desktop like W3Schools ── */}
       <LeftSidebar
         open={lessonSidebarOpen}
         onClose={() => setLessonSidebarOpen(false)}
@@ -1467,160 +1481,168 @@ export function LessonViewerPage() {
       {/* ── Center Content ── */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
 
-        {/* Sticky Top Bar */}
-        <header className="sticky top-0 z-30 bg-background/95 backdrop-blur shrink-0 border-b border-border relative">
+        {/* Sticky Top Bar — clean W3Schools-inspired header */}
+        <header className="sticky top-0 z-30 bg-background border-b border-border shrink-0">
           <ReadingProgressBar scrollRef={scrollRef} />
 
           {/* Toolbar row */}
-          <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border/40">
+          <div className="flex items-center justify-between gap-2 px-4 py-2">
             <div className="flex items-center gap-2 min-w-0">
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button variant="ghost" size="icon-sm" onClick={() => setLessonSidebarOpen(!lessonSidebarOpen)}
-                      aria-label={lessonSidebarOpen ? 'Collapse roadmap panel' : 'Expand roadmap panel'}>
+                      aria-label={lessonSidebarOpen ? 'Collapse menu' : 'Expand menu'}>
                       {lessonSidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom">{lessonSidebarOpen ? 'Collapse roadmap (Ctrl+B)' : 'Expand roadmap (Ctrl+B)'}</TooltipContent>
+                  <TooltipContent side="bottom">Toggle Menu</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
 
-              <div className="min-w-0 hidden sm:block">
-                <p className="text-[11px] text-muted-foreground truncate">
-                  <Link to="/dashboard/learning" className="hover:text-primary transition-colors">Learning</Link>
-                  {lesson.roadmapTitle && <> · <Link to={`/dashboard/learning/roadmaps/${lesson.roadmapSlug ?? ''}`} className="hover:text-primary transition-colors">{lesson.roadmapTitle}</Link></>}
-                  {lesson.sectionTitle && <> · <span>{lesson.sectionTitle}</span></>}
-                </p>
-              </div>
+              {/* Breadcrumb */}
+              <nav className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground min-w-0">
+                <Link to="/dashboard/learning" className="hover:text-primary transition-colors shrink-0">Learning</Link>
+                {lesson.roadmapTitle && (
+                  <>
+                    <span className="text-muted-foreground/40">›</span>
+                    <Link to={`/dashboard/learning/roadmaps/${lesson.roadmapSlug ?? ''}`}
+                      className="hover:text-primary transition-colors truncate max-w-[140px]">
+                      {lesson.roadmapTitle}
+                    </Link>
+                  </>
+                )}
+                {lesson.sectionTitle && (
+                  <>
+                    <span className="text-muted-foreground/40">›</span>
+                    <span className="text-foreground font-medium truncate max-w-[160px]">{lesson.sectionTitle}</span>
+                  </>
+                )}
+              </nav>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              <Badge variant={lesson.status === 'completed' ? 'success' : lesson.status === 'in_progress' ? 'info' : 'secondary'} className="text-xs hidden sm:flex">
-                {lesson.status === 'completed' ? '✓ Completed' : lesson.status === 'in_progress' ? 'In Progress' : 'Not Started'}
-              </Badge>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* Status badge */}
+              <span className={cn(
+                'hidden sm:inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium',
+                lesson.status === 'completed'
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                  : lesson.status === 'in_progress'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                  : 'bg-muted text-muted-foreground',
+              )}>
+                {lesson.status === 'completed' ? '✓ Done' : lesson.status === 'in_progress' ? 'In Progress' : 'Not Started'}
+              </span>
+
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button variant="ghost" size="icon-sm" onClick={() => id && toggleBookmark(id)} disabled={bookmarkPending}
-                      aria-label={lesson.isBookmarked ? 'Remove bookmark' : 'Bookmark lesson'} aria-pressed={lesson.isBookmarked}>
+                      aria-label={lesson.isBookmarked ? 'Remove bookmark' : 'Bookmark lesson'}>
                       {lesson.isBookmarked ? <BookmarkCheck className="h-4 w-4 text-primary" /> : <Bookmark className="h-4 w-4" />}
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>{lesson.isBookmarked ? 'Remove bookmark' : 'Bookmark'}</TooltipContent>
+                  <TooltipContent>{lesson.isBookmarked ? 'Bookmarked' : 'Bookmark'}</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon-sm" onClick={handleShare} aria-label="Share lesson"><Share2 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon-sm" onClick={handleShare} aria-label="Share lesson">
+                      <Share2 className="h-4 w-4" />
+                    </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Share lesson</TooltipContent>
+                  <TooltipContent>Share</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon-sm" className="hidden xl:flex" onClick={() => setLessonRightSidebarOpen(!lessonRightSidebarOpen)}
-                      aria-label={lessonRightSidebarOpen ? 'Collapse tools panel' : 'Expand tools panel'}>
+                    <Button variant="ghost" size="icon-sm" className="hidden xl:flex"
+                      onClick={() => setLessonRightSidebarOpen(!lessonRightSidebarOpen)}
+                      aria-label="Toggle tools panel">
                       {lessonRightSidebarOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom">{lessonRightSidebarOpen ? 'Collapse tools (Ctrl+Shift+B)' : 'Expand tools (Ctrl+Shift+B)'}</TooltipContent>
+                  <TooltipContent side="bottom">Notes & TOC</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
           </div>
 
-          {/* Lesson position + Prev/Next navigation */}
-          <div className="flex items-center justify-between px-8 lg:px-16 pt-4 pb-0 max-w-[860px] mx-auto w-full">
-            <Button
-              variant="ghost"
-              size="sm"
+          {/* Prev/Next navigation */}
+          <div className="flex items-center justify-between px-6 lg:px-12 pb-3 max-w-[900px] mx-auto w-full">
+            <Button variant="ghost" size="sm"
               asChild={!!lesson.prevLessonId}
               disabled={!lesson.prevLessonId}
-              className="gap-1.5 text-xs text-muted-foreground hover:text-foreground -ml-2"
-            >
+              className="gap-1 text-xs text-muted-foreground hover:text-foreground">
               {lesson.prevLessonId ? (
                 <Link to={`/dashboard/learning/lesson/${lesson.prevLessonId}`}>
-                  <ChevronLeft className="h-3.5 w-3.5" />
-                  Previous Lesson
+                  <ChevronLeft className="h-3.5 w-3.5" /> Previous
                 </Link>
               ) : (
-                <><ChevronLeft className="h-3.5 w-3.5" />Previous Lesson</>
+                <><ChevronLeft className="h-3.5 w-3.5" />Previous</>
               )}
             </Button>
 
             {lessonIndex > 0 && (
-              <span className="text-xs text-muted-foreground font-medium tabular-nums">
-                Lesson {lessonIndex} of {totalLessonsInRoadmap}
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {lessonIndex} / {totalLessonsInRoadmap}
               </span>
             )}
 
-            <Button
-              variant="ghost"
-              size="sm"
+            <Button variant="ghost" size="sm"
               asChild={!!lesson.nextLessonId}
               disabled={!lesson.nextLessonId}
-              className="gap-1.5 text-xs text-muted-foreground hover:text-foreground -mr-2"
-            >
+              className="gap-1 text-xs text-muted-foreground hover:text-foreground">
               {lesson.nextLessonId ? (
                 <Link to={`/dashboard/learning/lesson/${lesson.nextLessonId}`}>
-                  Next Lesson
-                  <ChevronRight className="h-3.5 w-3.5" />
+                  Next <ChevronRight className="h-3.5 w-3.5" />
                 </Link>
               ) : (
-                <>Next Lesson<ChevronRight className="h-3.5 w-3.5" /></>
+                <>Next<ChevronRight className="h-3.5 w-3.5" /></>
               )}
             </Button>
           </div>
 
-          {/* Lesson header */}
-          <div className="px-8 lg:px-16 py-6 pb-4 max-w-[860px] mx-auto w-full">
-            <div className="flex flex-col gap-4">
-              <h1 className="text-[2rem] lg:text-[2.4rem] font-bold leading-tight tracking-tight text-foreground">
-                {lesson.title}
-              </h1>
-              <div className="flex flex-wrap items-center gap-3 border-b border-border/40 pb-4">
-                <DifficultyBadge difficulty={difficulty} />
-                <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4" />{readingTime} min read
-                </span>
-                <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <TrendingUp className="h-4 w-4" />Est. {lesson.estimatedMinutes} min
-                </span>
-                {lessonIndex > 0 && (
-                  <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <ChevronFirst className="h-4 w-4" />Lesson {lessonIndex} of {totalLessonsInRoadmap}
-                  </span>
-                )}
-                {lessonIndex > 0 && totalLessonsInRoadmap > 0 && (
-                  <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-24 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
-                    </div>
-                    <span className="text-xs text-muted-foreground font-medium">{progress}%</span>
+          {/* Lesson title + meta */}
+          <div className="px-6 lg:px-12 pb-4 max-w-[900px] mx-auto w-full">
+            <h1 className="text-2xl lg:text-3xl font-bold leading-tight text-foreground mb-3">
+              {lesson.title}
+            </h1>
+            <div className="flex flex-wrap items-center gap-3 pb-3 border-b border-border/50">
+              <DifficultyBadge difficulty={difficulty} />
+              <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Clock className="h-3.5 w-3.5" />{readingTime} min
+              </span>
+              {lessonIndex > 0 && totalLessonsInRoadmap > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <div className="h-1.5 w-20 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-primary rounded-full" style={{ width: `${progress}%` }} />
                   </div>
-                )}
-                <Button
-                  onClick={handleComplete}
-                  disabled={completing || lesson.status === 'completed'}
-                  size="sm"
-                  variant={lesson.status === 'completed' ? 'outline' : 'default'}
-                  className="gap-1.5 ml-auto"
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  {lesson.status === 'completed' ? 'Completed ✓' : completing ? 'Marking...' : 'Mark Complete'}
-                </Button>
-              </div>
+                  <span className="text-xs text-muted-foreground">{progress}%</span>
+                </div>
+              )}
+              <Button
+                onClick={handleComplete}
+                disabled={completing || lesson.status === 'completed'}
+                size="sm"
+                variant={lesson.status === 'completed' ? 'outline' : 'default'}
+                className="gap-1.5 ml-auto"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                {lesson.status === 'completed' ? '✓ Completed' : completing ? 'Saving...' : 'Mark Complete'}
+              </Button>
             </div>
           </div>
         </header>
 
-        {/* Scrollable content */}
+        {/* Scrollable content — clean W3Schools-style reading area */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto bg-background" id="lesson-content-scroll">
-          <div className="max-w-[860px] mx-auto px-8 lg:px-16 py-10 pb-36">
-            <motion.div key={id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="space-y-14">
+          <div className="max-w-[900px] mx-auto px-6 lg:px-12 py-8 pb-32">
+            <motion.div key={id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="space-y-12">
 
               {lesson.content ? (
                 <SectionRenderer content={lesson.content} />
@@ -1652,9 +1674,9 @@ export function LessonViewerPage() {
           </div>
         </div>
 
-        {/* Sticky bottom nav */}
-        <nav className="sticky bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur shrink-0" aria-label="Lesson navigation">
-          <div className="max-w-[860px] mx-auto w-full px-8 lg:px-16 py-3 flex items-center justify-between gap-3">
+        {/* Sticky bottom nav — clean Prev/Next like W3Schools */}
+        <nav className="sticky bottom-0 z-20 border-t border-border bg-background shrink-0" aria-label="Lesson navigation">
+          <div className="max-w-[900px] mx-auto w-full px-6 lg:px-12 py-3 flex items-center justify-between gap-3">
 
             {/* Previous */}
             <Button variant="outline" size="sm" asChild={!!lesson.prevLessonId} disabled={!lesson.prevLessonId}
@@ -1669,17 +1691,17 @@ export function LessonViewerPage() {
               )}
             </Button>
 
-            {/* Center info */}
+            {/* Center: complete + next */}
             <div className="flex flex-col items-center gap-1 hidden sm:flex">
               {lessonIndex > 0 && (
-                <span className="text-xs text-muted-foreground font-medium">{lessonIndex} / {totalLessonsInRoadmap}</span>
+                <span className="text-xs text-muted-foreground">{lessonIndex} / {totalLessonsInRoadmap}</span>
               )}
               <Button
                 onClick={handleComplete}
                 disabled={completing || lesson.status === 'completed' || !lesson.nextLessonId}
-                className="gap-2"
                 size="sm"
                 variant={lesson.status === 'completed' ? 'outline' : 'default'}
+                className="gap-1.5"
               >
                 <CheckCircle2 className="h-4 w-4" />
                 {lesson.status === 'completed' ? 'Completed' : completing ? 'Saving...' : 'Complete & Next'}

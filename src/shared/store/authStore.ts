@@ -55,6 +55,18 @@ export const useAuthStore = create<AuthStore>()(
         }),
 
       logout: () => {
+        // Invalidate the refresh token on the server (fire-and-forget — don't
+        // block the local logout even if the API call fails)
+        const { tokens } = get()
+        if (tokens?.refreshToken) {
+          import('@/shared/lib/axios').then(({ default: axiosInstance }) => {
+            axiosInstance
+              .post('/auth/logout', { refreshToken: tokens.refreshToken })
+              .catch(() => {/* ignore — local logout proceeds regardless */})
+          })
+        }
+
+        // Clear all local auth state immediately
         localStorage.removeItem('auth-storage')
         sessionStorage.clear()
         document.cookie.split(';').forEach((c) => {
@@ -124,14 +136,19 @@ export const useAuthStore = create<AuthStore>()(
               : null,
           }))
           return accessToken
-        } catch {
-          set({
-            user: null,
-            tokens: null,
-            permissions: [],
-            isAuthenticated: false,
-            isLoading: false,
-          })
+        } catch (err: any) {
+          const status = err?.response?.status
+          // Only clear auth if server explicitly says the token is invalid
+          if (status === 401 || status === 403) {
+            set({
+              user: null,
+              tokens: null,
+              permissions: [],
+              isAuthenticated: false,
+              isLoading: false,
+            })
+          }
+          // Network / 5xx: keep the user logged in, return null
           return null
         }
       },

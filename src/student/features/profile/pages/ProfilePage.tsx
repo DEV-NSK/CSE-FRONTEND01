@@ -693,19 +693,48 @@ function ResumeCard({
     ? new Date(user.resumeUploadedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
     : null
 
-  const isPdf = user.resumeFileName?.toLowerCase().endsWith('.pdf')
-  const isDocx = user.resumeFileName?.toLowerCase().endsWith('.docx')
+  const isPdf = user.resumeFileName?.toLowerCase().endsWith('.pdf') ||
+    user.resumeUrl?.toLowerCase().includes('.pdf')
+  const isDocx = user.resumeFileName?.toLowerCase().endsWith('.docx') ||
+    user.resumeUrl?.toLowerCase().includes('.docx')
 
   const handlePreview = () => {
     if (!user.resumeUrl) return
     if (isPdf) {
-      window.open(user.resumeUrl, '_blank', 'noopener')
+      // For PDF: open in new tab directly — browser PDF viewer handles it
+      const url = user.resumeUrl
+      window.open(url, '_blank', 'noopener,noreferrer')
     } else {
-      // DOCX — trigger download
+      // For DOCX: use Google Docs viewer to preview online
+      const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(user.resumeUrl)}&embedded=true`
+      window.open(viewerUrl, '_blank', 'noopener,noreferrer')
+    }
+  }
+
+  const handleDownload = async () => {
+    if (!user.resumeUrl) return
+    try {
+      // Fetch the file as a blob to force download (avoids browser navigation)
+      const response = await fetch(user.resumeUrl)
+      const blob = await response.blob()
+      const blobUrl = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = blobUrl
+      a.download = user.resumeFileName ?? (isPdf ? 'resume.pdf' : 'resume.docx')
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(blobUrl)
+    } catch {
+      // Fallback: direct link download
       const a = document.createElement('a')
       a.href = user.resumeUrl
-      a.download = user.resumeFileName ?? 'resume.docx'
+      a.download = user.resumeFileName ?? 'resume'
+      a.target = '_blank'
+      a.rel = 'noopener noreferrer'
+      document.body.appendChild(a)
       a.click()
+      document.body.removeChild(a)
     }
   }
 
@@ -751,22 +780,16 @@ function ResumeCard({
                 variant="outline"
                 className="gap-1.5 text-xs"
                 onClick={handlePreview}
-                title={isPdf ? 'Open in new tab' : 'Download DOCX'}
+                title={isPdf ? 'Open in new tab' : 'Preview with Google Docs'}
               >
                 <ExternalLink className="h-3.5 w-3.5" />
-                {isPdf ? 'Preview' : 'Download'}
+                Preview
               </Button>
               <Button
                 size="sm"
                 variant="outline"
                 className="gap-1.5 text-xs"
-                onClick={() => {
-                  if (!user.resumeUrl) return
-                  const a = document.createElement('a')
-                  a.href = user.resumeUrl
-                  a.download = user.resumeFileName ?? 'resume'
-                  a.click()
-                }}
+                onClick={handleDownload}
               >
                 <RefreshCw className="h-3.5 w-3.5" />
                 Download
@@ -942,7 +965,6 @@ export function ProfilePage() {
             <ActivityCard activity={activity} isLoading={isActivityLoading} />
           </div>
           <ProjectsCard projects={projects} />
-          <AchievementsCard achievements={achievements} />
         </div>
 
         {/* Right column */}
@@ -969,6 +991,11 @@ export function ProfilePage() {
           <ShareCard user={user} />
           <PrivacyCard user={user} onUpdate={updatePrivacy} />
         </div>
+      </div>
+
+      {/* Projects & Achievements — equal layout below main grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <AchievementsCard achievements={achievements} />
       </div>
     </div>
   )

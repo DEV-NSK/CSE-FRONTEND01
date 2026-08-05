@@ -7,16 +7,24 @@ import { Input } from '@/shared/components/ui/input'
 import { PageHeader } from '@/shared/components/common/PageHeader'
 import { ErrorState } from '@/shared/components/feedback/ErrorState'
 import { TopicCard, TopicCardSkeleton } from '@/student/components/questionBank/TopicCard'
-import { useQuestionBankTopics } from '@/shared/hooks/useQuestionBank'
+import { useQuestionBankTopics, useQuestionBankProgress } from '@/shared/hooks/useQuestionBank'
+import { useAuthStore } from '@/shared/store/authStore'
 import { debounce } from '@/shared/lib/utils'
 import { cn } from '@/shared/lib/utils'
 
 export function QuestionBankPage() {
   const [search, setSearch] = useState('')
   const { data: topics, isLoading, isError, refetch } = useQuestionBankTopics()
+  const { isAuthenticated } = useAuthStore()
+  const { data: progressData } = useQuestionBankProgress()
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSearch = useCallback(debounce((v: string) => setSearch(v), 200), [])
+
+  // Build a map of slug → progress for fast lookup
+  const progressMap = new Map(
+    (progressData ?? []).map((p) => [p.slug, p])
+  )
 
   const filtered = Array.isArray(topics)
     ? topics.filter((t) =>
@@ -27,6 +35,11 @@ export function QuestionBankPage() {
 
   const totalProblems = Array.isArray(topics)
     ? topics.reduce((sum, t) => sum + t.totalProblems, 0)
+    : 0
+
+  // Total solved across all topics
+  const totalSolved = isAuthenticated
+    ? (progressData ?? []).reduce((sum, p) => sum + p.solved, 0)
     : 0
 
   return (
@@ -69,11 +82,37 @@ export function QuestionBankPage() {
               <p className="text-xs text-muted-foreground">Topics</p>
             </div>
           </div>
+          {isAuthenticated && totalSolved > 0 && (
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <span className="text-emerald-600 text-lg font-bold" aria-hidden="true">✓</span>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                  {totalSolved}
+                </p>
+                <p className="text-xs text-muted-foreground">Problems Solved</p>
+              </div>
+            </div>
+          )}
           <div className="ml-auto text-right hidden sm:block">
-            <p className="text-sm font-medium text-foreground">Dataset being prepared</p>
-            <p className="text-xs text-muted-foreground">
-              Thousands of curated questions — coming soon
-            </p>
+            {isAuthenticated && totalSolved > 0 && totalProblems > 0 ? (
+              <>
+                <p className="text-sm font-medium text-foreground">
+                  {Math.round((totalSolved / totalProblems) * 100)}% overall completion
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Keep solving to improve your rank!
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-medium text-foreground">Dataset being prepared</p>
+                <p className="text-xs text-muted-foreground">
+                  Thousands of curated questions — coming soon
+                </p>
+              </>
+            )}
           </div>
         </div>
       </motion.div>
@@ -149,7 +188,11 @@ export function QuestionBankPage() {
               )
               : filtered.map((topic, idx) => (
                   <div key={topic.id} role="listitem">
-                    <TopicCard topic={topic} index={idx} />
+                    <TopicCard
+                      topic={topic}
+                      index={idx}
+                      progress={progressMap.get(topic.slug)}
+                    />
                   </div>
                 ))}
           </div>

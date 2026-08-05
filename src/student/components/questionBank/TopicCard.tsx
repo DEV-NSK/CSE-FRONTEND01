@@ -5,18 +5,22 @@ import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 import type { QuestionBankTopic } from '@/shared/types/questionBank'
+import type { TopicProgress } from '@/shared/hooks/useQuestionBank'
 import { getTopicMeta } from './topicIcons'
 
 interface TopicCardProps {
   topic: QuestionBankTopic
   /** 0-based index for stagger animation */
   index?: number
+  /** Real-time user progress for this topic (from /questions/progress API) */
+  progress?: TopicProgress
 }
 
-export function TopicCard({ topic, index = 0 }: TopicCardProps) {
+export function TopicCard({ topic, index = 0, progress }: TopicCardProps) {
   const meta = getTopicMeta(topic.slug)
-  const solved = 0 // placeholder until user progress is wired
-  const completion = topic.totalProblems > 0 ? Math.round((solved / topic.totalProblems) * 100) : 0
+  // Use real progress data if available, else default to 0
+  const solved = progress?.solved ?? 0
+  const completionPct = progress?.completionPct ?? (topic.totalProblems > 0 ? Math.round((solved / topic.totalProblems) * 100) : 0)
 
   return (
     <motion.div
@@ -99,39 +103,55 @@ export function TopicCard({ topic, index = 0 }: TopicCardProps) {
           {/* Progress bar */}
           <div className="mt-auto">
             <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
-              <span>{solved} / {topic.totalProblems} Solved</span>
-              <span>{completion}%</span>
+              <span>
+                {solved > 0 ? (
+                  <span className="font-medium text-foreground">{solved}</span>
+                ) : solved} / {topic.totalProblems} Solved
+              </span>
+              <span className={cn(
+                'font-medium',
+                completionPct === 100 ? 'text-green-600 dark:text-green-400' :
+                completionPct > 0 ? 'text-primary' : ''
+              )}>
+                {completionPct}%
+              </span>
             </div>
             <div
               className="h-1.5 rounded-full bg-muted overflow-hidden"
               role="progressbar"
-              aria-valuenow={completion}
+              aria-valuenow={completionPct}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label={`${completion}% completed`}
+              aria-label={`${completionPct}% completed`}
             >
-              <div
+              <motion.div
                 className={cn(
-                  'h-full rounded-full transition-all duration-500',
-                  completion === 100 ? 'bg-green-500' : 'bg-primary',
+                  'h-full rounded-full',
+                  completionPct === 100 ? 'bg-green-500' : 'bg-primary',
                 )}
-                style={{ width: `${completion}%` }}
+                initial={{ width: 0 }}
+                animate={{ width: `${completionPct}%` }}
+                transition={{ duration: 0.6, ease: 'easeOut', delay: index * 0.04 + 0.2 }}
               />
             </div>
           </div>
 
-          {/* Continue button */}
+          {/* Continue / Start label */}
           <div className="mt-3 pt-3 border-t border-border/50">
             <span
               className={cn(
                 'text-xs font-medium transition-colors',
-                'text-muted-foreground group-hover:text-primary',
+                completionPct === 100
+                  ? 'text-green-600 dark:text-green-400'
+                  : 'text-muted-foreground group-hover:text-primary',
               )}
             >
               {topic.totalProblems === 0
                 ? 'Coming Soon →'
+                : completionPct === 100
+                ? '✓ Completed'
                 : solved > 0
-                ? 'Continue →'
+                ? `Continue → ${solved}/${topic.totalProblems}`
                 : 'Start Solving →'}
             </span>
           </div>

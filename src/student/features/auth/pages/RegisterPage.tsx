@@ -21,7 +21,7 @@ const registerSchema = z.object({
     .regex(/[a-z]/, 'Must contain at least one lowercase letter')
     .regex(/[0-9]/, 'Must contain at least one number')
     .regex(/[@$!%*?&]/, 'Must contain at least one special character (@$!%*?&)'),
-  phoneNumber: z.string().optional(),
+  phoneNumber: z.string().min(7, 'Please enter a valid phone number'),
 })
 
 type RegisterFormValues = z.infer<typeof registerSchema>
@@ -97,7 +97,7 @@ export function RegisterPage() {
           <Input
             label="Phone Number"
             type="tel"
-            placeholder="+1 (555) 000-0000 (optional)"
+            placeholder="+91 98765 43210"
             leftIcon={<Phone className="h-4 w-4" />}
             autoComplete="tel"
             error={errors.phoneNumber?.message}
