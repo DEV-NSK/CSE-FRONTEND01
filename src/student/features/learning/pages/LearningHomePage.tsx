@@ -1,25 +1,24 @@
-import { useState, useCallback, useMemo } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   BookOpen, ArrowRight, Clock, Target,
-  Flame, Bookmark, Search, PlayCircle, Award, ChevronDown, ChevronRight,
+  Flame, Bookmark, PlayCircle, Award, ChevronDown, ChevronRight,
 } from 'lucide-react'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { PageHeader } from '@/shared/components/common/PageHeader'
-import { ContinueLearningCard } from '@/student/components/learning/ContinueLearningCard'
 import { RoadmapCardSkeleton } from '@/student/components/learning/LearningSkeletons'
 import { EmptyLearningState } from '@/student/components/learning/EmptyLearningState'
 import { ProgressRing } from '@/student/components/learning/ProgressRing'
 import { DifficultyBadge } from '@/student/components/learning/DifficultyBadge'
 import {
-  useRoadmaps, useContinueLearning,
+  useRoadmaps,
   useLearningStats, useRecentlyViewed, useBookmarks,
 } from '@/shared/hooks/useLearning'
 import { useAuthStore } from '@/shared/store/authStore'
-import { debounce, cn } from '@/shared/lib/utils'
+import { cn } from '@/shared/lib/utils'
 import type { Roadmap } from '@/shared/types/learning'
 
 // ─── Animation variants ───────────────────────────────────────────────────────
@@ -207,13 +206,10 @@ function ModuleAccordion({ sections }: ModuleAccordionProps) {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export function LearningHomePage() {
-  const navigate = useNavigate()
   const { user, isAuthenticated } = useAuthStore()
-  const [searchValue, setSearchValue] = useState('')
 
   // Fetch data (public + authenticated guards preserved)
   const { data: roadmapsData, isLoading: roadmapsLoading } = useRoadmaps({ limit: 50 })
-  const { data: continueLearning } = useContinueLearning()
   const { data: stats } = useLearningStats()
   const { data: recentlyViewed } = useRecentlyViewed(4)
   const { data: bookmarks } = useBookmarks()
@@ -223,12 +219,6 @@ export function LearningHomePage() {
     [roadmapsData],
   )
   const pythonRoadmap: Roadmap | undefined = pythonRoadmaps[0]
-
-  const pythonContinueLearning = useMemo(() => {
-    if (!continueLearning) return null
-    if (isPythonRoadmap(continueLearning.roadmap)) return continueLearning
-    return null
-  }, [continueLearning])
 
   const pythonRecentlyViewed = useMemo(
     () => recentlyViewed?.filter((r) => r.roadmapTitle?.toLowerCase().includes('python') ?? true) ?? [],
@@ -244,26 +234,6 @@ export function LearningHomePage() {
       ) ?? [],
     [bookmarks],
   )
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const handleSearch = useCallback(
-    debounce((q: string) => {
-      if (q.trim().length >= 2)
-        navigate(`/dashboard/learning/search?q=${encodeURIComponent(q.trim())}`)
-    }, 300),
-    [navigate],
-  )
-
-  const onSearchChange = (val: string) => {
-    setSearchValue(val)
-    handleSearch(val)
-  }
-
-  const onSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchValue.trim().length >= 2)
-      navigate(`/dashboard/learning/search?q=${encodeURIComponent(searchValue.trim())}`)
-  }
 
   const statsCards: StatCardProps[] = [
     {
@@ -298,37 +268,10 @@ export function LearningHomePage() {
     },
   ]
 
-  // Build "next up" list from recently viewed + continue learning
-  const nextUpLessons = useMemo(() => {
-    const lessons: { id: string; title: string; subtitle?: string; hasProgress: boolean }[] = []
-
-    if (pythonContinueLearning) {
-      lessons.push({
-        id: pythonContinueLearning.lesson.id,
-        title: pythonContinueLearning.lesson.title,
-        subtitle: pythonContinueLearning.roadmap.title,
-        hasProgress: true,
-      })
-    }
-
-    pythonRecentlyViewed.slice(0, 3).forEach((rv) => {
-      if (!lessons.some((l) => l.id === rv.lesson.id)) {
-        lessons.push({
-          id: rv.lesson.id,
-          title: rv.lesson.title,
-          subtitle: rv.roadmapTitle,
-          hasProgress: false,
-        })
-      }
-    })
-
-    return lessons.slice(0, 4)
-  }, [pythonContinueLearning, pythonRecentlyViewed])
 
   const progress = pythonRoadmap?.progress ?? 0
   const completedLessons = pythonRoadmap?.completedLessons ?? 0
   const sections = (pythonRoadmap as any)?.sections ?? []
-  const firstName = user?.fullName?.split(' ')[0] ?? 'Student'
 
   return (
     <div className="space-y-8">
@@ -346,118 +289,7 @@ export function LearningHomePage() {
         breadcrumbs={[{ label: 'Learning' }]}
       />
 
-      {/* ── Welcome header ── */}
-      <motion.div
-        initial={{ opacity: 0, y: -6 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-xl border border-border bg-card shadow-sm p-6"
-      >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="secondary" className="text-xs">🐍 Python Programming</Badge>
-              {pythonContinueLearning && (
-                <Badge variant="outline" className="text-xs text-muted-foreground">
-                  {pythonContinueLearning.progress}% complete
-                </Badge>
-              )}
-            </div>
-            <h2 className="text-2xl font-bold text-foreground">
-              Welcome back, {firstName}!
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {pythonContinueLearning
-                ? `You're on a roll — keep going with your Python course.`
-                : 'Start your Python journey today — beginner to advanced, step by step.'}
-            </p>
-          </div>
-
-          {/* Overall progress bar */}
-          {pythonRoadmap && (
-            <div className="sm:min-w-[200px] space-y-2">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Course progress</span>
-                <span className="font-medium text-foreground tabular-nums">
-                  {completedLessons}/{pythonRoadmap.lessonCount}
-                </span>
-              </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-primary rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
-                  transition={{ duration: 0.6, ease: 'easeOut' }}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground text-right">{progress}%</p>
-            </div>
-          )}
-        </div>
-
-        {/* Search bar */}
-        <form
-          onSubmit={onSearchSubmit}
-          role="search"
-          aria-label="Search learning content"
-          className="mt-5"
-        >
-          <div className="relative max-w-xl">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"
-              aria-hidden="true"
-            />
-            <input
-              type="search"
-              value={searchValue}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search lessons: Variables, Functions, Loops..."
-              aria-label="Search"
-              className={cn(
-                'w-full pl-9 pr-4 py-2.5 rounded-lg text-sm',
-                'bg-background border border-border',
-                'text-foreground placeholder:text-muted-foreground',
-                'focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent',
-                'transition-colors duration-150',
-              )}
-            />
-          </div>
-        </form>
-      </motion.div>
-
       <div id="main-learning-content" className="space-y-8">
-        {/* ── Continue Learning (full card) ── */}
-        {pythonContinueLearning && (
-          <section aria-labelledby="continue-heading">
-            <h2 id="continue-heading" className="text-base font-semibold text-foreground mb-3">
-              Continue Learning
-            </h2>
-            <ContinueLearningCard data={pythonContinueLearning} />
-          </section>
-        )}
-
-        {/* ── Next Up horizontal scroll ── */}
-        {nextUpLessons.length > 0 && (
-          <section aria-labelledby="nextup-heading">
-            <div className="flex items-center justify-between mb-3">
-              <h2 id="nextup-heading" className="text-base font-semibold text-foreground">
-                Next Up
-              </h2>
-            </div>
-            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin">
-              {nextUpLessons.map((lesson, idx) => (
-                <NextUpCard
-                  key={lesson.id}
-                  index={idx}
-                  id={lesson.id}
-                  title={lesson.title}
-                  subtitle={lesson.subtitle}
-                  hasProgress={lesson.hasProgress}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
         {/* ── Stats ── */}
         {isAuthenticated && (
           <section aria-labelledby="stats-heading">

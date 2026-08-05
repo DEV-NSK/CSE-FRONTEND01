@@ -1,21 +1,20 @@
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  Clock, BookOpen, ArrowRight, Share2, Tag, Calendar, Map, ChevronRight,
+  Clock, BookOpen, ArrowRight, Share2, Tag, Calendar, ChevronRight,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/components/ui/tabs'
 import { PageHeader } from '@/shared/components/common/PageHeader'
 import { ErrorState } from '@/shared/components/feedback/ErrorState'
 import { ProgressRing } from '@/student/components/learning/ProgressRing'
 import { DifficultyBadge } from '@/student/components/learning/DifficultyBadge'
 import { BookmarkButton } from '@/student/components/learning/BookmarkButton'
-import { RoadmapTimeline } from '@/student/components/learning/RoadmapTimeline'
 import { PythonRoadmapVisual } from '@/student/components/learning/PythonRoadmapVisual'
 import { RoadmapDetailSkeleton } from '@/student/components/learning/LearningSkeletons'
 import { useRoadmap, useToggleRoadmapBookmark } from '@/shared/hooks/useLearning'
+import { useAuthStore } from '@/shared/store/authStore'
 import { formatDate, cn } from '@/shared/lib/utils'
 import { normalizeTags } from '@/shared/utils'
 
@@ -62,6 +61,7 @@ function StatRow({ label, value }: { label: string; value: React.ReactNode }) {
 export function RoadmapDetailPage() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
+  const { user } = useAuthStore()
 
   const { data: roadmap, isLoading, isError, refetch } = useRoadmap(slug ?? '')
   const { mutate: toggleBookmark, isPending: bookmarkPending } = useToggleRoadmapBookmark()
@@ -171,52 +171,29 @@ export function RoadmapDetailPage() {
             </Card>
           </motion.div>
 
-          {/* Learning path tabs */}
+          {/* Roadmap visualization */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
           >
-            <Card className="shadow-sm">
-              <CardHeader className="pb-0 pt-5 px-6">
-                <CardTitle className="text-base font-semibold">Learning Path</CardTitle>
-              </CardHeader>
-              <CardContent className="px-6 pb-6 pt-4">
-                {sections.length > 0 ? (
-                  <Tabs defaultValue="visual">
-                    <TabsList className="mb-5">
-                      <TabsTrigger value="visual" className="gap-1.5 text-xs">
-                        <Map className="h-3.5 w-3.5" />
-                        Visual Roadmap
-                      </TabsTrigger>
-                      <TabsTrigger value="list" className="gap-1.5 text-xs">
-                        <BookOpen className="h-3.5 w-3.5" />
-                        List View
-                      </TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="visual">
-                      <PythonRoadmapVisual
-                        sections={sections}
-                        currentLessonId={currentLessonId}
-                        completedLessons={completedLessons}
-                        totalLessons={roadmap.lessonCount}
-                        progress={progress}
-                      />
-                    </TabsContent>
-                    <TabsContent value="list">
-                      <RoadmapTimeline
-                        sections={sections}
-                        currentLessonId={currentLessonId}
-                      />
-                    </TabsContent>
-                  </Tabs>
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-10">
-                    No sections available yet.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+            {sections.length > 0 ? (
+              <PythonRoadmapVisual
+                sections={sections}
+                currentLessonId={currentLessonId}
+                completedLessons={completedLessons}
+                totalLessons={roadmap.lessonCount}
+                progress={progress}
+                userAvatar={user?.profileImage}
+                userName={user?.fullName}
+              />
+            ) : (
+              <Card className="shadow-sm">
+                <CardContent className="py-10 text-center">
+                  <p className="text-sm text-muted-foreground">No sections available yet.</p>
+                </CardContent>
+              </Card>
+            )}
           </motion.div>
         </div>
 
