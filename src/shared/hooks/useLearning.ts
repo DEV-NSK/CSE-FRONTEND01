@@ -59,7 +59,9 @@ export function useRoadmaps(filters?: Partial<RoadmapFilters>) {
   return useQuery({
     queryKey: learningKeys.roadmaps(filters),
     queryFn: () => learningService.getRoadmaps(filters).then((r) => r.data.data),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
     placeholderData: (prev) => prev,
   })
 }
@@ -69,6 +71,9 @@ export function useRoadmap(slug: string) {
     queryKey: learningKeys.roadmap(slug),
     queryFn: () => learningService.getRoadmapBySlug(slug).then((r) => r.data.data),
     enabled: !!slug,
+    staleTime: 0,          // always re-fetch to get live progress
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   })
 }
 
@@ -124,7 +129,9 @@ export function useLearningStats() {
   return useQuery({
     queryKey: learningKeys.stats(),
     queryFn: () => learningService.getLearningStats().then((r) => r.data.data),
-    staleTime: 1000 * 60 * 2,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
     enabled: isAuthenticated,
   })
 }

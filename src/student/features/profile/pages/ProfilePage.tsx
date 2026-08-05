@@ -93,7 +93,7 @@ function CompletionBar({ user }: { user: User }) {
   if (pct >= 100) return null
 
   return (
-    <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-4">
+    <div className="bg-card/80 border border-border/40 rounded-2xl p-4 shadow-sm flex items-center gap-4">
       <div className="flex-1">
         <div className="flex justify-between mb-1.5">
           <span className="text-sm font-medium text-foreground">{label}</span>
@@ -114,10 +114,10 @@ function StatCard({ icon: Icon, label, value, delta, color }: {
 }) {
   return (
     <motion.div whileHover={{ y: -2, scale: 1.01 }} transition={{ type: 'spring', stiffness: 300 }}>
-      <Card className="hover:border-border/80 transition-all cursor-default h-full">
+      <Card className="border-border/30 shadow-md hover:shadow-lg bg-gradient-to-br from-card to-card/60 backdrop-blur-sm transition-all cursor-default h-full">
         <CardContent className="p-3 sm:p-4">
           <div className="flex items-start justify-between mb-2">
-            <div className={`p-2 rounded-lg ${color}`}>
+            <div className={`p-2.5 rounded-xl ${color}`}>
               <Icon className="h-4 w-4" />
             </div>
             {delta && <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">{delta}</span>}
@@ -270,8 +270,8 @@ function SocialsCard({ user }: { user: User }) {
   ].filter(Boolean) as SocialLink[]
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="shadow-sm border-border/40 bg-card/80 backdrop-blur-sm">
+      <CardHeader className="pb-2 pt-4 px-5">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-semibold">Connect</CardTitle>
           <Button asChild variant="ghost" size="sm" className="text-xs h-auto py-1">
@@ -279,7 +279,7 @@ function SocialsCard({ user }: { user: User }) {
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="px-5 pb-4 space-y-2">
         {links.length === 0 ? (
           <p className="text-xs text-muted-foreground">
             No social links yet.{' '}
@@ -311,15 +311,15 @@ function SocialsCard({ user }: { user: User }) {
 // ── Coding analytics card ─────────────────────────────────────────────────────
 function CodingCard({ analytics }: { analytics: ReturnType<typeof useProfile>['analytics'] }) {
   if (!analytics) return (
-    <Card><CardContent className="p-5 flex items-center justify-center h-32">
+    <Card className="shadow-sm border-border/40 bg-card/80 backdrop-blur-sm"><CardContent className="p-5 flex items-center justify-center h-32">
       <p className="text-sm text-muted-foreground">No coding data yet. Start solving!</p>
     </CardContent></Card>
   )
   const total = analytics.totalSubmissions
   const pct = analytics.acceptanceRate
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
+    <Card className="h-full shadow-sm border-border/40 bg-card/80 backdrop-blur-sm">
+      <CardHeader className="pb-2 pt-4 px-5">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-semibold">Coding Stats</CardTitle>
           <Button asChild variant="ghost" size="sm" className="text-xs h-auto py-1">
@@ -327,15 +327,15 @@ function CodingCard({ analytics }: { analytics: ReturnType<typeof useProfile>['a
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="grid grid-cols-2 gap-3">
+      <CardContent className="px-5 pb-4 space-y-3">
+        <div className="grid grid-cols-2 gap-2">
           {[
             { label: 'Accepted', value: analytics.accepted, color: 'text-emerald-600 dark:text-emerald-400' },
             { label: 'Rejected', value: analytics.rejected, color: 'text-destructive' },
             { label: 'Total', value: total, color: 'text-foreground' },
             { label: 'Acceptance', value: `${pct}%`, color: 'text-primary', isStr: true },
           ].map((s) => (
-            <div key={s.label} className="p-3 rounded-lg bg-muted/50 text-center">
+            <div key={s.label} className="p-3 rounded-xl bg-muted/30 border border-border/20 text-center">
               <div className={`text-xl font-bold ${s.color}`}>
                 {s.isStr ? s.value : <CountUp end={s.value as number} />}
               </div>
@@ -370,11 +370,11 @@ function ActivityCard({ activity, isLoading }: {
   isLoading: boolean
 }) {
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
+    <Card className="h-full shadow-sm border-border/40 bg-card/80 backdrop-blur-sm">
+      <CardHeader className="pb-2 pt-4 px-5">
         <CardTitle className="text-sm font-semibold">Recent Activity</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="px-5 pb-4 space-y-3">
         {isLoading && [...Array(4)].map((_, i) => (
           <div key={i} className="flex gap-3 animate-pulse">
             <div className="w-7 h-7 rounded-full bg-muted shrink-0" />
@@ -393,7 +393,7 @@ function ActivityCard({ activity, isLoading }: {
           return (
             <motion.div key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.05 }} className="flex items-start gap-3">
-              <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center shrink-0">
+              <div className="w-7 h-7 rounded-full bg-muted/50 border border-border/30 flex items-center justify-center shrink-0">
                 <Icon className={`h-3.5 w-3.5 ${color}`} />
               </div>
               <div className="flex-1 min-w-0">
@@ -415,7 +415,7 @@ function ProjectsCard({ projects }: {
 }) {
   if (projects.length === 0) return null   // hide entirely when empty — no dead space
   return (
-    <Card className="flex flex-col h-full">
+    <Card className="flex flex-col h-full shadow-sm border-border/40">
       <CardHeader className="pb-2 pt-3 px-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-semibold">Projects</CardTitle>
@@ -465,7 +465,7 @@ function ProjectsCard({ projects }: {
 function AchievementsCard({ achievements }: { achievements: ReturnType<typeof useProfile>['achievements'] }) {
   if (achievements.length === 0) return null  // hide entirely when empty — no dead space
   return (
-    <Card>
+    <Card className="shadow-sm border-border/40">
       <CardHeader className="pb-2 pt-3 px-4">
         <CardTitle className="text-sm font-semibold">Achievements</CardTitle>
       </CardHeader>
@@ -532,13 +532,13 @@ function ShareCard({ user }: { user: User }) {
   ]
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="shadow-sm border-border/40">
+      <CardHeader className="pb-2 pt-4 px-5">
         <CardTitle className="text-sm font-semibold">Share Profile</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="px-5 pb-4 space-y-3">
         {/* Profile URL */}
-        <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border border-border">
+        <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border/30">
           <p className="text-xs text-muted-foreground flex-1 truncate">{profileUrl.replace(/^https?:\/\//, '')}</p>
           <Button size="sm" variant="ghost" className="h-7 px-2 shrink-0" onClick={copyLink}>
             {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
@@ -572,18 +572,18 @@ function PrivacyCard({ user, onUpdate }: { user: User; onUpdate: (v: 'PUBLIC' | 
   ] as const
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="shadow-sm border-border/40">
+      <CardHeader className="pb-2 pt-4 px-5">
         <CardTitle className="text-sm font-semibold">Profile Visibility</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="px-5 pb-4 space-y-2">
         {options.map((o) => {
           const Icon = o.icon
           const active = (user.profileVisibility ?? 'PUBLIC') === o.value
           return (
             <button key={o.value} onClick={() => onUpdate(o.value)}
-              className={`w-full flex items-center gap-3 p-2.5 rounded-lg border transition-all text-left ${
-                active ? 'border-primary bg-primary/8' : 'border-border hover:bg-muted/50'
+              className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
+                active ? 'border-primary/40 bg-primary/5' : 'border-border/30 hover:bg-muted/40'
               }`}>
               <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-primary' : 'text-muted-foreground'}`} />
               <div className="flex-1 min-w-0">
@@ -603,15 +603,15 @@ function PrivacyCard({ user, onUpdate }: { user: User; onUpdate: (v: 'PUBLIC' | 
 function CompletionCard({ completion }: { completion: ReturnType<typeof useProfile>['completion'] }) {
   if (!completion) return null
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="shadow-sm border-border/40">
+      <CardHeader className="pb-2 pt-4 px-5">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-semibold">Profile Strength</CardTitle>
           <span className="text-lg font-bold text-primary">{completion.percentage}%</span>
         </div>
         <Progress value={completion.percentage} className="h-2 mt-1" />
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-5 pb-4">
         <div className="space-y-1.5">
           {completion.details.map((d) => (
             <div key={d.label} className="flex items-center justify-between">
@@ -753,15 +753,15 @@ function ResumeCard({
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="shadow-sm border-border/40">
+      <CardHeader className="pb-2 pt-4 px-5">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
             <FileText className="h-4 w-4 text-primary" /> Resume
           </CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="px-5 pb-4 space-y-3">
         {/* Error */}
         {uploadError && (
           <div className="p-2 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center justify-between">
@@ -773,7 +773,7 @@ function ResumeCard({
         {hasResume ? (
           <div className="space-y-3">
             {/* Resume info */}
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border/30">
               <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                 <FileText className="h-5 w-5 text-primary" />
               </div>
@@ -936,7 +936,7 @@ export function ProfilePage() {
   ]
 
   return (
-    <div className="flex flex-col gap-0">
+    <div className="flex flex-col gap-0 bg-muted/20 dark:bg-transparent min-h-full -m-6 p-6">
       {/* Upload error */}
       <AnimatePresence>
         {uploadError && (
@@ -958,16 +958,16 @@ export function ProfilePage() {
       />
 
       {/* Main grid — 2 columns: left content + right sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-0 items-start mt-3">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4 items-start mt-4">
 
         {/* ── LEFT COLUMN ── */}
-        <div className="flex flex-col gap-3 lg:pr-3">
+        <div className="flex flex-col gap-4">
 
           {/* Profile completion bar (if not 100%) */}
           <CompletionBar user={user} />
 
           {/* ── ROW 2: 4 stat cards ── */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {stats.map((s) => (
               <StatCard key={s.label} icon={s.icon} label={s.label} value={s.value}
                 delta={s.delta} color={s.color} />
@@ -975,7 +975,7 @@ export function ProfilePage() {
           </div>
 
           {/* ── ROW 3: Coding Stats (left 2/3) + Resume (right 1/3) ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-start">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
             <div className="sm:col-span-2">
               <CodingCard analytics={analytics} />
             </div>
@@ -998,9 +998,9 @@ export function ProfilePage() {
           </div>
 
           {/* ── ROW 4: Connect (left ~40%) + Share Profile (right ~60%) ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
             <SocialsCard user={user} />
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-4">
               <ShareCard user={user} />
               <PrivacyCard user={user} onUpdate={updatePrivacy} />
             </div>
@@ -1014,7 +1014,7 @@ export function ProfilePage() {
         </div>
 
         {/* ── RIGHT SIDEBAR: Recent Activity + Profile Strength (sticky) ── */}
-        <div className="flex flex-col gap-3 lg:sticky lg:top-[72px]">
+        <div className="flex flex-col gap-4 lg:sticky lg:top-[72px]">
           <ActivityCard activity={activity} isLoading={isActivityLoading} />
           <CompletionCard completion={completion} />
         </div>
