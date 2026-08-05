@@ -940,7 +940,7 @@ export function ProfilePage() {
   ]
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 pb-2">
       {/* Upload error */}
       <AnimatePresence>
         {uploadError && (
@@ -972,18 +972,17 @@ export function ProfilePage() {
         ))}
       </div>
 
-      {/* ── Main content: single col on mobile, two cols on xl ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
+      {/* ── Main content: single col on mobile, two cols on xl — items-start stops columns stretching ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 items-start">
 
-        {/* LEFT column: 2 spans — main stats */}
+        {/* LEFT column: 2 spans */}
         <div className="xl:col-span-2 flex flex-col gap-3">
           <CodingCard analytics={analytics} />
           <ActivityCard activity={activity} isLoading={isActivityLoading} />
-          {/* Projects at full width in left col */}
-          <ProjectsCard projects={projects} />
+          {projects.length > 0 && <ProjectsCard projects={projects} />}
         </div>
 
-        {/* RIGHT column: 1 span — profile tools */}
+        {/* RIGHT column: 1 span */}
         <div className="flex flex-col gap-3">
           <CompletionCard completion={completion} />
           <ResumeCard
@@ -1009,8 +1008,8 @@ export function ProfilePage() {
         </div>
       </div>
 
-      {/* Achievements — full width below */}
-      <AchievementsCard achievements={achievements} />
+      {/* Achievements — only shown when earned */}
+      {achievements.length > 0 && <AchievementsCard achievements={achievements} />}
     </div>
   )
 }

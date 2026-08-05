@@ -161,9 +161,9 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({ data, isLoading }
       role="region"
       aria-label="Activity heatmap — last year"
     >
-      {/* ── Main heatmap area ── */}
-      <div className="px-4 pt-3 pb-2">
-        {/* Header */}
+      <div className="px-4 pt-3 pb-3">
+
+        {/* ── Header row: title left, contribution count right ── */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <span className="text-sm" aria-hidden="true">🔥</span>
@@ -178,6 +178,7 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({ data, isLoading }
         </div>
 
         {isLoading ? (
+          /* ── Skeleton ── */
           <div className="flex gap-0 overflow-hidden">
             <div className="flex flex-col gap-[2px] pr-1 pt-4" style={{ minWidth: 24 }}>
               {dayLabels.map((d, i) => (
@@ -197,6 +198,7 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({ data, isLoading }
             </div>
           </div>
         ) : (
+          /* ── Live grid ── */
           <div ref={containerRef} className="relative">
             {tooltip.visible && (
               <div
@@ -204,73 +206,118 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({ data, isLoading }
                 style={{ left: tooltip.x, top: tooltip.y, transform: 'translateX(-50%)' }}
                 role="tooltip"
               >
-                <span className="font-semibold text-foreground">{tooltip.count} {tooltip.count === 1 ? 'contribution' : 'contributions'}</span>
+                <span className="font-semibold text-foreground">
+                  {tooltip.count} {tooltip.count === 1 ? 'contribution' : 'contributions'}
+                </span>
                 <span className="text-muted-foreground ml-1">on {tooltip.date}</span>
               </div>
             )}
 
-            <div ref={scrollRef} className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
-              <div className="flex gap-0 min-w-max">
-                {/* Day labels */}
-                <div className="flex flex-col shrink-0 pr-1" style={{ gap: GAP, paddingTop: 16 }} aria-hidden="true">
-                  {dayLabels.map((d, i) => (
-                    <div key={i} className="flex items-center justify-end text-[9px] text-muted-foreground" style={{ height: SQ, minWidth: 24 }}>
-                      {d.show ? d.label : ''}
-                    </div>
-                  ))}
-                </div>
+            {/*
+              Desktop (md+): grid left (shrink-0) + quote right (flex-1) — side by side.
+              Mobile (<md):  grid on top, quote below — stacked.
+            */}
+            <div className="flex flex-col md:flex-row md:items-stretch gap-3 w-full">
 
-                {/* Grid */}
-                <div className="relative">
-                  {/* Month labels */}
-                  <div className="flex mb-1 h-4 relative" style={{ width: svgW }} aria-hidden="true">
-                    {monthLabels.map(({ label, weekIndex }) => (
-                      <span key={`${label}-${weekIndex}`} className="absolute text-[10px] text-muted-foreground" style={{ left: weekIndex * (SQ + GAP) }}>
-                        {label}
-                      </span>
+              {/* Grid — natural pixel width, scrollable on mobile */}
+              <div
+                ref={scrollRef}
+                className="shrink-0 overflow-x-auto"
+                style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+              >
+                <div className="flex gap-0 min-w-max">
+                  {/* Day labels */}
+                  <div
+                    className="flex flex-col shrink-0 pr-1"
+                    style={{ gap: GAP, paddingTop: 16 }}
+                    aria-hidden="true"
+                  >
+                    {dayLabels.map((d, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-end text-[9px] text-muted-foreground"
+                        style={{ height: SQ, minWidth: 24 }}
+                      >
+                        {d.show ? d.label : ''}
+                      </div>
                     ))}
                   </div>
 
-                  <svg width={svgW} height={svgH} onMouseLeave={() => setTooltip(t => ({ ...t, visible: false }))}>
-                    {weeks.map((week, wi) =>
-                      week.map((cell, di) => {
-                        if (!cell) return null
-                        return (
-                          <rect
-                            key={`${wi}-${di}`}
-                            x={wi * (SQ + GAP)} y={di * (SQ + GAP)}
-                            width={SQ} height={SQ} rx={2} ry={2}
-                            fill={LEVEL_COLORS[getLevel(cell.count)]}
-                            style={{ cursor: 'pointer' }}
-                            onMouseEnter={e => handleEnter(e, cell.date, cell.count)}
-                          />
-                        )
-                      })
-                    )}
-                  </svg>
+                  {/* SVG grid */}
+                  <div className="relative">
+                    {/* Month labels */}
+                    <div className="flex mb-1 h-4 relative" style={{ width: svgW }} aria-hidden="true">
+                      {monthLabels.map(({ label, weekIndex }) => (
+                        <span
+                          key={`${label}-${weekIndex}`}
+                          className="absolute text-[10px] text-muted-foreground"
+                          style={{ left: weekIndex * (SQ + GAP) }}
+                        >
+                          {label}
+                        </span>
+                      ))}
+                    </div>
+
+                    <svg
+                      width={svgW}
+                      height={svgH}
+                      onMouseLeave={() => setTooltip(t => ({ ...t, visible: false }))}
+                    >
+                      {weeks.map((week, wi) =>
+                        week.map((cell, di) => {
+                          if (!cell) return null
+                          return (
+                            <rect
+                              key={`${wi}-${di}`}
+                              x={wi * (SQ + GAP)} y={di * (SQ + GAP)}
+                              width={SQ} height={SQ} rx={2} ry={2}
+                              fill={LEVEL_COLORS[getLevel(cell.count)]}
+                              style={{ cursor: 'pointer' }}
+                              onMouseEnter={e => handleEnter(e, cell.date, cell.count)}
+                            />
+                          )
+                        })
+                      )}
+                    </svg>
+                  </div>
                 </div>
+              </div>
+
+              {/* Quote panel:
+                  - Desktop: flex-1, border-l, vertically centered — fills empty right space
+                  - Mobile: full width, border-t, compact strip below grid
+              */}
+              <div className="
+                flex flex-col justify-center min-w-0
+                pt-2 border-t border-border/40
+                md:pt-0 md:border-t-0 md:border-l md:pl-4 md:flex-1
+              ">
+                <span className="text-base mb-1 leading-none" aria-hidden="true">💡</span>
+                <p className="text-[11px] leading-relaxed text-muted-foreground">
+                  <span className="italic text-foreground/75">"{quote.text}"</span>
+                </p>
+                {quote.author && (
+                  <p className="text-[10px] font-semibold text-muted-foreground/70 mt-1">
+                    — {quote.author}
+                  </p>
+                )}
               </div>
             </div>
 
             {/* Legend */}
-            <div className="flex items-center gap-1 mt-1.5 justify-end" aria-label="Color legend">
+            <div className="flex items-center gap-1 mt-2 justify-end" aria-label="Color legend">
               <span className="text-[10px] text-muted-foreground mr-0.5">Less</span>
               {LEVEL_COLORS.map((color, i) => (
-                <div key={i} className="rounded-sm" style={{ width: SQ - 1, height: SQ - 1, background: color, border: '1px solid rgba(0,0,0,0.06)' }} />
+                <div
+                  key={i}
+                  className="rounded-sm"
+                  style={{ width: SQ - 1, height: SQ - 1, background: color, border: '1px solid rgba(0,0,0,0.06)' }}
+                />
               ))}
               <span className="text-[10px] text-muted-foreground ml-0.5">More</span>
             </div>
           </div>
         )}
-      </div>
-
-      {/* ── Motivational quote strip — no empty gap ── */}
-      <div className="border-t border-border/60 bg-muted/30 px-4 py-2.5 flex items-center gap-2">
-        <span className="text-base shrink-0" aria-hidden="true">💡</span>
-        <p className="text-xs text-muted-foreground leading-snug min-w-0">
-          <span className="italic">"{quote.text}"</span>
-          {quote.author && <span className="ml-1 not-italic font-medium text-foreground/70">— {quote.author}</span>}
-        </p>
       </div>
     </motion.div>
   )
