@@ -181,19 +181,7 @@ export function TopNav() {
           <Menu className="h-5 w-5" />
         </Button>
 
-        {/* Logo — desktop only (sidebar already shows it) */}
-        <Link
-          to="/dashboard"
-          className="hidden lg:flex items-center gap-2 shrink-0 group"
-          aria-label="CAMPUSRANK — Go to Dashboard"
-        >
-          <div className="flex items-center justify-center h-7 w-7 rounded-md bg-primary text-primary-foreground transition-opacity duration-150 group-hover:opacity-80">
-            <GraduationCap className="h-4 w-4" />
-          </div>
-          <span className="font-semibold text-sm text-foreground">CAMPUSRANK</span>
-        </Link>
-
-        {/* Mobile: small logo text */}
+        {/* Logo — mobile only (desktop sidebar already shows it) */}
         <Link
           to="/dashboard"
           className="lg:hidden flex items-center gap-1.5 shrink-0"
@@ -204,9 +192,6 @@ export function TopNav() {
           </div>
           <span className="font-semibold text-xs text-foreground">CAMPUSRANK</span>
         </Link>
-
-        {/* Divider between logo and breadcrumb */}
-        <span className="hidden lg:block h-4 w-px bg-border" aria-hidden="true" />
 
         {/* Breadcrumb */}
         <TopNavBreadcrumb />

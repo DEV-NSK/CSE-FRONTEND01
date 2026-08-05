@@ -23,9 +23,21 @@ function getLevel(count: number): number {
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
+// ── Motivational quotes ───────────────────────────────────────────────────────
+const QUOTES = [
+  { text: 'Every expert was once a beginner. Keep going.', author: 'Helen Hayes' },
+  { text: 'Code is like humor. When you have to explain it, it\'s bad.', author: 'Cory House' },
+  { text: 'The best time to plant a tree was 20 years ago. The second best time is now.', author: 'Chinese Proverb' },
+  { text: 'First, solve the problem. Then, write the code.', author: 'John Johnson' },
+  { text: 'Programs must be written for people to read.', author: 'Harold Abelson' },
+  { text: 'The only way to learn a new programming language is by writing programs in it.', author: 'Dennis Ritchie' },
+  { text: 'Consistency beats intensity. Show up every day.', author: '' },
+  { text: 'Your only limit is the amount of work you are willing to put in.', author: '' },
+]
+
 // Cell dimensions
-const SQ  = 11   // cell size px
-const GAP = 2    // gap between cells
+const SQ  = 11
+const GAP = 2
 
 interface TooltipState {
   visible: boolean
@@ -40,22 +52,15 @@ interface ActivityHeatmapProps {
   isLoading?: boolean
 }
 
-/**
- * Build 52-week grid (Sunday-start) for the last 365 days.
- * Returns array of weeks (newest week last), each week is 7 day slots (Sun→Sat).
- * Slots before today-364 or in the future are null.
- */
 function buildYearGrid(activityMap: Map<string, number>) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  // Go back 364 days (52 full weeks + today = 365 days)
   const start = new Date(today)
   start.setDate(start.getDate() - 364)
 
   // Align start to Sunday
-  const startDow = start.getDay() // 0=Sun
-  start.setDate(start.getDate() - startDow)
+  start.setDate(start.getDate() - start.getDay())
 
   const weeks: ({ date: Date; count: number } | null)[][] = []
   const cursor = new Date(start)
@@ -64,12 +69,7 @@ function buildYearGrid(activityMap: Map<string, number>) {
     const week: ({ date: Date; count: number } | null)[] = []
     for (let d = 0; d < 7; d++) {
       const day = new Date(cursor)
-      if (day > today) {
-        week.push(null)
-      } else {
-        const key = day.toISOString().slice(0, 10)
-        week.push({ date: day, count: activityMap.get(key) ?? 0 })
-      }
+      week.push(day > today ? null : { date: day, count: activityMap.get(day.toISOString().slice(0, 10)) ?? 0 })
       cursor.setDate(cursor.getDate() + 1)
     }
     weeks.push(week)
@@ -77,9 +77,6 @@ function buildYearGrid(activityMap: Map<string, number>) {
   return weeks
 }
 
-/**
- * Get month label positions — returns { label, weekIndex } for each month change.
- */
 function getMonthLabels(weeks: ({ date: Date; count: number } | null)[][]) {
   const labels: { label: string; weekIndex: number }[] = []
   let lastMonth = -1
@@ -100,7 +97,6 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({ data, isLoading }
   const containerRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // Watch dark/light class changes
   const [, setThemeTick] = useState(0)
   useEffect(() => {
     const obs = new MutationObserver(() => setThemeTick(t => t + 1))
@@ -109,11 +105,14 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({ data, isLoading }
   }, [])
   const LEVEL_COLORS = getThemeLevelColors()
 
-  // Auto-scroll to end (most recent) on mount
+  // Pick a stable quote (changes daily)
+  const quote = useMemo(() => {
+    const idx = new Date().getDate() % QUOTES.length
+    return QUOTES[idx]
+  }, [])
+
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth
-    }
+    if (scrollRef.current) scrollRef.current.scrollLeft = scrollRef.current.scrollWidth
   }, [isLoading])
 
   const activityMap = useMemo(() => {
@@ -124,25 +123,20 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({ data, isLoading }
 
   const weeks = useMemo(() => buildYearGrid(activityMap), [activityMap])
   const monthLabels = useMemo(() => getMonthLabels(weeks), [weeks])
+  const totalContributions = useMemo(() => (data ?? []).reduce((s, d) => s + d.count, 0), [data])
 
-  const totalContributions = useMemo(
-    () => (data ?? []).reduce((s, d) => s + d.count, 0),
-    [data],
-  )
-
-  // SVG dimensions
   const svgW = weeks.length * (SQ + GAP) - GAP
   const svgH = 7 * (SQ + GAP) - GAP
 
-  // Day labels (only Mon, Wed, Fri — alternating, matching GitHub)
+  // Only Mon / Wed / Fri shown (GitHub style)
   const dayLabels = [
-    { label: '',    show: false }, // Sun
-    { label: 'Mon', show: true  }, // Mon
-    { label: '',    show: false }, // Tue
-    { label: 'Wed', show: true  }, // Wed
-    { label: '',    show: false }, // Thu
-    { label: 'Fri', show: true  }, // Fri
-    { label: '',    show: false }, // Sat
+    { label: '',    show: false },
+    { label: 'Mon', show: true  },
+    { label: '',    show: false },
+    { label: 'Wed', show: true  },
+    { label: '',    show: false },
+    { label: 'Fri', show: true  },
+    { label: '',    show: false },
   ]
 
   const handleEnter = (e: React.MouseEvent<SVGRectElement>, date: Date, count: number) => {
@@ -152,167 +146,132 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({ data, isLoading }
     setTooltip({
       visible: true,
       x: rect.left - cRect.left + SQ / 2,
-      y: rect.top  - cRect.top  - 40,
+      y: rect.top  - cRect.top  - 38,
       date: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }),
       count,
     })
   }
-
-  const skeletonWeeks = 52
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="rounded-xl p-4 bg-card border border-border shadow-sm w-full"
+      className="rounded-xl bg-card border border-border shadow-sm w-full overflow-hidden"
       role="region"
       aria-label="Activity heatmap — last year"
     >
-      {/* Header row */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-sm" aria-hidden="true">🔥</span>
-          <span className="text-sm font-semibold text-foreground">Activity</span>
+      {/* ── Main heatmap area ── */}
+      <div className="px-4 pt-3 pb-2">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm" aria-hidden="true">🔥</span>
+            <span className="text-sm font-semibold text-foreground">Activity</span>
+          </div>
+          {!isLoading && (
+            <span className="text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">{totalContributions}</span>
+              {' '}contributions in the last year
+            </span>
+          )}
         </div>
-        {!isLoading && (
-          <span className="text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">{totalContributions}</span>
-            {' '}contributions in the last year
-          </span>
-        )}
-      </div>
 
-      {isLoading ? (
-        /* ── Skeleton ── */
-        <div className="overflow-x-auto">
-          <div className="flex gap-1.5 min-w-max">
-            {/* day labels column */}
-            <div className="flex flex-col gap-[2px] pt-4" style={{ minWidth: 24 }}>
+        {isLoading ? (
+          <div className="flex gap-0 overflow-hidden">
+            <div className="flex flex-col gap-[2px] pr-1 pt-4" style={{ minWidth: 24 }}>
               {dayLabels.map((d, i) => (
-                <div key={i} className="h-[11px] text-[9px] text-muted-foreground/40 flex items-center justify-end pr-1">
+                <div key={i} className="h-[11px] text-[9px] text-muted-foreground/30 flex items-center justify-end pr-1">
                   {d.show ? d.label : ''}
                 </div>
               ))}
             </div>
-            {/* skeleton columns */}
-            {Array.from({ length: skeletonWeeks }).map((_, wi) => (
-              <div key={wi} className="flex flex-col gap-[2px] mt-4">
-                {Array.from({ length: 7 }).map((__, di) => (
-                  <div
-                    key={di}
-                    className="rounded-sm animate-pulse bg-muted"
-                    style={{ width: SQ, height: SQ }}
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div ref={containerRef} className="relative">
-          {/* Tooltip */}
-          {tooltip.visible && (
-            <div
-              className="absolute z-20 pointer-events-none px-2.5 py-1.5 rounded-md text-xs font-medium whitespace-nowrap bg-popover border border-border shadow-lg text-popover-foreground"
-              style={{ left: tooltip.x, top: tooltip.y, transform: 'translateX(-50%)' }}
-              role="tooltip"
-            >
-              <span className="font-semibold text-foreground">{tooltip.count} {tooltip.count === 1 ? 'contribution' : 'contributions'}</span>
-              <span className="text-muted-foreground ml-1">on {tooltip.date}</span>
+            <div className="flex gap-[2px] overflow-hidden mt-4">
+              {Array.from({ length: 52 }).map((_, wi) => (
+                <div key={wi} className="flex flex-col gap-[2px]">
+                  {Array.from({ length: 7 }).map((__, di) => (
+                    <div key={di} className="rounded-sm animate-pulse bg-muted" style={{ width: SQ, height: SQ }} />
+                  ))}
+                </div>
+              ))}
             </div>
-          )}
-
-          {/* Scrollable heatmap */}
-          <div
-            ref={scrollRef}
-            className="overflow-x-auto pb-1"
-            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
-          >
-            <div className="flex gap-0 min-w-max">
-              {/* Day-of-week labels column */}
+          </div>
+        ) : (
+          <div ref={containerRef} className="relative">
+            {tooltip.visible && (
               <div
-                className="flex flex-col shrink-0 pr-1"
-                style={{ gap: GAP, paddingTop: 16 /* leave room for month labels */ }}
-                aria-hidden="true"
+                className="absolute z-20 pointer-events-none px-2.5 py-1.5 rounded-md text-xs font-medium whitespace-nowrap bg-popover border border-border shadow-lg text-popover-foreground"
+                style={{ left: tooltip.x, top: tooltip.y, transform: 'translateX(-50%)' }}
+                role="tooltip"
               >
-                {dayLabels.map((d, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-end text-[9px] text-muted-foreground"
-                    style={{ height: SQ, minWidth: 24 }}
-                  >
-                    {d.show ? d.label : ''}
-                  </div>
-                ))}
+                <span className="font-semibold text-foreground">{tooltip.count} {tooltip.count === 1 ? 'contribution' : 'contributions'}</span>
+                <span className="text-muted-foreground ml-1">on {tooltip.date}</span>
               </div>
+            )}
 
-              {/* Grid column */}
-              <div className="relative">
-                {/* Month labels row */}
-                <div
-                  className="flex mb-1 h-4 relative"
-                  style={{ width: svgW }}
-                  aria-hidden="true"
-                >
-                  {monthLabels.map(({ label, weekIndex }) => (
-                    <span
-                      key={`${label}-${weekIndex}`}
-                      className="absolute text-[10px] text-muted-foreground"
-                      style={{ left: weekIndex * (SQ + GAP) }}
-                    >
-                      {label}
-                    </span>
+            <div ref={scrollRef} className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
+              <div className="flex gap-0 min-w-max">
+                {/* Day labels */}
+                <div className="flex flex-col shrink-0 pr-1" style={{ gap: GAP, paddingTop: 16 }} aria-hidden="true">
+                  {dayLabels.map((d, i) => (
+                    <div key={i} className="flex items-center justify-end text-[9px] text-muted-foreground" style={{ height: SQ, minWidth: 24 }}>
+                      {d.show ? d.label : ''}
+                    </div>
                   ))}
                 </div>
 
-                {/* SVG cell grid */}
-                <svg
-                  width={svgW}
-                  height={svgH}
-                  aria-label="Contribution grid for the last year"
-                  onMouseLeave={() => setTooltip(t => ({ ...t, visible: false }))}
-                >
-                  {weeks.map((week, wi) =>
-                    week.map((cell, di) => {
-                      if (!cell) return null
-                      const x = wi * (SQ + GAP)
-                      const y = di * (SQ + GAP)
-                      const color = LEVEL_COLORS[getLevel(cell.count)]
-                      return (
-                        <rect
-                          key={`${wi}-${di}`}
-                          x={x} y={y}
-                          width={SQ} height={SQ}
-                          rx={2} ry={2}
-                          fill={color}
-                          style={{ cursor: 'pointer', transition: 'opacity 0.1s' }}
-                          onMouseEnter={e => handleEnter(e, cell.date, cell.count)}
-                          aria-label={`${cell.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}: ${cell.count} contributions`}
-                        />
-                      )
-                    })
-                  )}
-                </svg>
+                {/* Grid */}
+                <div className="relative">
+                  {/* Month labels */}
+                  <div className="flex mb-1 h-4 relative" style={{ width: svgW }} aria-hidden="true">
+                    {monthLabels.map(({ label, weekIndex }) => (
+                      <span key={`${label}-${weekIndex}`} className="absolute text-[10px] text-muted-foreground" style={{ left: weekIndex * (SQ + GAP) }}>
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+
+                  <svg width={svgW} height={svgH} onMouseLeave={() => setTooltip(t => ({ ...t, visible: false }))}>
+                    {weeks.map((week, wi) =>
+                      week.map((cell, di) => {
+                        if (!cell) return null
+                        return (
+                          <rect
+                            key={`${wi}-${di}`}
+                            x={wi * (SQ + GAP)} y={di * (SQ + GAP)}
+                            width={SQ} height={SQ} rx={2} ry={2}
+                            fill={LEVEL_COLORS[getLevel(cell.count)]}
+                            style={{ cursor: 'pointer' }}
+                            onMouseEnter={e => handleEnter(e, cell.date, cell.count)}
+                          />
+                        )
+                      })
+                    )}
+                  </svg>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Legend row */}
-          <div className="flex items-center gap-1 mt-2 justify-end" aria-label="Color legend">
-            <span className="text-[10px] text-muted-foreground mr-0.5">Less</span>
-            {LEVEL_COLORS.map((color, i) => (
-              <div
-                key={i}
-                className="rounded-sm"
-                style={{ width: SQ - 1, height: SQ - 1, background: color, border: '1px solid rgba(0,0,0,0.06)' }}
-                aria-label={i === 0 ? 'No contributions' : `Level ${i}`}
-              />
-            ))}
-            <span className="text-[10px] text-muted-foreground ml-0.5">More</span>
+            {/* Legend */}
+            <div className="flex items-center gap-1 mt-1.5 justify-end" aria-label="Color legend">
+              <span className="text-[10px] text-muted-foreground mr-0.5">Less</span>
+              {LEVEL_COLORS.map((color, i) => (
+                <div key={i} className="rounded-sm" style={{ width: SQ - 1, height: SQ - 1, background: color, border: '1px solid rgba(0,0,0,0.06)' }} />
+              ))}
+              <span className="text-[10px] text-muted-foreground ml-0.5">More</span>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+
+      {/* ── Motivational quote strip — no empty gap ── */}
+      <div className="border-t border-border/60 bg-muted/30 px-4 py-2.5 flex items-center gap-2">
+        <span className="text-base shrink-0" aria-hidden="true">💡</span>
+        <p className="text-xs text-muted-foreground leading-snug min-w-0">
+          <span className="italic">"{quote.text}"</span>
+          {quote.author && <span className="ml-1 not-italic font-medium text-foreground/70">— {quote.author}</span>}
+        </p>
+      </div>
     </motion.div>
   )
 })

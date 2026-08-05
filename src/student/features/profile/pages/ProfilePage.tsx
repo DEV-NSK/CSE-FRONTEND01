@@ -413,9 +413,10 @@ function ProjectsCard({ projects }: {
   projects: ReturnType<typeof useProfile>['projects']
   isLoading?: boolean
 }) {
+  if (projects.length === 0) return null   // hide entirely when empty — no dead space
   return (
     <Card className="flex flex-col h-full">
-      <CardHeader className="pb-2 pt-4 px-4">
+      <CardHeader className="pb-2 pt-3 px-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-semibold">Projects</CardTitle>
           <Button asChild variant="ghost" size="sm" className="text-xs h-6 px-2">
@@ -423,48 +424,38 @@ function ProjectsCard({ projects }: {
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 px-4 pb-4 space-y-2">
-        {projects.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full py-6 gap-2">
-            <FolderOpen className="h-8 w-8 text-muted-foreground/30" />
-            <p className="text-xs text-muted-foreground text-center">
-              No projects yet.{' '}
-              <Link to="/dashboard/projects" className="text-primary hover:underline">Join one</Link>
-            </p>
-          </div>
-        ) : (
-          projects.slice(0, 3).map((p) => (
-            <div key={p.id}
-              className="flex items-start gap-2.5 p-2.5 rounded-lg bg-muted/40 border border-border/50 hover:bg-muted/70 transition-colors">
-              <div className="h-7 w-7 rounded-md bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0 mt-0.5">
-                <FolderOpen className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+      <CardContent className="flex-1 px-4 pb-3 space-y-2">
+        {projects.slice(0, 3).map((p) => (
+          <div key={p.id}
+            className="flex items-start gap-2.5 p-2.5 rounded-lg bg-muted/40 border border-border/50 hover:bg-muted/70 transition-colors">
+            <div className="h-7 w-7 rounded-md bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0 mt-0.5">
+              <FolderOpen className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-1 mb-0.5">
+                <span className="text-xs font-medium text-foreground truncate">{p.title}</span>
+                <div className="flex gap-1 shrink-0">
+                  {p.githubRepository && (
+                    <a href={p.githubRepository} target="_blank" rel="noopener noreferrer">
+                      <GithubIcon className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                    </a>
+                  )}
+                  {p.liveDemo && (
+                    <a href={p.liveDemo} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                    </a>
+                  )}
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-1 mb-0.5">
-                  <span className="text-xs font-medium text-foreground truncate">{p.title}</span>
-                  <div className="flex gap-1 shrink-0">
-                    {p.githubRepository && (
-                      <a href={p.githubRepository} target="_blank" rel="noopener noreferrer">
-                        <GithubIcon className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                      </a>
-                    )}
-                    {p.liveDemo && (
-                      <a href={p.liveDemo} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                      </a>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {p.technologies.slice(0, 3).map((t) => (
-                    <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">{t}</span>
-                  ))}
-                  <Badge variant="outline" className="text-[10px] h-4 ml-auto">{p.role}</Badge>
-                </div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {p.technologies.slice(0, 3).map((t) => (
+                  <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">{t}</span>
+                ))}
+                <Badge variant="outline" className="text-[10px] h-4 ml-auto">{p.role}</Badge>
               </div>
             </div>
-          ))
-        )}
+          </div>
+        ))}
       </CardContent>
     </Card>
   )
@@ -472,34 +463,26 @@ function ProjectsCard({ projects }: {
 
 // ── Achievements card ─────────────────────────────────────────────────────────
 function AchievementsCard({ achievements }: { achievements: ReturnType<typeof useProfile>['achievements'] }) {
+  if (achievements.length === 0) return null  // hide entirely when empty — no dead space
   return (
-    <Card className="flex flex-col h-full">
-      <CardHeader className="pb-2 pt-4 px-4">
+    <Card>
+      <CardHeader className="pb-2 pt-3 px-4">
         <CardTitle className="text-sm font-semibold">Achievements</CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 px-4 pb-4">
-        {achievements.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full py-6 gap-2">
-            <Award className="h-8 w-8 text-muted-foreground/30" />
-            <p className="text-xs text-muted-foreground text-center">
-              Solve problems and complete lessons to earn achievements!
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-4 gap-2">
-            {achievements.map((b) => (
-              <div key={b.id} title={b.name}
-                className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all cursor-default ${
-                  b.earned
-                    ? 'bg-primary/8 border-primary/20'
-                    : 'bg-muted border-border opacity-40 grayscale'
-                }`}>
-                <span className="text-xl leading-none">{b.icon}</span>
-                <span className="text-[10px] text-center text-muted-foreground leading-tight">{b.name}</span>
-              </div>
-            ))}
-          </div>
-        )}
+      <CardContent className="px-4 pb-3">
+        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+          {achievements.map((b) => (
+            <div key={b.id} title={b.name}
+              className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all cursor-default ${
+                b.earned
+                  ? 'bg-primary/8 border-primary/20'
+                  : 'bg-muted border-border opacity-40 grayscale'
+              }`}>
+              <span className="text-lg leading-none">{b.icon}</span>
+              <span className="text-[10px] text-center text-muted-foreground leading-tight">{b.name}</span>
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   )

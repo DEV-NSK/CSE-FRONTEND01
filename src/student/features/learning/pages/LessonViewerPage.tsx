@@ -1456,44 +1456,80 @@ export function LessonViewerPage() {
       {/* ── Center Content ── */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
 
-        {/* Sticky Top Bar — compact, minimal */}
+        {/* ── Compact Single-Row Sticky Header (~10% height) ── */}
         <header className="sticky top-0 z-30 bg-background border-b border-border shrink-0">
           <ReadingProgressBar scrollRef={scrollRef} />
 
-          {/* Toolbar: toggle + breadcrumb + actions — single tight row */}
-          <div className="flex items-center justify-between gap-2 px-3 py-1.5">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon-sm" onClick={() => setLessonSidebarOpen(!lessonSidebarOpen)}
-                      aria-label={lessonSidebarOpen ? 'Collapse menu' : 'Expand menu'}
-                      className="h-7 w-7">
-                      {lessonSidebarOpen ? <PanelLeftClose className="h-3.5 w-3.5" /> : <PanelLeftOpen className="h-3.5 w-3.5" />}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">Toggle Menu</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+          {/* ONE unified row: sidebar toggle | title+meta | prev/position/next | status+actions */}
+          <div className="flex items-center gap-1.5 px-2 py-1.5 h-11">
 
-              {/* Breadcrumb */}
-              <nav className="hidden sm:flex items-center gap-1 text-[11px] text-muted-foreground min-w-0">
-                <Link to="/dashboard/learning" className="hover:text-primary transition-colors shrink-0">Learning</Link>
-                {lesson.roadmapTitle && (
-                  <><span className="opacity-40">›</span>
-                  <Link to={`/dashboard/learning/roadmaps/${lesson.roadmapSlug ?? ''}`}
-                    className="hover:text-primary truncate max-w-[120px]">{lesson.roadmapTitle}</Link></>
-                )}
-                {lesson.sectionTitle && (
-                  <><span className="opacity-40">›</span>
-                  <span className="text-foreground font-medium truncate max-w-[140px]">{lesson.sectionTitle}</span></>
-                )}
-              </nav>
+            {/* Left: sidebar toggle */}
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon-sm"
+                    onClick={() => setLessonSidebarOpen(!lessonSidebarOpen)}
+                    className="h-7 w-7 shrink-0"
+                    aria-label={lessonSidebarOpen ? 'Collapse menu' : 'Expand menu'}>
+                    {lessonSidebarOpen ? <PanelLeftClose className="h-3.5 w-3.5" /> : <PanelLeftOpen className="h-3.5 w-3.5" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Toggle Menu</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Separator */}
+            <div className="h-4 w-px bg-border/60 shrink-0" />
+
+            {/* Title + difficulty + time — fills available space */}
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <h1 className="text-[13px] font-semibold text-foreground truncate leading-none">
+                {lesson.title}
+              </h1>
+              <DifficultyBadge difficulty={difficulty} />
+              <span className="hidden sm:inline-flex items-center gap-0.5 text-[11px] text-muted-foreground shrink-0">
+                <Clock className="h-3 w-3" />{readingTime}m
+              </span>
+              {lessonIndex > 0 && totalLessonsInRoadmap > 0 && (
+                <div className="hidden sm:flex items-center gap-1 shrink-0">
+                  <div className="h-1 w-12 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-primary rounded-full" style={{ width: `${progress}%` }} />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">{progress}%</span>
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center gap-1 shrink-0">
+            {/* Center: Prev | position | Next */}
+            <div className="hidden sm:flex items-center gap-0 shrink-0">
+              <Button variant="ghost" size="sm"
+                asChild={!!lesson.prevLessonId} disabled={!lesson.prevLessonId}
+                className="h-7 gap-0.5 text-xs text-muted-foreground hover:text-foreground px-1.5">
+                {lesson.prevLessonId
+                  ? <Link to={`/dashboard/learning/lesson/${lesson.prevLessonId}`}><ChevronLeft className="h-3.5 w-3.5" />Prev</Link>
+                  : <><ChevronLeft className="h-3.5 w-3.5" />Prev</>}
+              </Button>
+              {lessonIndex > 0 && (
+                <span className="text-[10px] text-muted-foreground tabular-nums px-1">
+                  {lessonIndex}/{totalLessonsInRoadmap}
+                </span>
+              )}
+              <Button variant="ghost" size="sm"
+                asChild={!!lesson.nextLessonId} disabled={!lesson.nextLessonId}
+                className="h-7 gap-0.5 text-xs text-muted-foreground hover:text-foreground px-1.5">
+                {lesson.nextLessonId
+                  ? <Link to={`/dashboard/learning/lesson/${lesson.nextLessonId}`}>Next<ChevronRight className="h-3.5 w-3.5" /></Link>
+                  : <>Next<ChevronRight className="h-3.5 w-3.5" /></>}
+              </Button>
+            </div>
+
+            {/* Separator */}
+            <div className="hidden sm:block h-4 w-px bg-border/60 shrink-0" />
+
+            {/* Right: status pill + bookmark + share + mark complete */}
+            <div className="flex items-center gap-0.5 shrink-0">
               <span className={cn(
-                'hidden sm:inline-flex items-center text-[11px] px-1.5 py-0.5 rounded-full font-medium',
+                'hidden md:inline-flex items-center text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0',
                 lesson.status === 'completed'
                   ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                   : lesson.status === 'in_progress'
@@ -1502,87 +1538,28 @@ export function LessonViewerPage() {
               )}>
                 {lesson.status === 'completed' ? '✓ Done' : lesson.status === 'in_progress' ? 'In Progress' : 'Not Started'}
               </span>
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon-sm" className="h-7 w-7"
-                      onClick={() => id && toggleBookmark(id)} disabled={bookmarkPending}
-                      aria-label={lesson.isBookmarked ? 'Remove bookmark' : 'Bookmark'}>
-                      {lesson.isBookmarked ? <BookmarkCheck className="h-3.5 w-3.5 text-primary" /> : <Bookmark className="h-3.5 w-3.5" />}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{lesson.isBookmarked ? 'Bookmarked' : 'Bookmark'}</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon-sm" className="h-7 w-7" onClick={handleShare}>
-                      <Share2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Share</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
 
-          {/* Prev / position / Next — compact single row */}
-          <div className="flex items-center justify-between px-4 py-1 w-full max-w-[900px] xl:w-[75%] mx-auto">
-            <Button variant="ghost" size="sm"
-              asChild={!!lesson.prevLessonId} disabled={!lesson.prevLessonId}
-              className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground px-2">
-              {lesson.prevLessonId ? (
-                <Link to={`/dashboard/learning/lesson/${lesson.prevLessonId}`}>
-                  <ChevronLeft className="h-3.5 w-3.5" />Previous
-                </Link>
-              ) : (<><ChevronLeft className="h-3.5 w-3.5" />Previous</>)}
-            </Button>
+              <Button variant="ghost" size="icon-sm" className="h-7 w-7"
+                onClick={() => id && toggleBookmark(id)} disabled={bookmarkPending}
+                aria-label={lesson.isBookmarked ? 'Remove bookmark' : 'Bookmark'}>
+                {lesson.isBookmarked ? <BookmarkCheck className="h-3.5 w-3.5 text-primary" /> : <Bookmark className="h-3.5 w-3.5" />}
+              </Button>
 
-            {lessonIndex > 0 && (
-              <span className="text-[11px] text-muted-foreground tabular-nums">
-                {lessonIndex} / {totalLessonsInRoadmap}
-              </span>
-            )}
+              <Button variant="ghost" size="icon-sm" className="h-7 w-7" onClick={handleShare}>
+                <Share2 className="h-3.5 w-3.5" />
+              </Button>
 
-            <Button variant="ghost" size="sm"
-              asChild={!!lesson.nextLessonId} disabled={!lesson.nextLessonId}
-              className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground px-2">
-              {lesson.nextLessonId ? (
-                <Link to={`/dashboard/learning/lesson/${lesson.nextLessonId}`}>
-                  Next<ChevronRight className="h-3.5 w-3.5" />
-                </Link>
-              ) : (<>Next<ChevronRight className="h-3.5 w-3.5" /></>)}
-            </Button>
-          </div>
-
-          {/* Lesson title + meta — compact, no excess padding */}
-          <div className="px-4 pb-2 w-full max-w-[900px] xl:w-[75%] mx-auto">
-            <h1 className="text-lg font-semibold leading-snug text-foreground mb-1.5">
-              {lesson.title}
-            </h1>
-            <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-border/40">
-              <DifficultyBadge difficulty={difficulty} />
-              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" />{readingTime} min
-              </span>
-              {lessonIndex > 0 && totalLessonsInRoadmap > 0 && (
-                <div className="flex items-center gap-1">
-                  <div className="h-1 w-16 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-primary rounded-full" style={{ width: `${progress}%` }} />
-                  </div>
-                  <span className="text-[11px] text-muted-foreground">{progress}%</span>
-                </div>
-              )}
               <Button
                 onClick={handleComplete}
                 disabled={completing || lesson.status === 'completed'}
                 size="sm"
                 variant={lesson.status === 'completed' ? 'outline' : 'default'}
-                className="h-6 text-xs px-2.5 gap-1 ml-auto"
+                className="h-7 text-xs px-2.5 gap-1 ml-1"
               >
                 <CheckCircle2 className="h-3 w-3" />
-                {lesson.status === 'completed' ? '✓ Done' : completing ? 'Saving...' : 'Mark Complete'}
+                <span className="hidden sm:inline">
+                  {lesson.status === 'completed' ? 'Done' : completing ? '…' : 'Mark Complete'}
+                </span>
               </Button>
             </div>
           </div>
