@@ -1,227 +1,219 @@
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   BookOpen, Code2, FolderKanban, Briefcase, ArrowRight,
-  Zap, TrendingUp, CheckCircle2, Sparkles,
-  GraduationCap, Shield, Globe, ChevronRight,
-  Target, Brain, Rocket, BarChart3, Quote,
+  Zap, TrendingUp, CheckCircle2, Sparkles, Users, Star,
+  GraduationCap, Shield, Globe, ChevronRight, Trophy,
+  Target, Brain, Rocket, BarChart3, Award,
 } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { cn } from '@/shared/lib/utils'
 
-/* ─── Animation Variants ──────────────────────────────────────────────────── */
+/* ─── Animation Variants ─────────────────────────────────────────────────── */
 const fadeUp = {
-  hidden: { opacity: 0, y: 28 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
+  hidden: { opacity: 0, y: 24 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
 }
 const stagger = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.09 } },
-}
-const fadeIn = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { duration: 0.6 } },
+  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
 }
 
-/* ─── Data ────────────────────────────────────────────────────────────────── */
+/* ─── Data ───────────────────────────────────────────────────────────────── */
 const features = [
   {
     icon: BookOpen,
     title: 'Structured Learning',
-    description: 'Curated roadmaps from fundamentals to advanced — progress tracked step by step with real lesson content.',
-    accent: '#3b82f6',
+    description: 'Curated roadmaps designed for CSE students — from fundamentals to advanced topics with hands-on exercises and progress tracking.',
+    color: 'from-blue-500/20 to-blue-600/10',
+    iconColor: 'text-blue-600 dark:text-blue-400',
+    iconBg: 'bg-blue-500/10',
   },
   {
     icon: Code2,
     title: 'Coding Practice',
-    description: 'Solve 500+ DSA problems in an integrated editor with live test cases and instant verdict.',
-    accent: '#8b5cf6',
+    description: 'Solve 500+ algorithmic problems with an integrated editor, real-time test cases, and detailed editorial solutions.',
+    color: 'from-purple-500/20 to-purple-600/10',
+    iconColor: 'text-purple-600 dark:text-purple-400',
+    iconBg: 'bg-purple-500/10',
   },
   {
     icon: FolderKanban,
     title: 'Project Showcase',
-    description: 'Build, track and showcase real projects to demonstrate skills beyond the classroom.',
-    accent: '#f59e0b',
+    description: 'Build real-world projects, track your progress, and showcase your portfolio to top recruiters across the country.',
+    color: 'from-orange-500/20 to-orange-600/10',
+    iconColor: 'text-orange-600 dark:text-orange-400',
+    iconBg: 'bg-orange-500/10',
   },
   {
     icon: Briefcase,
     title: 'Placement Prep',
-    description: 'Resume uploads, mock interview prep, and a profile that speaks louder than a transcript.',
-    accent: '#10b981',
+    description: 'Ace interviews with aptitude tests, resume builder, mock interviews, and company-specific preparation guides.',
+    color: 'from-emerald-500/20 to-emerald-600/10',
+    iconColor: 'text-emerald-600 dark:text-emerald-400',
+    iconBg: 'bg-emerald-500/10',
   },
   {
     icon: TrendingUp,
     title: 'Progress Analytics',
-    description: 'Know your streaks, lessons done, problems solved — every metric in one clean dashboard.',
-    accent: '#ec4899',
+    description: 'Detailed insights into your learning journey with actionable, AI-powered recommendations tailored to your goals.',
+    color: 'from-pink-500/20 to-pink-600/10',
+    iconColor: 'text-pink-600 dark:text-pink-400',
+    iconBg: 'bg-pink-500/10',
   },
   {
     icon: Zap,
-    title: 'Fast & Focused',
-    description: 'Zero clutter. Built for students who want results, not distractions.',
-    accent: '#eab308',
+    title: 'Fast & Responsive',
+    description: 'A blazing-fast experience on any device — mobile, tablet, or desktop — with a clean, distraction-free interface.',
+    color: 'from-yellow-500/20 to-yellow-600/10',
+    iconColor: 'text-yellow-600 dark:text-yellow-400',
+    iconBg: 'bg-yellow-500/10',
   },
 ]
 
 const stats = [
-  { value: '500+', label: 'Coding Problems', accent: '#3b82f6' },
-  { value: '50+', label: 'Learning Modules', accent: '#8b5cf6' },
-  { value: 'Free', label: 'Forever Plan', accent: '#10b981' },
-  { value: 'Beta', label: 'Early Access', accent: '#f59e0b' },
-]
-
-const howItWorks = [
-  { step: '01', icon: Target, title: 'Create Account', description: 'Sign up free in seconds — no card required. Your dashboard is live instantly.', color: '#3b82f6' },
-  { step: '02', icon: Brain, title: 'Follow a Roadmap', description: 'Pick Python, DSA, Web Dev and work through structured lessons at your pace.', color: '#8b5cf6' },
-  { step: '03', icon: BarChart3, title: 'Practice & Track', description: 'Solve real problems, complete lessons, watch your stats grow in real time.', color: '#10b981' },
-  { step: '04', icon: Rocket, title: 'Prep for Placement', description: 'Build your profile, sharpen your skills, and walk into interviews confident.', color: '#f59e0b' },
+  { value: '500+', label: 'Coding Problems', icon: Code2 },
+  { value: '50+', label: 'Learning Modules', icon: BookOpen },
+  { value: 'Free', label: 'Forever Plan', icon: Shield },
+  { value: 'Beta', label: 'Early Access', icon: Sparkles },
 ]
 
 const whyUs = [
-  { icon: Target, title: 'Built for CSE Students', description: 'Every feature is purpose-built for computer science undergrads — not generic learners.', color: '#3b82f6' },
-  { icon: Brain, title: 'Structured Paths', description: 'No guessing what to study. Clear milestones, ordered content, no dead ends.', color: '#8b5cf6' },
-  { icon: BarChart3, title: 'Real-Time Tracking', description: 'Live dashboard showing lessons done, problems solved, streak, XP — everything.', color: '#10b981' },
-  { icon: Rocket, title: 'Practice That Counts', description: 'Problems mirror real interviews. Code editor, test cases, editorial — all built in.', color: '#f59e0b' },
+  {
+    icon: Target,
+    title: 'Built for CSE Students',
+    description: 'Every feature — roadmaps, problems, projects — is designed specifically for Computer Science students preparing for placements.',
+    color: 'text-blue-500',
+    bg: 'bg-blue-500/10',
+  },
+  {
+    icon: Brain,
+    title: 'Structured Learning Paths',
+    description: 'No guessing what to study next. Follow curated roadmaps from fundamentals to advanced topics with clear milestones.',
+    color: 'text-purple-500',
+    bg: 'bg-purple-500/10',
+  },
+  {
+    icon: BarChart3,
+    title: 'Track Everything',
+    description: 'See exactly how much you\'ve learned, what problems you\'ve solved, and where to focus next — all in one dashboard.',
+    color: 'text-emerald-500',
+    bg: 'bg-emerald-500/10',
+  },
+  {
+    icon: Rocket,
+    title: 'Practice That Matters',
+    description: 'Solve real DSA problems with an integrated code editor, test cases, and instant feedback — the way interviews actually work.',
+    color: 'text-orange-500',
+    bg: 'bg-orange-500/10',
+  },
+]
+const howItWorks = [
+  {
+    step: '01',
+    icon: Target,
+    title: 'Create Your Account',
+    description: 'Sign up for free in seconds — no credit card, no commitments. Your personal dashboard is ready instantly.',
+    color: 'text-blue-500',
+    bg: 'bg-blue-500/10',
+  },
+  {
+    step: '02',
+    icon: Brain,
+    title: 'Follow a Roadmap',
+    description: 'Pick a structured learning path — Python, DSA, Web Dev — and work through it lesson by lesson at your own pace.',
+    color: 'text-purple-500',
+    bg: 'bg-purple-500/10',
+  },
+  {
+    step: '03',
+    icon: BarChart3,
+    title: 'Practice & Track',
+    description: 'Solve coding problems, complete lessons, and watch your progress dashboard fill up in real time.',
+    color: 'text-emerald-500',
+    bg: 'bg-emerald-500/10',
+  },
+  {
+    step: '04',
+    icon: Rocket,
+    title: 'Prep for Placements',
+    description: 'Build a strong profile, sharpen DSA skills, and walk into interviews feeling prepared and confident.',
+    color: 'text-orange-500',
+    bg: 'bg-orange-500/10',
+  },
 ]
 
-/* ─── Dot-matrix background — navy dark / light slate light ──────────────── */
-function DotBackground() {
+/* ─── Floating Orb Decoration ────────────────────────────────────────────── */
+function HeroOrbs() {
   return (
     <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden="true">
-      {/* Base layer: dark navy in dark mode, very light slate in light mode */}
-      <div className="absolute inset-0
-        bg-[#0a1628]
-        dark:bg-[#060d1a]
-        [.light_&]:bg-[#f0f4ff]
-      " />
-      {/* Dot grid */}
+      <div className="absolute left-1/4 top-0 w-[600px] h-[600px] rounded-full bg-primary/8 blur-[80px] -translate-y-1/2" />
+      <div className="absolute right-1/4 bottom-0 w-[500px] h-[500px] rounded-full bg-secondary/8 blur-[80px] translate-y-1/3" />
+      <div className="absolute left-3/4 top-1/3 w-[300px] h-[300px] rounded-full bg-emerald-500/6 blur-[60px]" />
       <div
-        className="absolute inset-0 opacity-[0.35] dark:opacity-[0.22]"
+        className="absolute inset-0 opacity-[0.03]"
         style={{
-          backgroundImage: 'radial-gradient(circle, #7cb9e8 1px, transparent 1px)',
-          backgroundSize: '28px 28px',
-        }}
-      />
-      {/* Radial vignette — hides dots at edges */}
-      <div className="absolute inset-0"
-        style={{
-          background: 'radial-gradient(ellipse 80% 60% at 50% 0%, transparent 40%, rgba(6,13,26,0.97) 100%)',
-        }}
-      />
-      {/* Accent glows */}
-      <div className="absolute left-1/4 top-1/3 w-[700px] h-[400px] rounded-full blur-[120px]
-        bg-blue-600/20 dark:bg-blue-500/15" />
-      <div className="absolute right-1/4 top-1/2 w-[500px] h-[300px] rounded-full blur-[100px]
-        bg-indigo-500/15 dark:bg-indigo-400/10" />
-    </div>
-  )
-}
-
-/* ─── Section dot background (lighter, for body sections) ───────────────── */
-function SectionDots({ className }: { className?: string }) {
-  return (
-    <div className={cn('absolute inset-0 -z-10 overflow-hidden pointer-events-none', className)} aria-hidden="true">
-      <div
-        className="absolute inset-0 opacity-[0.06] dark:opacity-[0.07]"
-        style={{
-          backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
+          backgroundImage: 'linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)',
+          backgroundSize: '64px 64px',
         }}
       />
     </div>
   )
 }
 
-/* ─── Dashboard 3D preview mockup ────────────────────────────────────────── */
-function DashboardPreview() {
+/* ─── Dashboard mockup visual ─────────────────────────────────────────────── */
+function HeroVisual() {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40, rotateX: 8 }}
-      animate={{ opacity: 1, y: 0, rotateX: 0 }}
-      transition={{ duration: 0.9, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0, x: 40, y: 20 }}
+      animate={{ opacity: 1, x: 0, y: 0 }}
+      transition={{ duration: 0.7, delay: 0.3, ease: 'easeOut' }}
       className="relative hidden lg:block"
-      style={{ perspective: '1200px' }}
     >
-      {/* Outer glow halo */}
-      <div className="absolute -inset-6 rounded-3xl blur-2xl
-        bg-gradient-to-br from-blue-500/30 via-indigo-500/20 to-purple-600/20
-        dark:from-blue-400/20 dark:via-indigo-400/15 dark:to-purple-500/15" />
-
-      {/* Browser chrome */}
-      <div className="relative rounded-2xl overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.45)] dark:shadow-[0_32px_80px_rgba(0,0,0,0.7)]
-        border border-white/10 dark:border-white/5
-        bg-[#0f172a] dark:bg-[#080e1a]"
-        style={{ transform: 'rotateX(3deg) rotateY(-2deg)', transformStyle: 'preserve-3d' }}
-      >
-        {/* Title bar */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-white/8 bg-white/5">
-          <div className="flex gap-1.5">
-            <div className="h-3 w-3 rounded-full bg-red-400/70" />
-            <div className="h-3 w-3 rounded-full bg-yellow-400/70" />
-            <div className="h-3 w-3 rounded-full bg-green-400/70" />
-          </div>
-          <div className="flex-1 mx-3 h-5 rounded-md bg-white/8 flex items-center px-3 gap-2">
-            <div className="h-2 w-2 rounded-full bg-green-400/60" />
-            <span className="text-[10px] text-white/40 font-mono">campusrank.app/dashboard</span>
-          </div>
-        </div>
-
-        {/* Dashboard body */}
-        <div className="p-4 space-y-3 w-[400px]">
-          {/* Header row */}
-          <div className="flex items-center justify-between mb-1">
-            <div className="space-y-1.5">
-              <div className="h-4 w-32 rounded-md bg-white/15" />
-              <div className="h-2.5 w-20 rounded bg-white/8" />
+      <div className="animate-float relative">
+        <div className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-primary/20 via-transparent to-purple-500/20 blur-xl" />
+        <div className="relative rounded-2xl border border-border/60 bg-card shadow-2xl overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-muted/40">
+            <div className="flex gap-1.5">
+              <div className="h-3 w-3 rounded-full bg-destructive/60" />
+              <div className="h-3 w-3 rounded-full bg-warning/60" />
+              <div className="h-3 w-3 rounded-full bg-success/60" />
             </div>
-            <div className="h-8 w-28 rounded-full bg-blue-500/30 border border-blue-400/20" />
+            <div className="flex-1 mx-2 h-4 rounded bg-border/60 text-[10px] text-muted-foreground flex items-center px-2">
+              campusrank.app/dashboard
+            </div>
           </div>
-
-          {/* Progress bar */}
-          <div className="h-1.5 w-full rounded-full bg-white/8">
-            <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500" />
-          </div>
-
-          {/* Stat cards */}
-          <div className="grid grid-cols-4 gap-2 pt-1">
-            {[
-              { label: 'Lessons', val: '5', c: '#3b82f6' },
-              { label: 'Problems', val: '2', c: '#8b5cf6' },
-              { label: 'Streak', val: '1d', c: '#f59e0b' },
-              { label: 'XP', val: '40', c: '#10b981' },
-            ].map((s) => (
-              <div key={s.label} className="rounded-xl p-2.5 bg-white/5 border border-white/8 text-center">
-                <div className="text-sm font-bold mb-0.5" style={{ color: s.c }}>{s.val}</div>
-                <div className="text-[9px] text-white/40">{s.label}</div>
+          <div className="p-5 space-y-4 w-[340px]">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="h-4 w-28 rounded bg-foreground/10 mb-1.5" />
+                <div className="h-3 w-20 rounded bg-muted-foreground/20" />
               </div>
-            ))}
-          </div>
-
-          {/* Module rows */}
-          <div className="space-y-2 pt-1">
-            {[
-              { name: 'Python Roadmap', pct: 9, c: '#3b82f6' },
-              { name: 'Coding Practice', pct: 0, c: '#8b5cf6' },
-              { name: 'Placement Prep', pct: 0, c: '#10b981' },
-            ].map((m) => (
-              <div key={m.name} className="flex items-center gap-3">
-                <div className="h-7 w-7 rounded-lg shrink-0" style={{ background: `${m.c}22`, border: `1px solid ${m.c}33` }}>
-                  <div className="h-full w-full rounded-lg flex items-center justify-center">
-                    <div className="h-2.5 w-2.5 rounded-sm" style={{ background: `${m.c}88` }} />
+              <div className="h-9 w-24 rounded-full bg-primary/20" />
+            </div>
+            <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+              <div className="h-full w-3/5 rounded-full bg-gradient-to-r from-primary to-purple-500" />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {['Learning', 'Coding', 'Projects'].map((t, i) => (
+                <div key={t} className={cn('rounded-xl p-3 text-center', i === 0 ? 'bg-blue-500/10' : i === 1 ? 'bg-purple-500/10' : 'bg-orange-500/10')}>
+                  <div className="h-6 w-6 rounded-full bg-current opacity-20 mx-auto mb-1.5" />
+                  <div className="text-[10px] font-medium text-muted-foreground">{t}</div>
+                </div>
+              ))}
+            </div>
+            <div className="space-y-2.5">
+              {[70, 45, 85].map((w, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="h-7 w-7 rounded-lg bg-muted shrink-0" />
+                  <div className="flex-1 space-y-1">
+                    <div className="h-2.5 rounded bg-muted-foreground/20" style={{ width: `${w}%` }} />
+                    <div className="h-2 w-16 rounded bg-muted-foreground/10" />
                   </div>
                 </div>
-                <div className="flex-1 space-y-1">
-                  <div className="flex justify-between">
-                    <div className="h-2.5 rounded bg-white/20" style={{ width: '60%' }} />
-                    <span className="text-[9px]" style={{ color: `${m.c}cc` }}>{m.pct}%</span>
-                  </div>
-                  <div className="h-1 w-full rounded-full bg-white/5">
-                    <div className="h-full rounded-full" style={{ width: `${m.pct}%`, background: m.c }} />
-                  </div>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -229,86 +221,44 @@ function DashboardPreview() {
   )
 }
 
-/* ─── Quote Section ──────────────────────────────────────────────────────── */
-function QuoteSection() {
-  return (
-    <section className="relative py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      <SectionDots />
-      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-blue-600/8 via-indigo-600/5 to-purple-600/8 dark:from-blue-500/10 dark:via-indigo-500/6 dark:to-purple-500/10" />
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-        className="max-w-4xl mx-auto text-center"
-      >
-        <Quote className="h-10 w-10 mx-auto mb-6 text-blue-500/40 dark:text-blue-400/30" />
-        <blockquote className="text-2xl sm:text-3xl font-semibold leading-snug text-foreground tracking-tight">
-          "The students who make it aren't always the smartest —
-          they're the ones who show up{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-indigo-500">
-            consistently, with the right tools.
-          </span>"
-        </blockquote>
-        <p className="mt-5 text-sm text-muted-foreground font-medium">
-          — The idea behind CAMPUSRANK
-        </p>
-      </motion.div>
-    </section>
-  )
-}
-
-/* ─── Main Page ──────────────────────────────────────────────────────────── */
+/* ─── Main Component ─────────────────────────────────────────────────────── */
 export function LandingPage() {
   const navigate = useNavigate()
 
   return (
     <div className="overflow-hidden">
 
-      {/* ══ HERO ══════════════════════════════════════════════════════════════ */}
+      {/* ── HERO ── */}
       <section className="relative min-h-[calc(100vh-4rem)] flex items-center py-24 px-4 sm:px-6 lg:px-8">
-        <DotBackground />
-
-        <div className="max-w-7xl mx-auto w-full relative z-10">
+        <HeroOrbs />
+        <div className="max-w-7xl mx-auto w-full">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-
-            {/* Left: copy */}
             <motion.div className="space-y-8" variants={stagger} initial="hidden" animate="show">
-
-              {/* Badge */}
-              <motion.div variants={fadeUp}>
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full
-                  bg-blue-500/10 border border-blue-400/20
-                  text-blue-400 dark:text-blue-300 text-sm font-medium backdrop-blur-sm">
-                  <Sparkles className="h-3.5 w-3.5" />
+              <motion.div variants={fadeUp} className="space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium">
+                  <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>India's Campus Tech Platform</span>
-                  <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Beta</span>
+                  <Badge className="bg-primary text-primary-foreground text-[10px] h-4 px-1.5 ml-0.5 font-semibold rounded-full">Beta</Badge>
                 </div>
               </motion.div>
 
-              {/* Headline */}
-              <motion.div variants={fadeUp} className="space-y-4">
-                <h1 className="text-5xl sm:text-6xl font-extrabold leading-[1.07] tracking-tight text-white dark:text-white">
+              <motion.div variants={fadeUp} className="space-y-5">
+                <h1 className="text-display text-foreground">
                   Rank Higher.{' '}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
-                    Grow Faster.
-                  </span>
+                  <span className="gradient-text">Grow Faster.</span>
                   {' '}Land Better.
                 </h1>
-                <p className="text-lg text-white/60 dark:text-white/55 max-w-xl leading-relaxed">
-                  CAMPUSRANK is the all-in-one platform built for CSE students —
-                  structured learning, coding practice, and placement prep in one place.
+                <p className="text-body-lg text-muted-foreground max-w-xl">
+                  CAMPUSRANK is the all-in-one platform built for Computer Science students to learn,
+                  practice DSA, build projects, and ace placements — all in one place.
                 </p>
               </motion.div>
 
-              {/* CTAs */}
               <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3">
                 <Button
                   size="xl"
                   onClick={() => navigate('/auth/register')}
-                  className="gap-2 rounded-full bg-blue-600 hover:bg-blue-500 text-white border-0
-                    shadow-[0_0_32px_rgba(59,130,246,0.4)] hover:shadow-[0_0_48px_rgba(59,130,246,0.5)]
-                    transition-all active:scale-[0.98]"
+                  className="gap-2 rounded-full btn-glow shadow-lg shadow-primary/25 hover:opacity-95 active:scale-[0.98] transition-all"
                 >
                   Start for Free
                   <ArrowRight className="h-5 w-5" />
@@ -317,117 +267,174 @@ export function LandingPage() {
                   size="xl"
                   variant="outline"
                   onClick={() => navigate('/auth/login')}
-                  className="rounded-full border-white/15 text-white/80 hover:bg-white/8 hover:border-white/25 hover:text-white transition-all"
+                  className="rounded-full border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all"
                 >
                   Sign In
                 </Button>
               </motion.div>
 
-              {/* Trust badges */}
-              <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-5 text-sm text-white/45">
+              <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-5 text-sm text-muted-foreground">
                 {[
                   { icon: Shield, text: 'No credit card required' },
                   { icon: GraduationCap, text: 'Free forever plan' },
                   { icon: Globe, text: 'Early access now' },
                 ].map(({ icon: Icon, text }) => (
                   <div key={text} className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                    <CheckCircle2 className="h-4 w-4 text-success shrink-0" aria-hidden="true" />
                     <span>{text}</span>
                   </div>
                 ))}
               </motion.div>
             </motion.div>
-
-            {/* Right: dashboard preview */}
-            <DashboardPreview />
+            <HeroVisual />
           </div>
         </div>
       </section>
 
-      {/* ══ QUOTE ═════════════════════════════════════════════════════════════ */}
-      <QuoteSection />
-
-      {/* ══ STATS BAR ═════════════════════════════════════════════════════════ */}
-      <section className="relative py-16 px-4 sm:px-6 lg:px-8 border-y border-border/40 overflow-hidden">
-        <SectionDots />
-        <div className="max-w-4xl mx-auto">
+      {/* ── STATS ── */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8" aria-label="Platform statistics">
+        <div className="max-w-5xl mx-auto">
           <motion.div
-            variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true }}
+            variants={stagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
             className="grid grid-cols-2 lg:grid-cols-4 gap-8"
           >
-            {stats.map(({ value, label, accent }) => (
-              <motion.div key={label} variants={fadeUp} className="text-center">
-                <div
-                  className="inline-flex items-center justify-center h-11 w-11 rounded-xl mb-3 mx-auto"
-                  style={{ background: `${accent}18`, border: `1px solid ${accent}30` }}
-                >
-                  <div className="h-3 w-3 rounded-full" style={{ background: accent }} />
+            {stats.map(({ value, label, icon: Icon }) => (
+              <motion.div key={label} variants={fadeUp} className="text-center space-y-2">
+                <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-primary/10 mx-auto mb-3">
+                  <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
                 </div>
-                <p className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">{value}</p>
-                <p className="text-sm text-muted-foreground font-medium mt-1">{label}</p>
+                <p className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">{value}</p>
+                <p className="text-sm text-muted-foreground font-medium">{label}</p>
               </motion.div>
             ))}
           </motion.div>
         </div>
       </section>
 
-      {/* ══ FEATURES ══════════════════════════════════════════════════════════ */}
-      <section className="relative py-28 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        <SectionDots />
+      {/* ── ABOUT / BRAND SECTION ── */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/5 via-background to-secondary/5 border-y border-border/50" aria-label="About CAMPUSRANK">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="space-y-6"
+            >
+              <Badge variant="secondary" className="px-3 py-1 text-sm">About CAMPUSRANK</Badge>
+              <h2 className="text-heading-1 text-foreground">
+                Built by students,{' '}
+                <span className="gradient-text">for students</span>
+              </h2>
+              <p className="text-body text-muted-foreground leading-relaxed">
+                CAMPUSRANK was born from a simple idea — every CSE student deserves a platform that truly prepares
+                them for the real world. We've built a comprehensive ecosystem that covers your entire journey:
+                from learning core concepts to cracking top-tier placement interviews.
+              </p>
+              <p className="text-body text-muted-foreground leading-relaxed">
+                Whether you're in your first year or final semester, CAMPUSRANK adapts to your pace and goals.
+                No fluff, no gatekeeping — just focused, high-quality preparation.
+              </p>
+              <div className="flex gap-8 pt-2">
+                {[
+                  { icon: BookOpen, label: '50+', sub: 'Learning modules' },
+                  { icon: Code2, label: '500+', sub: 'Coding problems' },
+                  { icon: Zap, label: 'Free', sub: 'Forever plan' },
+                ].map(({ icon: Icon, label, sub }) => (
+                  <div key={sub} className="space-y-1">
+                    <div className="flex items-center gap-1.5">
+                      <Icon className="h-4 w-4 text-primary" aria-hidden="true" />
+                      <span className="text-xl font-extrabold text-foreground">{label}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{sub}</p>
+                  </div>
+                ))}
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => navigate('/about')}
+                className="gap-2 rounded-full border-primary/30 hover:bg-primary/5 hover:border-primary/50 transition-all mt-2"
+              >
+                Learn more about us
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="grid grid-cols-2 gap-4"
+            >
+              {[
+                { icon: BookOpen, title: 'Structured Roadmaps', desc: 'Python, DSA, Web Dev and more — all laid out step by step.', bg: 'bg-blue-500/10', color: 'text-blue-500' },
+                { icon: Code2, title: '500+ Problems', desc: 'From easy warm-ups to hard company-tagged challenges.', bg: 'bg-purple-500/10', color: 'text-purple-500' },
+                { icon: BarChart3, title: 'Smart Analytics', desc: 'Know exactly where you stand and what to improve next.', bg: 'bg-emerald-500/10', color: 'text-emerald-500' },
+                { icon: Briefcase, title: 'Placement Ready', desc: 'Mock interviews, aptitude tests and resume reviews.', bg: 'bg-orange-500/10', color: 'text-orange-500' },
+              ].map(({ icon: Icon, title, desc, bg, color }) => (
+                <div key={title} className="rounded-2xl border border-border/60 bg-card p-5 space-y-3 card-elevated">
+                  <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', bg)}>
+                    <Icon className={cn('h-5 w-5', color)} aria-hidden="true" />
+                  </div>
+                  <h4 className="text-sm font-semibold text-foreground">{title}</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FEATURES ── */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8" aria-label="Features">
         <div className="max-w-7xl mx-auto">
           <motion.div
-            variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true }}
+            variants={stagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
             className="text-center max-w-2xl mx-auto mb-16"
           >
             <motion.div variants={fadeUp}>
               <Badge variant="secondary" className="mb-4 px-3 py-1 text-sm">Everything you need</Badge>
-              <h2 className="text-4xl font-extrabold tracking-tight mb-4 text-foreground">
-                Features built for{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-indigo-500">
-                  campus success
-                </span>
-              </h2>
-              <p className="text-muted-foreground text-base leading-relaxed">
-                From your first year to final placement — every tool you need, nothing you don't.
+              <h2 className="text-heading-1 mb-4">Features built for campus success</h2>
+              <p className="text-body text-muted-foreground">
+                From your first year to final placement, we've got every step covered with tools that actually work.
               </p>
             </motion.div>
           </motion.div>
 
           <motion.div
-            variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+            variants={stagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
-            {features.map((f) => {
-              const Icon = f.icon
+            {features.map((feature) => {
+              const Icon = feature.icon
               return (
                 <motion.div
-                  key={f.title}
+                  key={feature.title}
                   variants={fadeUp}
-                  whileHover={{ y: -4 }}
+                  whileHover={{ y: -4, scale: 1.01 }}
                   transition={{ duration: 0.18 }}
-                  className="group relative rounded-2xl p-6 overflow-hidden cursor-default
-                    border border-border/50 bg-card/60 backdrop-blur-sm
-                    hover:border-border hover:shadow-lg transition-all duration-200"
+                  className="group relative rounded-2xl border border-border/60 bg-card p-6 card-elevated cursor-default overflow-hidden"
                 >
-                  {/* Hover accent glow */}
-                  <div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none"
-                    style={{ background: `radial-gradient(ellipse 60% 40% at 30% 30%, ${f.accent}12, transparent)` }}
-                  />
+                  <div className={cn('absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl bg-gradient-to-br', feature.color)} />
                   <div className="relative space-y-3">
-                    <div
-                      className="w-11 h-11 rounded-xl flex items-center justify-center"
-                      style={{ background: `${f.accent}18`, border: `1px solid ${f.accent}30` }}
-                    >
-                      <Icon className="h-5 w-5" style={{ color: f.accent }} />
+                    <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center', feature.iconBg)}>
+                      <Icon className={cn('h-6 w-6', feature.iconColor)} aria-hidden="true" />
                     </div>
-                    <h3 className="text-base font-semibold text-foreground">{f.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{f.description}</p>
-                    <div
-                      className="flex items-center gap-1 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity pt-1"
-                      style={{ color: f.accent }}
-                    >
-                      Explore <ChevronRight className="h-3 w-3" />
+                    <h3 className="text-base font-semibold text-foreground">{feature.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+                    <div className="flex items-center gap-1 text-primary text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200 pt-1">
+                      Learn more <ChevronRight className="h-3 w-3" />
                     </div>
                   </div>
                 </motion.div>
@@ -437,29 +444,28 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ══ HOW IT WORKS ══════════════════════════════════════════════════════ */}
-      <section className="relative py-28 px-4 sm:px-6 lg:px-8 overflow-hidden border-y border-border/40">
-        <div className="absolute inset-0 -z-10
-          bg-gradient-to-br from-slate-50/80 via-background to-slate-50/60
-          dark:from-[#070d1a]/90 dark:via-background dark:to-[#070d1a]/80" />
-        <SectionDots />
+      {/* ── HOW IT WORKS ── */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/20 border-y border-border/50" aria-label="How it works">
         <div className="max-w-7xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }} className="text-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
           >
             <Badge variant="secondary" className="mb-4 px-3 py-1 text-sm">Simple process</Badge>
-            <h2 className="text-4xl font-extrabold tracking-tight mb-3 text-foreground">
-              How CAMPUSRANK works
-            </h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              Four steps from zero to placement-ready.
+            <h2 className="text-heading-1 mb-3">How CAMPUSRANK works</h2>
+            <p className="text-muted-foreground text-body max-w-xl mx-auto">
+              Four simple steps from beginner to placement-ready.
             </p>
           </motion.div>
 
           <motion.div
-            variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
+            variants={stagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
           >
             {howItWorks.map((item, idx) => {
               const Icon = item.icon
@@ -467,23 +473,16 @@ export function LandingPage() {
                 <motion.div
                   key={item.step}
                   variants={fadeUp}
-                  className="relative rounded-2xl border border-border/50 bg-card/70 backdrop-blur-sm p-6 space-y-4"
+                  className="relative rounded-2xl border border-border/60 bg-card p-6 space-y-4 card-elevated"
                 >
-                  {/* Connector arrow */}
                   {idx < howItWorks.length - 1 && (
-                    <div className="hidden lg:flex absolute top-9 -right-2.5 z-10 items-center justify-center
-                      h-5 w-5 rounded-full bg-border/60 border border-border/30">
-                      <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                    </div>
+                    <div className="hidden lg:block absolute top-10 -right-3 w-6 h-0.5 bg-border/60 z-10" aria-hidden="true" />
                   )}
-                  <div className="flex items-start justify-between">
-                    <div
-                      className="w-11 h-11 rounded-xl flex items-center justify-center"
-                      style={{ background: `${item.color}18`, border: `1px solid ${item.color}30` }}
-                    >
-                      <Icon className="h-5 w-5" style={{ color: item.color }} />
+                  <div className="flex items-center justify-between">
+                    <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center', item.bg)}>
+                      <Icon className={cn('h-6 w-6', item.color)} aria-hidden="true" />
                     </div>
-                    <span className="text-4xl font-black text-muted-foreground/10 select-none">{item.step}</span>
+                    <span className="text-3xl font-extrabold text-muted-foreground/20">{item.step}</span>
                   </div>
                   <h3 className="text-base font-semibold text-foreground">{item.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
@@ -494,116 +493,75 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ══ WHY CAMPUSRANK ════════════════════════════════════════════════════ */}
-      <section className="relative py-28 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        <SectionDots />
+      {/* ── WHY CAMPUSRANK ── */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8" aria-label="Why CAMPUSRANK">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-14"
+          >
+            <Badge variant="secondary" className="mb-4 px-3 py-1 text-sm">Why CAMPUSRANK</Badge>
+            <h2 className="text-heading-1 mb-3">Everything you need, in one place</h2>
+            <p className="text-muted-foreground text-body max-w-xl mx-auto">
+              Stop jumping between 10 different platforms. CAMPUSRANK brings learning, practice, and placement prep under one roof.
+            </p>
+          </motion.div>
 
-            {/* Left: copy */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }} transition={{ duration: 0.6 }}
-              className="space-y-6"
-            >
-              <Badge variant="secondary" className="px-3 py-1 text-sm">Why CAMPUSRANK</Badge>
-              <h2 className="text-4xl font-extrabold tracking-tight text-foreground">
-                Built by students,{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500">
-                  for students
-                </span>
-              </h2>
-              <p className="text-base text-muted-foreground leading-relaxed">
-                CAMPUSRANK was born from one simple frustration — every useful tool was scattered across
-                dozens of different platforms. We built the single destination that covers your full journey:
-                learn, code, build, and land your first role.
-              </p>
-              <p className="text-base text-muted-foreground leading-relaxed">
-                Whether you're in your first year or final semester,
-                CAMPUSRANK adapts to your pace. No fluff, no gatekeeping — just focused preparation.
-              </p>
-              <div className="flex gap-6 pt-2">
-                {[
-                  { val: '50+', sub: 'Learning modules', c: '#3b82f6' },
-                  { val: '500+', sub: 'Coding problems', c: '#8b5cf6' },
-                  { val: 'Free', sub: 'Forever plan', c: '#10b981' },
-                ].map(({ val, sub, c }) => (
-                  <div key={sub} className="space-y-0.5">
-                    <p className="text-2xl font-extrabold" style={{ color: c }}>{val}</p>
-                    <p className="text-xs text-muted-foreground">{sub}</p>
-                  </div>
-                ))}
-              </div>
-              <Button
-                variant="outline" onClick={() => navigate('/about')}
-                className="gap-2 rounded-full border-primary/30 hover:bg-primary/5 hover:border-primary/50 transition-all"
-              >
-                Learn more about us <ChevronRight className="h-4 w-4" />
-              </Button>
-            </motion.div>
-
-            {/* Right: 2x2 benefit cards */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.1 }}
-              className="grid grid-cols-2 gap-4"
-            >
-              {whyUs.map(({ icon: Icon, title, description, color }) => (
-                <div
-                  key={title}
-                  className="rounded-2xl border border-border/50 bg-card/70 p-5 space-y-3
-                    hover:shadow-md transition-all duration-200 backdrop-blur-sm"
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+          >
+            {whyUs.map((item) => {
+              const Icon = item.icon
+              return (
+                <motion.div
+                  key={item.title}
+                  variants={fadeUp}
+                  className="flex gap-5 rounded-2xl border border-border/60 bg-card p-6 card-elevated"
                 >
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ background: `${color}18`, border: `1px solid ${color}28` }}
-                  >
-                    <Icon className="h-5 w-5" style={{ color }} />
+                  <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center shrink-0 mt-0.5', item.bg)}>
+                    <Icon className={cn('h-6 w-6', item.color)} aria-hidden="true" />
                   </div>
-                  <h4 className="text-sm font-semibold text-foreground">{title}</h4>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
-                </div>
-              ))}
-            </motion.div>
-          </div>
+                  <div className="space-y-1.5">
+                    <h3 className="text-base font-semibold text-foreground">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+                  </div>
+                </motion.div>
+              )
+            })}
+          </motion.div>
         </div>
       </section>
 
-      {/* ══ FINAL CTA ═════════════════════════════════════════════════════════ */}
-      <section className="relative py-32 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        {/* Dark navy dot background for CTA */}
-        <div className="absolute inset-0 -z-10
-          bg-[#07101f]
-          dark:bg-[#050c18]" />
-        <div
-          className="absolute inset-0 -z-10 opacity-[0.18]"
-          style={{
-            backgroundImage: 'radial-gradient(circle, #7cb9e8 1px, transparent 1px)',
-            backgroundSize: '26px 26px',
-          }}
-        />
-        <div className="absolute inset-0 -z-10
-          bg-[radial-gradient(ellipse_80%_50%_at_50%_50%,rgba(59,130,246,0.15),transparent)]" />
+      {/* ── FINAL CTA ── */}
+      <section className="relative py-28 px-4 sm:px-6 lg:px-8 overflow-hidden" aria-label="Call to action">
+        <div className="absolute inset-0 -z-10" aria-hidden="true">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5" />
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] rounded-full bg-primary/8 blur-[80px]" />
+        </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }} transition={{ duration: 0.6 }}
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.55 }}
           className="max-w-3xl mx-auto text-center space-y-8"
         >
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl mx-auto
-            bg-blue-500/15 border border-blue-400/20">
-            <GraduationCap className="h-8 w-8 text-blue-400" />
+          <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-primary/10 border border-primary/20 mx-auto">
+            <GraduationCap className="h-8 w-8 text-primary" aria-hidden="true" />
           </div>
-
           <div className="space-y-4">
-            <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">
+            <h2 className="text-heading-1 text-foreground">
               Ready to claim your{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
-                campus rank?
-              </span>
+              <span className="gradient-text">campus rank?</span>
             </h2>
-            <p className="text-lg text-white/55 max-w-xl mx-auto">
-              Start for free — structured roadmaps, coding practice, and placement prep all waiting for you.
+            <p className="text-body text-muted-foreground max-w-xl mx-auto">
+              Start for free today — structured roadmaps, coding practice, and placement prep all waiting for you.
             </p>
           </div>
 
@@ -611,30 +569,29 @@ export function LandingPage() {
             <Button
               size="xl"
               onClick={() => navigate('/auth/register')}
-              className="gap-2 rounded-full bg-blue-600 hover:bg-blue-500 text-white border-0
-                shadow-[0_0_48px_rgba(59,130,246,0.45)] hover:shadow-[0_0_64px_rgba(59,130,246,0.55)]
-                transition-all active:scale-[0.98] min-w-[200px]"
+              className="gap-2 rounded-full btn-glow shadow-xl shadow-primary/30 hover:opacity-95 active:scale-[0.98] transition-all min-w-[200px]"
             >
-              Create Free Account <ArrowRight className="h-5 w-5" />
+              Create Free Account
+              <ArrowRight className="h-5 w-5" />
             </Button>
             <Button
               size="xl"
               variant="outline"
               onClick={() => navigate('/about')}
-              className="rounded-full border-white/15 text-white/70 hover:bg-white/8 hover:border-white/25 hover:text-white transition-all"
+              className="rounded-full border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all"
             >
               Learn More
             </Button>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-white/35 pt-2">
+          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground pt-2">
             {[
               { icon: Shield, text: 'Secure & Private' },
               { icon: CheckCircle2, text: 'No Credit Card' },
               { icon: Globe, text: 'Access Anywhere' },
             ].map(({ icon: Icon, text }) => (
               <div key={text} className="flex items-center gap-1.5">
-                <Icon className="h-4 w-4 text-emerald-400" />
+                <Icon className="h-4 w-4 text-success" aria-hidden="true" />
                 <span>{text}</span>
               </div>
             ))}
