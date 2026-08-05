@@ -1481,19 +1481,20 @@ export function LessonViewerPage() {
       {/* ── Center Content ── */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
 
-        {/* Sticky Top Bar — clean W3Schools-inspired header */}
+        {/* Sticky Top Bar — compact, minimal */}
         <header className="sticky top-0 z-30 bg-background border-b border-border shrink-0">
           <ReadingProgressBar scrollRef={scrollRef} />
 
-          {/* Toolbar row */}
-          <div className="flex items-center justify-between gap-2 px-4 py-2">
-            <div className="flex items-center gap-2 min-w-0">
+          {/* Toolbar: toggle + breadcrumb + actions — single tight row */}
+          <div className="flex items-center justify-between gap-2 px-3 py-1.5">
+            <div className="flex items-center gap-1.5 min-w-0">
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button variant="ghost" size="icon-sm" onClick={() => setLessonSidebarOpen(!lessonSidebarOpen)}
-                      aria-label={lessonSidebarOpen ? 'Collapse menu' : 'Expand menu'}>
-                      {lessonSidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+                      aria-label={lessonSidebarOpen ? 'Collapse menu' : 'Expand menu'}
+                      className="h-7 w-7">
+                      {lessonSidebarOpen ? <PanelLeftClose className="h-3.5 w-3.5" /> : <PanelLeftOpen className="h-3.5 w-3.5" />}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">Toggle Menu</TooltipContent>
@@ -1501,30 +1502,23 @@ export function LessonViewerPage() {
               </TooltipProvider>
 
               {/* Breadcrumb */}
-              <nav className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground min-w-0">
+              <nav className="hidden sm:flex items-center gap-1 text-[11px] text-muted-foreground min-w-0">
                 <Link to="/dashboard/learning" className="hover:text-primary transition-colors shrink-0">Learning</Link>
                 {lesson.roadmapTitle && (
-                  <>
-                    <span className="text-muted-foreground/40">›</span>
-                    <Link to={`/dashboard/learning/roadmaps/${lesson.roadmapSlug ?? ''}`}
-                      className="hover:text-primary transition-colors truncate max-w-[140px]">
-                      {lesson.roadmapTitle}
-                    </Link>
-                  </>
+                  <><span className="opacity-40">›</span>
+                  <Link to={`/dashboard/learning/roadmaps/${lesson.roadmapSlug ?? ''}`}
+                    className="hover:text-primary truncate max-w-[120px]">{lesson.roadmapTitle}</Link></>
                 )}
                 {lesson.sectionTitle && (
-                  <>
-                    <span className="text-muted-foreground/40">›</span>
-                    <span className="text-foreground font-medium truncate max-w-[160px]">{lesson.sectionTitle}</span>
-                  </>
+                  <><span className="opacity-40">›</span>
+                  <span className="text-foreground font-medium truncate max-w-[140px]">{lesson.sectionTitle}</span></>
                 )}
               </nav>
             </div>
 
-            <div className="flex items-center gap-1.5 shrink-0">
-              {/* Status badge */}
+            <div className="flex items-center gap-1 shrink-0">
               <span className={cn(
-                'hidden sm:inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium',
+                'hidden sm:inline-flex items-center text-[11px] px-1.5 py-0.5 rounded-full font-medium',
                 lesson.status === 'completed'
                   ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                   : lesson.status === 'in_progress'
@@ -1533,96 +1527,76 @@ export function LessonViewerPage() {
               )}>
                 {lesson.status === 'completed' ? '✓ Done' : lesson.status === 'in_progress' ? 'In Progress' : 'Not Started'}
               </span>
-
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon-sm" onClick={() => id && toggleBookmark(id)} disabled={bookmarkPending}
-                      aria-label={lesson.isBookmarked ? 'Remove bookmark' : 'Bookmark lesson'}>
-                      {lesson.isBookmarked ? <BookmarkCheck className="h-4 w-4 text-primary" /> : <Bookmark className="h-4 w-4" />}
+                    <Button variant="ghost" size="icon-sm" className="h-7 w-7"
+                      onClick={() => id && toggleBookmark(id)} disabled={bookmarkPending}
+                      aria-label={lesson.isBookmarked ? 'Remove bookmark' : 'Bookmark'}>
+                      {lesson.isBookmarked ? <BookmarkCheck className="h-3.5 w-3.5 text-primary" /> : <Bookmark className="h-3.5 w-3.5" />}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>{lesson.isBookmarked ? 'Bookmarked' : 'Bookmark'}</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon-sm" onClick={handleShare} aria-label="Share lesson">
-                      <Share2 className="h-4 w-4" />
+                    <Button variant="ghost" size="icon-sm" className="h-7 w-7" onClick={handleShare}>
+                      <Share2 className="h-3.5 w-3.5" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Share</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon-sm" className="hidden xl:flex"
-                      onClick={() => setLessonRightSidebarOpen(!lessonRightSidebarOpen)}
-                      aria-label="Toggle tools panel">
-                      {lessonRightSidebarOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">Notes & TOC</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             </div>
           </div>
 
-          {/* Prev/Next navigation */}
-          <div className="flex items-center justify-between px-6 lg:px-12 pb-3 max-w-[900px] mx-auto w-full">
+          {/* Prev / position / Next — compact single row */}
+          <div className="flex items-center justify-between px-4 py-1 max-w-[70%] mx-auto w-full">
             <Button variant="ghost" size="sm"
-              asChild={!!lesson.prevLessonId}
-              disabled={!lesson.prevLessonId}
-              className="gap-1 text-xs text-muted-foreground hover:text-foreground">
+              asChild={!!lesson.prevLessonId} disabled={!lesson.prevLessonId}
+              className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground px-2">
               {lesson.prevLessonId ? (
                 <Link to={`/dashboard/learning/lesson/${lesson.prevLessonId}`}>
-                  <ChevronLeft className="h-3.5 w-3.5" /> Previous
+                  <ChevronLeft className="h-3.5 w-3.5" />Previous
                 </Link>
-              ) : (
-                <><ChevronLeft className="h-3.5 w-3.5" />Previous</>
-              )}
+              ) : (<><ChevronLeft className="h-3.5 w-3.5" />Previous</>)}
             </Button>
 
             {lessonIndex > 0 && (
-              <span className="text-xs text-muted-foreground tabular-nums">
+              <span className="text-[11px] text-muted-foreground tabular-nums">
                 {lessonIndex} / {totalLessonsInRoadmap}
               </span>
             )}
 
             <Button variant="ghost" size="sm"
-              asChild={!!lesson.nextLessonId}
-              disabled={!lesson.nextLessonId}
-              className="gap-1 text-xs text-muted-foreground hover:text-foreground">
+              asChild={!!lesson.nextLessonId} disabled={!lesson.nextLessonId}
+              className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground px-2">
               {lesson.nextLessonId ? (
                 <Link to={`/dashboard/learning/lesson/${lesson.nextLessonId}`}>
-                  Next <ChevronRight className="h-3.5 w-3.5" />
+                  Next<ChevronRight className="h-3.5 w-3.5" />
                 </Link>
-              ) : (
-                <>Next<ChevronRight className="h-3.5 w-3.5" /></>
-              )}
+              ) : (<>Next<ChevronRight className="h-3.5 w-3.5" /></>)}
             </Button>
           </div>
 
-          {/* Lesson title + meta */}
-          <div className="px-6 lg:px-12 pb-4 max-w-[900px] mx-auto w-full">
-            <h1 className="text-2xl lg:text-3xl font-bold leading-tight text-foreground mb-3">
+          {/* Lesson title + meta — compact, no excess padding */}
+          <div className="px-4 pb-3 max-w-[70%] mx-auto w-full">
+            <h1 className="text-lg font-semibold leading-snug text-foreground mb-1.5">
               {lesson.title}
             </h1>
-            <div className="flex flex-wrap items-center gap-3 pb-3 border-b border-border/50">
+            <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-border/40">
               <DifficultyBadge difficulty={difficulty} />
-              <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Clock className="h-3.5 w-3.5" />{readingTime} min
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3" />{readingTime} min
               </span>
               {lessonIndex > 0 && totalLessonsInRoadmap > 0 && (
-                <div className="flex items-center gap-1.5">
-                  <div className="h-1.5 w-20 bg-muted rounded-full overflow-hidden">
+                <div className="flex items-center gap-1">
+                  <div className="h-1 w-16 bg-muted rounded-full overflow-hidden">
                     <div className="h-full bg-primary rounded-full" style={{ width: `${progress}%` }} />
                   </div>
-                  <span className="text-xs text-muted-foreground">{progress}%</span>
+                  <span className="text-[11px] text-muted-foreground">{progress}%</span>
                 </div>
               )}
               <Button
@@ -1630,19 +1604,19 @@ export function LessonViewerPage() {
                 disabled={completing || lesson.status === 'completed'}
                 size="sm"
                 variant={lesson.status === 'completed' ? 'outline' : 'default'}
-                className="gap-1.5 ml-auto"
+                className="h-6 text-xs px-2.5 gap-1 ml-auto"
               >
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                {lesson.status === 'completed' ? '✓ Completed' : completing ? 'Saving...' : 'Mark Complete'}
+                <CheckCircle2 className="h-3 w-3" />
+                {lesson.status === 'completed' ? '✓ Done' : completing ? 'Saving...' : 'Mark Complete'}
               </Button>
             </div>
           </div>
         </header>
 
-        {/* Scrollable content — clean W3Schools-style reading area */}
+        {/* Scrollable content — 70% width, tight readable prose */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto bg-background" id="lesson-content-scroll">
-          <div className="max-w-[900px] mx-auto px-6 lg:px-12 py-8 pb-32">
-            <motion.div key={id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="space-y-12">
+          <div className="w-[70%] mx-auto px-4 py-5 pb-28">
+            <motion.div key={id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="space-y-8">
 
               {lesson.content ? (
                 <SectionRenderer content={lesson.content} />
@@ -1674,69 +1648,48 @@ export function LessonViewerPage() {
           </div>
         </div>
 
-        {/* Sticky bottom nav — clean Prev/Next like W3Schools */}
+        {/* Sticky bottom nav */}
         <nav className="sticky bottom-0 z-20 border-t border-border bg-background shrink-0" aria-label="Lesson navigation">
-          <div className="max-w-[900px] mx-auto w-full px-6 lg:px-12 py-3 flex items-center justify-between gap-3">
+          <div className="w-[70%] mx-auto px-4 py-2 flex items-center justify-between gap-3">
 
-            {/* Previous */}
             <Button variant="outline" size="sm" asChild={!!lesson.prevLessonId} disabled={!lesson.prevLessonId}
-              className="gap-2 group min-w-0 max-w-[200px]">
+              className="gap-1.5 group min-w-0 max-w-[180px] h-8">
               {lesson.prevLessonId ? (
                 <Link to={`/dashboard/learning/lesson/${lesson.prevLessonId}`}>
-                  <ChevronLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform shrink-0" />
-                  <span className="truncate text-sm">Previous</span>
+                  <ChevronLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform shrink-0" />
+                  <span className="truncate text-xs">Previous</span>
                 </Link>
-              ) : (
-                <><ChevronLeft className="h-4 w-4 shrink-0" /><span className="text-sm">Previous</span></>
-              )}
+              ) : (<><ChevronLeft className="h-3.5 w-3.5 shrink-0" /><span className="text-xs">Previous</span></>)}
             </Button>
 
-            {/* Center: complete + next */}
-            <div className="flex flex-col items-center gap-1 hidden sm:flex">
+            <div className="hidden sm:flex flex-col items-center gap-0.5">
               {lessonIndex > 0 && (
-                <span className="text-xs text-muted-foreground">{lessonIndex} / {totalLessonsInRoadmap}</span>
+                <span className="text-[11px] text-muted-foreground">{lessonIndex} / {totalLessonsInRoadmap}</span>
               )}
-              <Button
-                onClick={handleComplete}
+              <Button onClick={handleComplete}
                 disabled={completing || lesson.status === 'completed' || !lesson.nextLessonId}
-                size="sm"
-                variant={lesson.status === 'completed' ? 'outline' : 'default'}
-                className="gap-1.5"
-              >
-                <CheckCircle2 className="h-4 w-4" />
+                size="sm" variant={lesson.status === 'completed' ? 'outline' : 'default'}
+                className="h-7 text-xs px-3 gap-1">
+                <CheckCircle2 className="h-3 w-3" />
                 {lesson.status === 'completed' ? 'Completed' : completing ? 'Saving...' : 'Complete & Next'}
               </Button>
             </div>
 
-            {/* Next */}
             <Button variant={lesson.nextLessonId ? 'default' : 'outline'} size="sm"
               asChild={!!lesson.nextLessonId} disabled={!lesson.nextLessonId}
-              className="gap-2 group min-w-0 max-w-[200px]">
+              className="gap-1.5 group min-w-0 max-w-[180px] h-8">
               {lesson.nextLessonId ? (
                 <Link to={`/dashboard/learning/lesson/${lesson.nextLessonId}`}>
-                  <span className="truncate text-sm">Next</span>
-                  <ChevronRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                  <span className="truncate text-xs">Next</span>
+                  <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform shrink-0" />
                 </Link>
-              ) : (
-                <><span className="text-sm">Next</span><ChevronRight className="h-4 w-4 shrink-0" /></>
-              )}
+              ) : (<><span className="text-xs">Next</span><ChevronRight className="h-3.5 w-3.5 shrink-0" /></>)}
             </Button>
           </div>
         </nav>
       </div>
 
-      {/* ── Right Sidebar ── */}
-      <RightSidebar
-        open={lessonRightSidebarOpen}
-        tab={lessonRightTab}
-        onTabChange={setLessonRightTab}
-        lesson={lesson}
-        sections={sections}
-        lessonIndex={lessonIndex}
-        totalLessons={totalLessonsInRoadmap}
-        tocEntries={tocEntries}
-        scrollRef={scrollRef}
-      />
+      {/* ── Right Sidebar — REMOVED (content gets full width priority) ── */}
 
       {/* Floating progress indicator */}
       <FloatingProgress scrollRef={scrollRef} />

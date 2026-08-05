@@ -2,11 +2,10 @@ import { memo, useMemo, useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import type { DashboardActivityDay } from '@/shared/services/dashboard.service'
 
-// Activity heatmap color levels — level 0 uses a neutral muted tone visible in both light and dark
+// ── Color levels ──────────────────────────────────────────────────────────────
 const LEVEL_COLORS_LIGHT = ['#E2E8F0', '#0E4429', '#006D32', '#26A641', '#39D353']
 const LEVEL_COLORS_DARK  = ['#2D3748', '#0E4429', '#006D32', '#26A641', '#39D353']
 
-// We read the theme from the document class at render time
 function getThemeLevelColors(): string[] {
   if (typeof document !== 'undefined' && document.documentElement.classList.contains('dark')) {
     return LEVEL_COLORS_DARK
@@ -14,20 +13,17 @@ function getThemeLevelColors(): string[] {
   return LEVEL_COLORS_LIGHT
 }
 
-function getColor(count: number, levelColors: string[]): string {
-  if (count === 0) return levelColors[0]
-  if (count === 1) return levelColors[1]
-  if (count === 2) return levelColors[2]
-  if (count === 3) return levelColors[3]
-  return levelColors[4]
+function getColor(count: number, colors: string[]): string {
+  if (count === 0) return colors[0]
+  if (count === 1) return colors[1]
+  if (count === 2) return colors[2]
+  if (count === 3) return colors[3]
+  return colors[4]
 }
 
-const MONTHS  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-const DAYS    = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
-const SQ      = 12   // square size px
-const GAP     = 3    // gap px
-const WEEKS   = 53
-const ROWS    = 7
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const SQ  = 13   // cell size px
+const GAP = 3    // gap px
 
 interface TooltipState {
   visible: boolean; x: number; y: number; date: string; count: number
@@ -38,38 +34,38 @@ interface ActivityHeatmapProps {
   isLoading?: boolean
 }
 
-function buildGrid(activityMap: Map<string, number>) {
-  const today = new Date(); today.setHours(0,0,0,0)
-  const start = new Date(today)
-  start.setDate(start.getDate() - start.getDay() - (WEEKS - 1) * 7)
+/**
+ * Build a grid for a single month.
+ * Returns: array of weeks, each week is an array of 7 day cells.
+ * Cells before the 1st or after the last day are null (padding).
+ */
+function buildMonthGrid(year: number, month: number, activityMap: Map<string, number>) {
+  const firstDay = new Date(year, month, 1)
+  const lastDay  = new Date(year, month + 1, 0)
+  const startDow = firstDay.getDay()  // 0=Sun
 
-  const grid: { date: Date; count: number }[][] = []
-  for (let w = 0; w < WEEKS; w++) {
-    const col: { date: Date; count: number }[] = []
-    for (let d = 0; d < ROWS; d++) {
-      const dt = new Date(start)
-      dt.setDate(start.getDate() + w * 7 + d)
-      col.push({ date: dt, count: activityMap.get(dt.toISOString().slice(0,10)) ?? 0 })
-    }
-    grid.push(col)
+  const weeks: (null | { date: Date; count: number })[][] = []
+  let week: (null | { date: Date; count: number })[] = Array(startDow).fill(null)
+
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const dt   = new Date(year, month, d)
+    const key  = dt.toISOString().slice(0, 10)
+    const future = dt > new Date()
+    week.push(future ? null : { date: dt, count: activityMap.get(key) ?? 0 })
+    if (week.length === 7) { weeks.push(week); week = [] }
   }
-  return grid
-}
-
-function getMonthLabels(grid: { date: Date; count: number }[][]) {
-  const labels: { label: string; weekIndex: number }[] = []
-  let last = -1
-  grid.forEach((col, i) => {
-    const m = col[0].date.getMonth()
-    if (m !== last) { labels.push({ label: MONTHS[m], weekIndex: i }); last = m }
-  })
-  return labels
+  if (week.length > 0) {
+    while (week.length < 7) week.push(null)
+    weeks.push(week)
+  }
+  return weeks
 }
 
 export const ActivityHeatmap = memo(function ActivityHeatmap({ data, isLoading }: ActivityHeatmapProps) {
   const [tooltip, setTooltip] = useState<TooltipState>({ visible: false, x: 0, y: 0, date: '', count: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
-  // Track theme changes so we re-derive colors on dark/light toggle
+
+  // Re-derive theme colors on dark/light toggle
   const [, setThemeTick] = useState(0)
   useEffect(() => {
     const obs = new MutationObserver(() => setThemeTick(t => t + 1))
@@ -84,115 +80,136 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({ data, isLoading }
     return m
   }, [data])
 
-  const grid        = useMemo(() => buildGrid(activityMap), [activityMap])
-  const monthLabels = useMemo(() => getMonthLabels(grid), [grid])
-  const totalContributions = useMemo(() => (data ?? []).reduce((s, d) => s + d.count, 0), [data])
+  // Current month
+  const now          = new Date()
+  const year         = now.getFullYear()
+  const month        = now.getMonth()
+  const monthName    = now.toLocaleString('default', { month: 'long' })
+  const totalDays    = new Date(year, month + 1, 0).getDate()
 
-  const svgW = WEEKS * (SQ + GAP)
-  const svgH = ROWS  * (SQ + GAP)
+  // Total contributions this month only
+  const monthContributions = useMemo(() => {
+    let total = 0
+    for (let d = 1; d <= totalDays; d++) {
+      const key = new Date(year, month, d).toISOString().slice(0, 10)
+      total += activityMap.get(key) ?? 0
+    }
+    return total
+  }, [activityMap, year, month, totalDays])
+
+  const grid = useMemo(() => buildMonthGrid(year, month, activityMap), [activityMap, year, month])
+
+  const svgW = grid.length * (SQ + GAP) - GAP
+  const svgH = 7 * (SQ + GAP) - GAP
 
   const handleEnter = (e: React.MouseEvent<SVGRectElement>, date: Date, count: number) => {
-    const rect = e.currentTarget.getBoundingClientRect()
+    const rect  = e.currentTarget.getBoundingClientRect()
     const cRect = containerRef.current?.getBoundingClientRect()
     if (!cRect) return
     setTooltip({
       visible: true,
       x: rect.left - cRect.left + SQ / 2,
-      y: rect.top  - cRect.top  - 38,
-      date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      y: rect.top  - cRect.top  - 36,
+      date: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
       count,
     })
   }
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.97 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4, delay: 0.2 }}
-      className="rounded-[18px] p-5 flex flex-col gap-4 bg-card border border-border shadow-sm w-full h-full"
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="rounded-xl p-4 bg-card border border-border shadow-sm w-full"
       role="region"
       aria-label="Activity heatmap"
     >
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-base">🔥</span>
+          <span className="text-base" aria-hidden="true">🔥</span>
           <span className="text-sm font-semibold text-foreground">Activity</span>
+          <span className="text-xs text-muted-foreground font-medium">— {monthName} {year}</span>
         </div>
         {!isLoading && (
           <span className="text-xs text-muted-foreground">
-            {totalContributions.toLocaleString()} contributions in the last year
+            <span className="font-semibold text-foreground">{monthContributions}</span> activities this month
           </span>
         )}
       </div>
 
       {isLoading ? (
-        <div className="rounded-xl animate-pulse bg-muted" style={{ height: svgH + 20 }} />
+        <div className="rounded-lg animate-pulse bg-muted" style={{ height: svgH + 24 }} />
       ) : (
-        <div ref={containerRef} className="relative overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div ref={containerRef} className="relative">
           {/* Tooltip */}
           {tooltip.visible && (
             <div
-              className="absolute z-20 pointer-events-none px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap bg-popover border border-border shadow-lg text-popover-foreground"
+              className="absolute z-20 pointer-events-none px-2 py-1 rounded-md text-xs font-medium whitespace-nowrap bg-popover border border-border shadow-md text-popover-foreground"
               style={{ left: tooltip.x, top: tooltip.y, transform: 'translateX(-50%)' }}
               role="tooltip"
             >
-              <span className="text-violet-500">{tooltip.date}</span>
-              <span className="ml-2 text-muted-foreground">
+              <span className="text-primary">{tooltip.date}</span>
+              <span className="ml-1.5 text-muted-foreground">
                 {tooltip.count} {tooltip.count === 1 ? 'activity' : 'activities'}
               </span>
             </div>
           )}
 
-          <div style={{ minWidth: svgW + 28 }}>
-            {/* Month labels */}
-            <div className="flex mb-1.5" style={{ paddingLeft: 28, height: 14 }} aria-hidden="true">
-              <div className="relative flex-1" style={{ height: 14 }}>
-                {monthLabels.map(({ label, weekIndex }) => (
-                  <span
-                    key={`${label}-${weekIndex}`}
-                    className="absolute text-[10px] text-muted-foreground"
-                    style={{ left: weekIndex * (SQ + GAP), whiteSpace: 'nowrap' }}
-                  >
-                    {label}
-                  </span>
-                ))}
-              </div>
+          <div className="flex gap-3">
+            {/* Day-of-week labels */}
+            <div className="flex flex-col" style={{ gap: GAP, paddingTop: 0 }} aria-hidden="true">
+              {DAY_NAMES.map((d, i) => (
+                <div
+                  key={d}
+                  className="text-[10px] text-muted-foreground leading-none flex items-center justify-end"
+                  style={{ height: SQ, visibility: i % 2 === 1 ? 'visible' : 'hidden' }}
+                >
+                  {d.slice(0, 1)}
+                </div>
+              ))}
             </div>
 
-            <div className="flex gap-1.5">
-              {/* Day labels */}
-              <div
-                className="flex flex-col justify-between"
-                style={{ width: 24, height: svgH + (ROWS - 1) * GAP - SQ - GAP }}
-                aria-hidden="true"
-              >
-                {[1, 3, 5].map((di) => (
-                  <span key={di} className="text-[10px] leading-none text-muted-foreground"
-                    style={{ marginTop: di === 1 ? SQ + GAP : 0 }}>
-                    {DAYS[di]}
-                  </span>
-                ))}
+            {/* Month grid */}
+            <div className="flex-1">
+              {/* Week date labels */}
+              <div className="flex mb-1" style={{ gap: GAP }}>
+                {grid.map((week, wi) => {
+                  const firstReal = week.find(c => c !== null)
+                  return (
+                    <div
+                      key={wi}
+                      className="text-[10px] text-muted-foreground text-center"
+                      style={{ width: SQ, flexShrink: 0 }}
+                      aria-hidden="true"
+                    >
+                      {firstReal ? firstReal.date.getDate() : ''}
+                    </div>
+                  )
+                })}
               </div>
 
-              {/* SVG grid */}
-              <svg width={svgW} height={svgH + (ROWS - 1) * GAP} aria-label="Activity contribution grid">
-                {grid.map((col, wi) =>
-                  col.map(({ date, count }, di) => {
+              {/* SVG cell grid */}
+              <svg
+                width={svgW}
+                height={svgH}
+                aria-label={`${monthName} activity grid`}
+              >
+                {grid.map((week, wi) =>
+                  week.map((cell, di) => {
+                    if (!cell) return null
                     const x = wi * (SQ + GAP)
                     const y = di * (SQ + GAP)
-                    const future = date > new Date()
                     return (
                       <rect
                         key={`${wi}-${di}`}
                         x={x} y={y}
                         width={SQ} height={SQ} rx={2}
-                        fill={future ? 'transparent' : getColor(count, LEVEL_COLORS)}
-                        style={{ cursor: count > 0 ? 'pointer' : 'default' }}
-                        onMouseEnter={e => !future && handleEnter(e, date, count)}
+                        fill={getColor(cell.count, LEVEL_COLORS)}
+                        style={{ cursor: cell.count > 0 ? 'pointer' : 'default' }}
+                        onMouseEnter={e => handleEnter(e, cell.date, cell.count)}
                         onMouseLeave={() => setTooltip(t => ({ ...t, visible: false }))}
-                        aria-label={future ? undefined
-                          : `${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}: ${count} activities`}
+                        aria-label={`${cell.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}: ${cell.count} activities`}
                       />
                     )
                   })
@@ -207,8 +224,8 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({ data, isLoading }
             {LEVEL_COLORS.map((color, i) => (
               <div
                 key={i}
-                className="rounded-sm border border-border/30"
-                style={{ width: SQ, height: SQ, background: color }}
+                className="rounded-sm"
+                style={{ width: SQ - 2, height: SQ - 2, background: color }}
                 aria-label={i === 0 ? 'No activity' : `Level ${i}`}
               />
             ))}
