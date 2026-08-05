@@ -167,15 +167,15 @@ export function TopNav() {
   }
 
   return (
-    <header className="h-14 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-between px-4 gap-4 sticky top-0 z-30">
+    <header className="h-14 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-between px-3 sm:px-4 gap-2 sticky top-0 z-30">
       {/* ── Left: hamburger + logo + breadcrumb ── */}
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center gap-2 min-w-0">
         {/* Mobile hamburger */}
         <Button
           variant="ghost"
           size="icon"
           onClick={toggleMobile}
-          className="lg:hidden shrink-0"
+          className="lg:hidden shrink-0 h-9 w-9"
           aria-label="Open menu"
         >
           <Menu className="h-5 w-5" />
@@ -193,6 +193,18 @@ export function TopNav() {
           <span className="font-semibold text-sm text-foreground">CAMPUSRANK</span>
         </Link>
 
+        {/* Mobile: small logo text */}
+        <Link
+          to="/dashboard"
+          className="lg:hidden flex items-center gap-1.5 shrink-0"
+          aria-label="CAMPUSRANK"
+        >
+          <div className="flex items-center justify-center h-6 w-6 rounded-md bg-primary text-primary-foreground">
+            <GraduationCap className="h-3.5 w-3.5" />
+          </div>
+          <span className="font-semibold text-xs text-foreground">CAMPUSRANK</span>
+        </Link>
+
         {/* Divider between logo and breadcrumb */}
         <span className="hidden lg:block h-4 w-px bg-border" aria-hidden="true" />
 
@@ -201,7 +213,7 @@ export function TopNav() {
       </div>
 
       {/* ── Right: theme toggle, notifications, user dropdown ── */}
-      <div className="flex items-center gap-1 ml-auto shrink-0">
+      <div className="flex items-center gap-0.5 sm:gap-1 ml-auto shrink-0">
         <ThemeToggle />
 
         {/* Notification bell */}
@@ -209,10 +221,11 @@ export function TopNav() {
           variant="ghost"
           size="icon"
           asChild
+          className="h-9 w-9"
           aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
         >
           <Link to="/dashboard/notifications" className="relative">
-            <Bell className="h-5 w-5" />
+            <Bell className="h-4.5 w-4.5" />
             {unreadCount > 0 && (
               <span
                 className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-background"
@@ -228,7 +241,7 @@ export function TopNav() {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="flex items-center gap-2 px-2 h-9"
+                className="flex items-center gap-1.5 px-1.5 sm:px-2 h-9"
                 aria-label="User menu"
               >
                 <Avatar className="h-7 w-7 ring-2 ring-border">
@@ -237,10 +250,10 @@ export function TopNav() {
                     {getInitials(user.fullName)}
                   </AvatarFallback>
                 </Avatar>
-                <span className="hidden sm:block text-sm font-medium truncate max-w-[120px]">
-                  {user.fullName}
+                <span className="hidden sm:block text-sm font-medium truncate max-w-[100px]">
+                  {user.fullName?.split(' ')[0]}
                 </span>
-                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                <ChevronDown className="hidden sm:block h-3.5 w-3.5 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
 

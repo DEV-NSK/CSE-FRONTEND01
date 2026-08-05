@@ -232,21 +232,21 @@ function MarkdownWrapper({ content }: { content: string }) {
       </div>
     }>
       <MarkdownRenderer content={content} className="
-        [&_h1]:text-[2.25rem] [&_h1]:font-bold [&_h1]:tracking-tight [&_h1]:mt-10 [&_h1]:mb-5 [&_h1]:leading-tight
-        [&_h2]:text-[1.75rem] [&_h2]:font-semibold [&_h2]:tracking-tight [&_h2]:mt-10 [&_h2]:mb-4
-        [&_h3]:text-[1.4rem] [&_h3]:font-semibold [&_h3]:mt-8 [&_h3]:mb-3
-        [&_h4]:text-[1.15rem] [&_h4]:font-semibold [&_h4]:mt-6 [&_h4]:mb-2
-        [&_p]:text-[1.05rem] [&_p]:leading-[1.9] [&_p]:text-foreground/85 [&_p]:mb-5
-        [&_li]:text-[1.05rem] [&_li]:leading-[1.8] [&_li]:mb-1
-        [&_ul]:mb-5 [&_ul]:space-y-1 [&_ol]:mb-5 [&_ol]:space-y-1
-        [&_pre]:bg-[#1e1e2e] [&_pre]:rounded-xl [&_pre]:p-6 [&_pre]:overflow-x-auto [&_pre]:my-6
-        [&_code]:text-[0.9rem] [&_pre_code]:text-[#cdd6f4]
-        [&_img]:rounded-xl [&_img]:shadow-md [&_img]:my-6 [&_img]:cursor-zoom-in
-        [&_blockquote]:border-l-4 [&_blockquote]:border-primary/50 [&_blockquote]:pl-6 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_blockquote]:my-6 [&_blockquote]:text-lg
-        [&_table]:w-full [&_table]:my-6 [&_table]:text-sm
-        [&_th]:bg-muted [&_th]:px-4 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:border [&_th]:border-border
-        [&_td]:px-4 [&_td]:py-2.5 [&_td]:border [&_td]:border-border [&_td]:leading-relaxed
-        [&_hr]:my-8 [&_hr]:border-border/50
+        [&_h1]:text-[1.75rem] [&_h1]:font-bold [&_h1]:tracking-tight [&_h1]:mt-6 [&_h1]:mb-3 [&_h1]:leading-tight
+        [&_h2]:text-[1.35rem] [&_h2]:font-semibold [&_h2]:tracking-tight [&_h2]:mt-5 [&_h2]:mb-2.5
+        [&_h3]:text-[1.1rem] [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2
+        [&_h4]:text-[1rem] [&_h4]:font-semibold [&_h4]:mt-3 [&_h4]:mb-1.5
+        [&_p]:text-[0.9375rem] [&_p]:leading-[1.75] [&_p]:text-foreground/85 [&_p]:mb-3
+        [&_li]:text-[0.9375rem] [&_li]:leading-[1.7] [&_li]:mb-0.5
+        [&_ul]:mb-3 [&_ul]:space-y-0.5 [&_ol]:mb-3 [&_ol]:space-y-0.5
+        [&_pre]:bg-[#1e1e2e] [&_pre]:rounded-lg [&_pre]:p-4 [&_pre]:overflow-x-auto [&_pre]:my-4
+        [&_code]:text-[0.85rem] [&_pre_code]:text-[#cdd6f4]
+        [&_img]:rounded-lg [&_img]:shadow-md [&_img]:my-4 [&_img]:cursor-zoom-in
+        [&_blockquote]:border-l-4 [&_blockquote]:border-primary/50 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_blockquote]:my-4 [&_blockquote]:text-base
+        [&_table]:w-full [&_table]:my-4 [&_table]:text-sm
+        [&_th]:bg-muted [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:border [&_th]:border-border
+        [&_td]:px-3 [&_td]:py-2 [&_td]:border [&_td]:border-border [&_td]:leading-relaxed
+        [&_hr]:my-5 [&_hr]:border-border/50
       " />
     </Suspense>
   )
@@ -321,29 +321,29 @@ function SectionRenderer({ content }: { content: string }) {
   const sections = useMemo(() => parseSections(content), [content])
 
   return (
-    <div className="space-y-14">
+    <div className="space-y-8">
       {sections.map((section, idx) => (
-        <section key={idx} id={section.id || `section-${idx}`} className="scroll-mt-32">
+        <section key={idx} id={section.id || `section-${idx}`} className="scroll-mt-28">
           {section.heading && (
-            <div className="flex items-start gap-3 mb-6">
+            <div className="flex items-start gap-2.5 mb-3">
               <div className={cn(
                 'mt-1.5 rounded-full shrink-0',
-                section.level === 1 ? 'w-1.5 h-9' : section.level === 2 ? 'w-1.5 h-7' : 'w-1 h-5',
+                section.level === 1 ? 'w-1 h-7' : section.level === 2 ? 'w-1 h-5' : 'w-0.5 h-4',
                 headingColors[section.level] || 'bg-primary',
               )} aria-hidden="true" />
               {section.level === 1 && (
-                <h1 className="text-[2.25rem] font-bold leading-tight tracking-tight text-foreground">{section.heading}</h1>
+                <h1 className="text-2xl font-bold leading-snug tracking-tight text-foreground">{section.heading}</h1>
               )}
               {section.level === 2 && (
-                <h2 className="text-[1.75rem] font-semibold leading-tight tracking-tight text-foreground">{section.heading}</h2>
+                <h2 className="text-xl font-semibold leading-snug tracking-tight text-foreground">{section.heading}</h2>
               )}
               {section.level === 3 && (
-                <h3 className="text-[1.35rem] font-semibold text-foreground">{section.heading}</h3>
+                <h3 className="text-[1.1rem] font-semibold text-foreground">{section.heading}</h3>
               )}
             </div>
           )}
           {section.body.trim() && (
-            <div className={cn(section.heading ? 'pl-5 text-[1.05rem] leading-[1.9]' : 'text-[1.05rem] leading-[1.9]')}>
+            <div className={cn(section.heading ? 'pl-4 text-[0.9375rem] leading-[1.75]' : 'text-[0.9375rem] leading-[1.75]')}>
               <MarkdownWrapper content={section.body} />
             </div>
           )}
@@ -639,7 +639,7 @@ function PracticeSection({ lessonId }: { lessonId: string }) {
           <FileText className="h-4 w-4 text-primary" aria-hidden="true" />
         </div>
         <div>
-          <h2 className="text-xl font-bold">Practice Questions</h2>
+          <h2 className="text-base font-semibold">Practice Questions</h2>
           <p className="text-sm text-muted-foreground">Solve {questions.length} questions to reinforce your learning.</p>
         </div>
       </div>
@@ -740,7 +740,7 @@ function QuizSection({ lessonId, onPassed }: { lessonId: string; onPassed?: () =
           <Award className="h-4 w-4 text-amber-600 dark:text-amber-400" />
         </div>
         <div>
-          <h2 className="text-xl font-bold">Knowledge Quiz</h2>
+          <h2 className="text-base font-semibold">Knowledge Quiz</h2>
           <p className="text-sm text-muted-foreground">{quiz.length} questions · Pass threshold: 60%</p>
         </div>
       </div>
@@ -847,12 +847,11 @@ function buildFlashcards(lesson: NonNullable<ReturnType<typeof useLesson>['data'
 }
 
 function FPRD20Enhancements({ lesson, sections, totalLessons }: FPRD20Props) {
-  const completedLessons = sections.reduce((a, s) => a + s.lessons.filter((l) => l.status === 'completed').length, 0)
   const memorySteps = useMemo(() => buildMemorySteps(lesson), [lesson.id]) // eslint-disable-line react-hooks/exhaustive-deps
   const flashcards = useMemo(() => buildFlashcards(lesson), [lesson.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="space-y-14">
+    <div className="space-y-10">
       {/* ── Hero Section ── */}
       <LessonHero
         title={lesson.title}
@@ -870,7 +869,7 @@ function FPRD20Enhancements({ lesson, sections, totalLessons }: FPRD20Props) {
 
       {/* ── Explain Like Beginner ── */}
       <section aria-labelledby="elb-heading">
-        <h2 id="elb-heading" className="text-xl font-bold mb-4">Explain Like a Beginner</h2>
+        <h2 id="elb-heading" className="text-base font-semibold mb-2">Explain Like a Beginner</h2>
         <ExplainLikeBeginner
           analogy={
             lesson.slug?.includes('variable')
@@ -913,12 +912,12 @@ function FPRD20Enhancements({ lesson, sections, totalLessons }: FPRD20Props) {
       {/* ── Memory Visualization ── */}
       <section aria-labelledby="memory-heading">
         <div className="flex items-center gap-3 mb-4">
-          <h2 id="memory-heading" className="text-xl font-bold">Memory Visualization</h2>
+          <h2 id="memory-heading" className="text-base font-semibold">Memory Visualization</h2>
           <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
             Python Tutor style
           </span>
         </div>
-        <p className="text-sm text-muted-foreground mb-4">
+        <p className="text-sm text-muted-foreground mb-2">
           Step through the code and watch variables appear in memory in real time.
         </p>
         <MemoryVisualization steps={memorySteps} title="Step-by-Step Execution" />
@@ -926,8 +925,8 @@ function FPRD20Enhancements({ lesson, sections, totalLessons }: FPRD20Props) {
 
       {/* ── Code Walkthrough (Explanation) ── */}
       <section aria-labelledby="code-walk-heading">
-        <h2 id="code-walk-heading" className="text-xl font-bold mb-4">Code Walkthrough</h2>
-        <p className="text-sm text-muted-foreground mb-4">
+        <h2 id="code-walk-heading" className="text-base font-semibold mb-2">Code Walkthrough</h2>
+        <p className="text-sm text-muted-foreground mb-2">
           Click any line of code to understand exactly what it does.
         </p>
         <CodeExplanation
@@ -958,7 +957,7 @@ function FPRD20Enhancements({ lesson, sections, totalLessons }: FPRD20Props) {
 
       {/* ── Visual Diagram ── */}
       <section aria-labelledby="diagram-heading">
-        <h2 id="diagram-heading" className="text-xl font-bold mb-4">Visual Diagram</h2>
+        <h2 id="diagram-heading" className="text-base font-semibold mb-2">Visual Diagram</h2>
         <VisualDiagram
           title={
             lesson.slug?.includes('variable')
@@ -992,7 +991,7 @@ function FPRD20Enhancements({ lesson, sections, totalLessons }: FPRD20Props) {
 
       {/* ── Real World Example ── */}
       <section aria-labelledby="realworld-heading">
-        <h2 id="realworld-heading" className="text-xl font-bold mb-4">Real-World Example</h2>
+        <h2 id="realworld-heading" className="text-base font-semibold mb-2">Real-World Example</h2>
         <RealWorldExample
           context={
             lesson.slug?.includes('variable')
@@ -1020,7 +1019,7 @@ function FPRD20Enhancements({ lesson, sections, totalLessons }: FPRD20Props) {
 
       {/* ── AI Summary ── */}
       <section aria-labelledby="ai-summary-heading">
-        <h2 id="ai-summary-heading" className="text-xl font-bold mb-4">AI Summary</h2>
+        <h2 id="ai-summary-heading" className="text-base font-semibold mb-2">AI Summary</h2>
         <AISummary
           revisionTime="3 Minute Revision"
           keyPoints={[
@@ -1042,7 +1041,7 @@ function FPRD20Enhancements({ lesson, sections, totalLessons }: FPRD20Props) {
 
       {/* ── Text Highlight Demo ── */}
       <section aria-labelledby="highlight-heading">
-        <h2 id="highlight-heading" className="text-xl font-bold mb-4">Key Concepts — Highlight as you Read</h2>
+        <h2 id="highlight-heading" className="text-base font-semibold mb-2">Key Concepts — Highlight as you Read</h2>
         <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
           <HighlightableText
             text={
@@ -1065,8 +1064,8 @@ function FPRD20Enhancements({ lesson, sections, totalLessons }: FPRD20Props) {
 
       {/* ── Revision Cards ── */}
       <section aria-labelledby="flashcards-heading">
-        <h2 id="flashcards-heading" className="text-xl font-bold mb-4">Revision Cards</h2>
-        <p className="text-sm text-muted-foreground mb-4">
+        <h2 id="flashcards-heading" className="text-base font-semibold mb-2">Revision Cards</h2>
+        <p className="text-sm text-muted-foreground mb-2">
           Flashcards to reinforce memory. Mark what you know and what needs more review.
         </p>
         <RevisionCards cards={flashcards} title={`${lesson.title} Flashcards`} />
@@ -1074,7 +1073,7 @@ function FPRD20Enhancements({ lesson, sections, totalLessons }: FPRD20Props) {
 
       {/* ── Interview Questions ── */}
       <section aria-labelledby="interview-heading">
-        <h2 id="interview-heading" className="text-xl font-bold mb-4">Interview Questions</h2>
+        <h2 id="interview-heading" className="text-base font-semibold mb-2">Interview Questions</h2>
         <InterviewQuestions
           questions={[
             {
@@ -1113,7 +1112,7 @@ function FPRD20Enhancements({ lesson, sections, totalLessons }: FPRD20Props) {
               <ExternalLink className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h2 id="resources-heading" className="text-xl font-bold">Additional Resources</h2>
+              <h2 id="resources-heading" className="text-base font-semibold">Additional Resources</h2>
               <p className="text-sm text-muted-foreground">Official docs, videos, articles, and cheatsheets</p>
             </div>
           </div>
@@ -1122,30 +1121,6 @@ function FPRD20Enhancements({ lesson, sections, totalLessons }: FPRD20Props) {
           </div>
         </section>
       )}
-
-      {/* ── Progress Dashboard ── */}
-      <section aria-labelledby="progress-dash-heading">
-        <h2 id="progress-dash-heading" className="text-xl font-bold mb-4">Progress Dashboard</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {[
-            { label: 'Lessons', value: `${completedLessons} / ${totalLessons}`, emoji: '📚', color: 'text-primary' },
-            { label: 'Course %', value: `${totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0}%`, emoji: '📊', color: 'text-green-600' },
-            { label: 'Current Streak', value: '— days', emoji: '🔥', color: 'text-orange-600' },
-            { label: 'Quiz Accuracy', value: '—%', emoji: '🎯', color: 'text-blue-600' },
-            { label: 'Time Spent', value: `${lesson.estimatedMinutes ?? 0} min`, emoji: '⏱️', color: 'text-purple-600' },
-            { label: 'XP Earned', value: `${completedLessons * 20} XP`, emoji: '⚡', color: 'text-yellow-600' },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              className="rounded-xl border border-border bg-card p-4 text-center shadow-sm"
-            >
-              <div className="text-2xl mb-1">{stat.emoji}</div>
-              <div className={`text-lg font-black ${stat.color}`}>{stat.value}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
     </div>
   )
 }
@@ -1329,7 +1304,7 @@ function RightSidebar({ open, tab, onTabChange, lesson, sections, lessonIndex, t
 
 function PageSkeleton() {
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] -m-6">
+    <div className="flex h-[calc(100vh-3.5rem)] -m-3 sm:-m-4 lg:-m-6">
       <div className="hidden lg:flex w-80 border-r border-border flex-col bg-card/60">
         <div className="p-4 border-b border-border space-y-3">
           <Skeleton className="h-8 w-full rounded-lg" />
@@ -1439,7 +1414,7 @@ export function LessonViewerPage() {
 
   if (isLoading || roadmapLoading) return <PageSkeleton />
   if (isError || !lesson) return (
-    <div className="min-h-[60vh] flex items-center justify-center -m-6">
+    <div className="min-h-[60vh] flex items-center justify-center -m-3 sm:-m-4 lg:-m-6">
       <ErrorState title="Unable to load lesson" message="This lesson doesn't exist or we couldn't reach the server." onRetry={() => refetch()} />
     </div>
   )
@@ -1450,7 +1425,7 @@ export function LessonViewerPage() {
     ? Math.round((lessonIndex / totalLessonsInRoadmap) * 100) : 0
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] -m-6 overflow-hidden bg-background" role="main">
+    <div className="flex h-[calc(100vh-3.5rem)] -m-3 sm:-m-4 lg:-m-6 overflow-hidden bg-background" role="main">
 
       {/* ── Lesson Completion Modal (FPRD-20) ── */}
       <LessonCompletionModal
@@ -1553,7 +1528,7 @@ export function LessonViewerPage() {
           </div>
 
           {/* Prev / position / Next — compact single row */}
-          <div className="flex items-center justify-between px-4 py-1 max-w-[70%] mx-auto w-full">
+          <div className="flex items-center justify-between px-4 py-1 w-full max-w-[900px] xl:w-[75%] mx-auto">
             <Button variant="ghost" size="sm"
               asChild={!!lesson.prevLessonId} disabled={!lesson.prevLessonId}
               className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground px-2">
@@ -1582,7 +1557,7 @@ export function LessonViewerPage() {
           </div>
 
           {/* Lesson title + meta — compact, no excess padding */}
-          <div className="px-4 pb-3 max-w-[70%] mx-auto w-full">
+          <div className="px-4 pb-2 w-full max-w-[900px] xl:w-[75%] mx-auto">
             <h1 className="text-lg font-semibold leading-snug text-foreground mb-1.5">
               {lesson.title}
             </h1>
@@ -1613,10 +1588,10 @@ export function LessonViewerPage() {
           </div>
         </header>
 
-        {/* Scrollable content — 70% width, tight readable prose */}
+        {/* Scrollable content — responsive width */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto bg-background" id="lesson-content-scroll">
-          <div className="w-[70%] mx-auto px-4 py-5 pb-28">
-            <motion.div key={id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="space-y-8">
+          <div className="w-full max-w-[900px] xl:w-[75%] mx-auto px-4 sm:px-5 py-4 pb-24">
+            <motion.div key={id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="space-y-6">
 
               {lesson.content ? (
                 <SectionRenderer content={lesson.content} />
@@ -1637,7 +1612,7 @@ export function LessonViewerPage() {
                     <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                       <ExternalLink className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <h2 className="text-xl font-bold">Additional Resources</h2>
+                    <h2 className="text-base font-semibold">Additional Resources</h2>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {lesson.resources.map((r) => <ResourceCard key={r.id} resource={r} />)}
@@ -1650,7 +1625,7 @@ export function LessonViewerPage() {
 
         {/* Sticky bottom nav */}
         <nav className="sticky bottom-0 z-20 border-t border-border bg-background shrink-0" aria-label="Lesson navigation">
-          <div className="w-[70%] mx-auto px-4 py-2 flex items-center justify-between gap-3">
+          <div className="w-full max-w-[900px] xl:w-[75%] mx-auto px-4 py-2 flex items-center justify-between gap-3">
 
             <Button variant="outline" size="sm" asChild={!!lesson.prevLessonId} disabled={!lesson.prevLessonId}
               className="gap-1.5 group min-w-0 max-w-[180px] h-8">

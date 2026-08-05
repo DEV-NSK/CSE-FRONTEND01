@@ -113,19 +113,19 @@ function StatCard({ icon: Icon, label, value, delta, color }: {
   icon: React.ElementType; label: string; value: number; delta?: string; color: string
 }) {
   return (
-    <motion.div whileHover={{ y: -3, scale: 1.01 }} transition={{ type: 'spring', stiffness: 300 }}>
+    <motion.div whileHover={{ y: -2, scale: 1.01 }} transition={{ type: 'spring', stiffness: 300 }}>
       <Card className="hover:border-border/80 transition-all cursor-default h-full">
-        <CardContent className="p-5">
-          <div className="flex items-start justify-between mb-3">
-            <div className={`p-2.5 rounded-xl ${color}`}>
-              <Icon className="h-5 w-5" />
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex items-start justify-between mb-2">
+            <div className={`p-2 rounded-lg ${color}`}>
+              <Icon className="h-4 w-4" />
             </div>
-            {delta && <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">{delta}</span>}
+            {delta && <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">{delta}</span>}
           </div>
-          <div className="text-2xl font-bold text-foreground mb-0.5">
+          <div className="text-xl font-bold text-foreground mb-0.5 stat-card-value">
             <CountUp end={value} />
           </div>
-          <div className="text-xs text-muted-foreground">{label}</div>
+          <div className="text-[11px] text-muted-foreground stat-card-label">{label}</div>
         </CardContent>
       </Card>
     </motion.div>
@@ -707,27 +707,45 @@ function ResumeCard({
 
   const isPdf = user.resumeFileName?.toLowerCase().endsWith('.pdf') ||
     user.resumeUrl?.toLowerCase().includes('.pdf')
-  const isDocx = user.resumeFileName?.toLowerCase().endsWith('.docx') ||
-    user.resumeUrl?.toLowerCase().includes('.docx')
 
-  const handlePreview = () => {
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [downloadLoading, setDownloadLoading] = useState(false)
+
+  /** Get a fresh URL (signed if bucket is private, else public URL) */
+  const getFreshResumeUrl = async (): Promise<string | null> => {
+    try {
+      const res = await profileService.getResumeSignedUrl()
+      return res.data.data.signedUrl ?? user.resumeUrl ?? null
+    } catch {
+      return user.resumeUrl ?? null
+    }
+  }
+
+  const handlePreview = async () => {
     if (!user.resumeUrl) return
-    if (isPdf) {
-      // For PDF: open in new tab directly — browser PDF viewer handles it
-      const url = user.resumeUrl
-      window.open(url, '_blank', 'noopener,noreferrer')
-    } else {
-      // For DOCX: use Google Docs viewer to preview online
-      const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(user.resumeUrl)}&embedded=true`
-      window.open(viewerUrl, '_blank', 'noopener,noreferrer')
+    setPreviewLoading(true)
+    try {
+      const url = await getFreshResumeUrl()
+      if (!url) return
+      if (isPdf) {
+        window.open(url, '_blank', 'noopener,noreferrer')
+      } else {
+        const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`
+        window.open(viewerUrl, '_blank', 'noopener,noreferrer')
+      }
+    } finally {
+      setPreviewLoading(false)
     }
   }
 
   const handleDownload = async () => {
     if (!user.resumeUrl) return
+    setDownloadLoading(true)
     try {
-      // Fetch the file as a blob to force download (avoids browser navigation)
-      const response = await fetch(user.resumeUrl)
+      const url = await getFreshResumeUrl()
+      if (!url) return
+      const response = await fetch(url)
+      if (!response.ok) throw new Error('Download failed')
       const blob = await response.blob()
       const blobUrl = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -738,7 +756,6 @@ function ResumeCard({
       document.body.removeChild(a)
       window.URL.revokeObjectURL(blobUrl)
     } catch {
-      // Fallback: direct link download
       const a = document.createElement('a')
       a.href = user.resumeUrl
       a.download = user.resumeFileName ?? 'resume'
@@ -747,6 +764,72 @@ function ResumeCard({
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
+    } finally {
+      setDownloadLoading(false)
+    }
+  }
+
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [downloadLoading, setDownloadLoading] = useState(false)
+
+  /** Get a fresh URL (signed if bucket is private, else public URL) */
+  const getFreshResumeUrl = async (): Promise<string | null> => {
+    try {
+      const res = await profileService.getResumeSignedUrl()
+      return res.data.data.signedUrl ?? user.resumeUrl ?? null
+    } catch {
+      return user.resumeUrl ?? null
+    }
+  }
+
+  const handlePreview = async () => {
+    if (!user.resumeUrl) return
+    setPreviewLoading(true)
+    try {
+      const url = await getFreshResumeUrl()
+      if (!url) return
+      if (isPdf) {
+        window.open(url, '_blank', 'noopener,noreferrer')
+      } else {
+        // DOCX: use Google Docs viewer
+        const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`
+        window.open(viewerUrl, '_blank', 'noopener,noreferrer')
+      }
+    } finally {
+      setPreviewLoading(false)
+    }
+  }
+
+  const handleDownload = async () => {
+    if (!user.resumeUrl) return
+    setDownloadLoading(true)
+    try {
+      const url = await getFreshResumeUrl()
+      if (!url) return
+      // Fetch as blob to force download
+      const response = await fetch(url)
+      if (!response.ok) throw new Error('Download failed')
+      const blob = await response.blob()
+      const blobUrl = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = blobUrl
+      a.download = user.resumeFileName ?? (isPdf ? 'resume.pdf' : 'resume.docx')
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(blobUrl)
+    } catch {
+      // Fallback: direct anchor
+      const a = document.createElement('a')
+      a.href = user.resumeUrl
+      a.download = user.resumeFileName ?? 'resume'
+      a.target = '_blank'
+      a.rel = 'noopener noreferrer'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    } finally {
+      setDownloadLoading(false)
     }
   }
 
@@ -792,19 +875,23 @@ function ResumeCard({
                 variant="outline"
                 className="gap-1.5 text-xs"
                 onClick={handlePreview}
+                disabled={previewLoading}
                 title={isPdf ? 'Open in new tab' : 'Preview with Google Docs'}
               >
-                <ExternalLink className="h-3.5 w-3.5" />
-                Preview
+                {previewLoading
+                  ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Opening…</>
+                  : <><ExternalLink className="h-3.5 w-3.5" />Preview</>}
               </Button>
               <Button
                 size="sm"
                 variant="outline"
                 className="gap-1.5 text-xs"
                 onClick={handleDownload}
+                disabled={downloadLoading}
               >
-                <RefreshCw className="h-3.5 w-3.5" />
-                Download
+                {downloadLoading
+                  ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Saving…</>
+                  : <><RefreshCw className="h-3.5 w-3.5" />Download</>}
               </Button>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -934,7 +1021,7 @@ export function ProfilePage() {
   ]
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Upload error */}
       <AnimatePresence>
         {uploadError && (
@@ -958,7 +1045,7 @@ export function ProfilePage() {
       {/* Completion banner (if not 100%) */}
       <CompletionBar user={user} />
 
-      {/* Stats row */}
+      {/* Stats row — 2 cols on mobile, 4 on desktop */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {stats.map((s) => (
           <StatCard key={s.label} icon={s.icon} label={s.label} value={s.value}
@@ -966,17 +1053,19 @@ export function ProfilePage() {
         ))}
       </div>
 
-      {/* ── Main layout: left | right two-column ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      {/* ── Main content: single col on mobile, two cols on xl ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
 
-        {/* LEFT column */}
-        <div className="flex flex-col gap-4">
+        {/* LEFT column: 2 spans — main stats */}
+        <div className="xl:col-span-2 flex flex-col gap-3">
           <CodingCard analytics={analytics} />
           <ActivityCard activity={activity} isLoading={isActivityLoading} />
+          {/* Projects at full width in left col */}
+          <ProjectsCard projects={projects} />
         </div>
 
-        {/* RIGHT column */}
-        <div className="flex flex-col gap-4">
+        {/* RIGHT column: 1 span — profile tools */}
+        <div className="flex flex-col gap-3">
           <CompletionCard completion={completion} />
           <ResumeCard
             user={user}
@@ -1001,15 +1090,8 @@ export function ProfilePage() {
         </div>
       </div>
 
-      {/* ── Projects & Achievements: equal-height side-by-side row ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch">
-        <div className="flex flex-col">
-          <ProjectsCard projects={projects} />
-        </div>
-        <div className="flex flex-col">
-          <AchievementsCard achievements={achievements} />
-        </div>
-      </div>
+      {/* Achievements — full width below */}
+      <AchievementsCard achievements={achievements} />
     </div>
   )
 }

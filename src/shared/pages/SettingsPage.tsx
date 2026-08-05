@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Sun, Moon, Monitor, LogOut, Lock, Eye, EyeOff, Bell, Shield, User, Palette } from 'lucide-react'
+import { Sun, Moon, Monitor, LogOut, Lock, Eye, EyeOff, Bell, Shield, User, Palette, Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -20,6 +20,7 @@ import { useAuthStore } from '@/shared/store/authStore'
 import { authService } from '@/shared/services/auth.service'
 import { profileService } from '@/shared/services/profile.service'
 import { queryClient } from '@/shared/lib/queryClient'
+import { toast } from '@/shared/hooks/useToast'
 import type { Theme } from '@/types'
 
 const passwordSchema = z.object({
@@ -38,7 +39,7 @@ const themeOptions: { value: Theme; label: string; icon: React.ElementType; desc
 
 export function SettingsPage() {
   const { theme, setTheme } = useThemeStore()
-  const { user, logout } = useAuthStore()
+  const { user, logout, updateUser } = useAuthStore()
   const navigate = useNavigate()
   const [logoutOpen, setLogoutOpen] = useState(false)
   const [pwdSuccess, setPwdSuccess] = useState(false)
@@ -46,6 +47,14 @@ export function SettingsPage() {
   const [showCurrent, setShowCurrent] = useState(false)
   const [showNew, setShowNew] = useState(false)
   const [notifPrefs, setNotifPrefs] = useState({ learning: true, coding: true, projects: true, placement: true, events: true, system: true })
+
+  // Privacy state — initialized from user profile
+  const [privacyState, setPrivacyState] = useState({
+    publicProfile: (user?.profileVisibility ?? 'PUBLIC') === 'PUBLIC',
+    showActivity: true,
+    showProjects: true,
+  })
+  const [savingPrivacy, setSavingPrivacy] = useState(false)
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<PwdForm>({ resolver: zodResolver(passwordSchema) })
 
@@ -64,35 +73,63 @@ export function SettingsPage() {
     }
   }
 
+  const handlePrivacyToggle = async (key: keyof typeof privacyState, value: boolean) => {
+    // Optimistically update local state
+    const prev = privacyState
+    setPrivacyState(s => ({ ...s, [key]: value }))
+    setSavingPrivacy(true)
+    try {
+      if (key === 'publicProfile') {
+        const visibility = value ? 'PUBLIC' : 'PRIVATE'
+        const res = await profileService.updatePrivacy(visibility)
+        updateUser(res.data.data as any)
+        toast({ title: `Profile is now ${value ? 'public' : 'private'}` })
+      } else {
+        // showActivity / showProjects — update via profile update
+        await profileService.updateProfile({
+          ...(key === 'showActivity' ? { showActivity: value } as any : {}),
+          ...(key === 'showProjects' ? { showProjects: value } as any : {}),
+        })
+        toast({ title: 'Privacy setting saved' })
+      }
+    } catch {
+      // Revert on error
+      setPrivacyState(prev)
+      toast({ title: 'Failed to save privacy setting', variant: 'destructive' })
+    } finally {
+      setSavingPrivacy(false)
+    }
+  }
+
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto w-full">
       <PageHeader title="Settings" description="Manage your account preferences" breadcrumbs={[{ label: 'Settings' }]} />
-      <Tabs defaultValue="appearance" className="space-y-5">
-        <TabsList className="flex-wrap h-auto gap-1">
-          <TabsTrigger value="appearance" className="gap-1.5 text-xs"><Palette className="h-3 w-3" />Appearance</TabsTrigger>
-          <TabsTrigger value="account" className="gap-1.5 text-xs"><User className="h-3 w-3" />Account</TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-1.5 text-xs"><Bell className="h-3 w-3" />Notifications</TabsTrigger>
-          <TabsTrigger value="privacy" className="gap-1.5 text-xs"><Shield className="h-3 w-3" />Privacy</TabsTrigger>
-          <TabsTrigger value="security" className="gap-1.5 text-xs"><Lock className="h-3 w-3" />Security</TabsTrigger>
+      <Tabs defaultValue="appearance" className="space-y-4">
+        <TabsList className="flex-wrap h-auto gap-1 w-full">
+          <TabsTrigger value="appearance" className="gap-1.5 text-xs flex-1 sm:flex-none"><Palette className="h-3 w-3" />Appearance</TabsTrigger>
+          <TabsTrigger value="account" className="gap-1.5 text-xs flex-1 sm:flex-none"><User className="h-3 w-3" />Account</TabsTrigger>
+          <TabsTrigger value="notifications" className="gap-1.5 text-xs flex-1 sm:flex-none"><Bell className="h-3 w-3" />Notifications</TabsTrigger>
+          <TabsTrigger value="privacy" className="gap-1.5 text-xs flex-1 sm:flex-none"><Shield className="h-3 w-3" />Privacy</TabsTrigger>
+          <TabsTrigger value="security" className="gap-1.5 text-xs flex-1 sm:flex-none"><Lock className="h-3 w-3" />Security</TabsTrigger>
         </TabsList>
 
         {/* Appearance */}
         <TabsContent value="appearance">
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
             <Card>
-              <CardHeader><CardTitle>Theme</CardTitle><CardDescription>Choose your preferred appearance</CardDescription></CardHeader>
+              <CardHeader className="pb-3"><CardTitle className="text-sm">Theme</CardTitle><CardDescription className="text-xs">Choose your preferred appearance</CardDescription></CardHeader>
               <CardContent>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
                   {themeOptions.map((opt) => {
                     const Icon = opt.icon
                     const sel = theme === opt.value
                     return (
                       <button key={opt.value} type="button" onClick={() => setTheme(opt.value)}
-                        className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${sel ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'}`}
+                        className={`flex flex-col items-center gap-1.5 p-3 sm:p-4 rounded-lg border-2 transition-all ${sel ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'}`}
                         aria-pressed={sel}>
-                        <Icon className={`h-6 w-6 ${sel ? 'text-primary' : 'text-muted-foreground'}`} />
-                        <span className={`text-sm font-medium ${sel ? 'text-primary' : ''}`}>{opt.label}</span>
-                        <span className="text-xs text-muted-foreground">{opt.desc}</span>
+                        <Icon className={`h-5 w-5 ${sel ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <span className={`text-xs font-medium ${sel ? 'text-primary' : ''}`}>{opt.label}</span>
+                        <span className="text-[10px] text-muted-foreground hidden sm:block">{opt.desc}</span>
                       </button>
                     )
                   })}
@@ -163,19 +200,30 @@ export function SettingsPage() {
         <TabsContent value="privacy">
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
             <Card>
-              <CardHeader><CardTitle>Privacy Settings</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle>Privacy Settings</CardTitle>
+                <CardDescription>Control who can see your profile and activity</CardDescription>
+              </CardHeader>
               <CardContent className="space-y-4">
-                {[
-                  { label: 'Public Profile', desc: 'Allow others to view your profile' },
-                  { label: 'Show Activity', desc: 'Show your coding activity to others' },
-                  { label: 'Show Projects', desc: 'Make your projects publicly visible' },
-                ].map(({ label, desc }) => (
-                  <div key={label} className="flex items-center justify-between">
+                {([
+                  { key: 'publicProfile' as const, label: 'Public Profile', desc: 'Allow others to view your profile' },
+                  { key: 'showActivity' as const, label: 'Show Activity', desc: 'Show your coding activity to others' },
+                  { key: 'showProjects' as const, label: 'Show Projects', desc: 'Make your projects publicly visible' },
+                ]).map(({ key, label, desc }) => (
+                  <div key={key} className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium">{label}</p>
                       <p className="text-xs text-muted-foreground">{desc}</p>
                     </div>
-                    <Switch aria-label={label} />
+                    <div className="flex items-center gap-2">
+                      {savingPrivacy && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+                      <Switch
+                        aria-label={label}
+                        checked={privacyState[key]}
+                        onCheckedChange={(v) => handlePrivacyToggle(key, v)}
+                        disabled={savingPrivacy}
+                      />
+                    </div>
                   </div>
                 ))}
               </CardContent>

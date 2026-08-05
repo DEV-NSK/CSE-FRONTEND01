@@ -452,3 +452,410 @@ body {
 .learning-prose tr:nth-child(even) td {
   background-color: hsl(var(--muted) / 50%);
 }
+
+
+/* ─── Mobile Responsive Layout ──────────────────────────────────────────────── */
+
+/* ── Base mobile touch improvements ── */
+@media (max-width: 640px) {
+
+  /* Touch targets */
+  button,
+  a,
+  [role="button"] {
+    min-height: 36px;
+  }
+
+  /* Prevent text overflow globally */
+  * {
+    word-break: break-word;
+  }
+
+  /* Better scroll on mobile */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ── Dashboard Layout mobile ── */
+@media (max-width: 1024px) {
+
+  /* Main content gets full width when sidebar is hidden */
+  #main-content {
+    width: 100%;
+  }
+}
+
+/* ── TopNav mobile ── */
+@media (max-width: 640px) {
+
+  /* Shrink TopNav on mobile */
+  header.sticky {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+
+/* ── Dashboard Page mobile ── */
+@media (max-width: 640px) {
+
+  /* Greeting + stats row: single column on mobile */
+  .dashboard-row-1 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Section labels smaller */
+  .dashboard-section-label {
+    font-size: 0.65rem;
+  }
+}
+
+/* ── Card mobile compactness ── */
+@media (max-width: 640px) {
+
+  /* Reduce card padding on mobile */
+  .card-mobile-compact .p-5 {
+    padding: 0.875rem !important;
+  }
+
+  .card-mobile-compact .p-6 {
+    padding: 1rem !important;
+  }
+
+  /* Reduce gap in grids on mobile */
+  .gap-4 {
+    gap: 0.75rem;
+  }
+
+  .gap-6 {
+    gap: 1rem;
+  }
+
+  .space-y-6>*+* {
+    margin-top: 1rem;
+  }
+
+  .space-y-4>*+* {
+    margin-top: 0.75rem;
+  }
+}
+
+/* ── Profile Page mobile ── */
+@media (max-width: 640px) {
+
+  /* Hero banner — compact on mobile */
+  .profile-hero-banner {
+    padding: 1rem !important;
+  }
+
+  .profile-hero-banner h1 {
+    font-size: 1.25rem !important;
+  }
+
+  /* Stats grid — 2 cols on mobile */
+  .profile-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Profile two-col layout → single col */
+  .profile-two-col {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Avatar smaller on mobile */
+  .profile-avatar-wrap {
+    width: 5rem !important;
+    height: 5rem !important;
+  }
+
+  /* Contact row: stack vertically */
+  .profile-contact-row {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}
+
+/* ── Settings Page mobile ── */
+@media (max-width: 640px) {
+
+  /* Settings max-width full on mobile */
+  .settings-container {
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  /* Tabs wrap properly */
+  .settings-tabs-list {
+    flex-wrap: wrap;
+    height: auto !important;
+  }
+
+  /* Theme options: stack or wrap */
+  .theme-options-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  /* Password form full width */
+  .password-form input {
+    font-size: 1rem;
+    /* Prevent iOS zoom */
+  }
+}
+
+/* ── Lesson Viewer mobile ── */
+@media (max-width: 1024px) {
+
+  /* Content area full width (sidebar hidden) */
+  .lesson-content-area {
+    width: 100% !important;
+  }
+
+  /* Lesson content: full width on tablet/mobile */
+  .lesson-prose-container {
+    width: 100% !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  /* Right sidebar hidden on mobile/tablet */
+  .lesson-right-sidebar {
+    display: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+
+  /* Lesson header compact */
+  .lesson-header-toolbar {
+    padding: 0.375rem 0.75rem !important;
+  }
+
+  .lesson-title-bar {
+    padding: 0.5rem 0.75rem 0.75rem !important;
+  }
+
+  .lesson-title-bar h1 {
+    font-size: 1rem !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Bottom nav full width */
+  .lesson-bottom-nav {
+    width: 100% !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  /* Section headings smaller on mobile */
+  .lesson-section h1 {
+    font-size: 1.5rem !important;
+  }
+
+  .lesson-section h2 {
+    font-size: 1.25rem !important;
+  }
+
+  .lesson-section h3 {
+    font-size: 1.1rem !important;
+  }
+
+  /* Progress dashboard grid: 2 cols on mobile */
+  .progress-dashboard-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* ── Learning Home / Roadmap Pages mobile ── */
+@media (max-width: 640px) {
+
+  /* Roadmap cards: single col */
+  .roadmap-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Category cards: 2 cols */
+  .category-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* ── Coding Pages mobile ── */
+@media (max-width: 640px) {
+
+  /* Problem list: remove extra padding */
+  .problems-list-header {
+    padding: 0.75rem !important;
+  }
+
+  /* Filter bar: scroll horizontally */
+  .filter-bar {
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    padding-bottom: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Problem detail: full height panels */
+  .problem-detail-layout {
+    flex-direction: column !important;
+    height: auto !important;
+  }
+}
+
+/* ── Notifications Page mobile ── */
+@media (max-width: 640px) {
+  .notification-item {
+    padding: 0.625rem 0.75rem !important;
+  }
+}
+
+/* ── Auth Pages mobile ── */
+@media (max-width: 640px) {
+  .auth-card {
+    margin: 0.75rem !important;
+    padding: 1.25rem !important;
+    border-radius: 0.75rem !important;
+  }
+
+  .auth-input {
+    font-size: 1rem;
+    /* Prevent iOS zoom on focus */
+  }
+}
+
+/* ── Landing Page mobile ── */
+@media (max-width: 640px) {
+  .hero-title {
+    font-size: clamp(1.75rem, 8vw, 2.5rem) !important;
+    line-height: 1.2 !important;
+  }
+
+  .hero-cta-row {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Nav: hide large nav items */
+  .landing-nav-links {
+    display: none !important;
+  }
+}
+
+/* ── Public profile mobile ── */
+@media (max-width: 640px) {
+  .public-profile-hero {
+    padding: 1rem !important;
+  }
+
+  .public-profile-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* ── Mobile sidebar overlay ── */
+@media (max-width: 1024px) {
+
+  /* Ensure mobile sidebar is always on top */
+  .mobile-sidebar-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 40 !important;
+  }
+}
+
+/* ── Resume Card mobile ── */
+@media (max-width: 640px) {
+  .resume-action-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+}
+
+/* ── Form inputs prevent iOS zoom ── */
+@media (max-width: 640px) {
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="search"],
+  input[type="url"],
+  textarea,
+  select {
+    font-size: 1rem !important;
+  }
+}
+
+/* ── Lesson content typography — reduce sizes ── */
+.lesson-content-compact {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+}
+
+.lesson-content-compact h1 {
+  font-size: 1.75rem !important;
+  margin-top: 1.25rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.lesson-content-compact h2 {
+  font-size: 1.35rem !important;
+  margin-top: 1.25rem !important;
+  margin-bottom: 0.4rem !important;
+}
+
+.lesson-content-compact h3 {
+  font-size: 1.1rem !important;
+  margin-top: 1rem !important;
+  margin-bottom: 0.35rem !important;
+}
+
+.lesson-content-compact p {
+  margin-bottom: 0.75rem !important;
+  font-size: 0.9375rem !important;
+  line-height: 1.75 !important;
+}
+
+/* Section header — compact */
+.lesson-section-heading-compact {
+  margin-top: 1.25rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* ── Stat cards mobile ── */
+@media (max-width: 480px) {
+  .stat-card-value {
+    font-size: 1.5rem !important;
+  }
+
+  .stat-card-label {
+    font-size: 0.7rem !important;
+  }
+}
+
+/* ── Table of contents mobile ── */
+@media (max-width: 640px) {
+  .toc-mobile {
+    display: none !important;
+  }
+}
+
+/* ── Scrollbar thin on mobile ── */
+@media (max-width: 640px) {
+  ::-webkit-scrollbar {
+    width: 2px;
+    height: 2px;
+  }
+}
+
+/* ── Safe area insets for mobile (notch support) ── */
+@supports (padding: max(0px)) {
+  .mobile-safe-bottom {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+}

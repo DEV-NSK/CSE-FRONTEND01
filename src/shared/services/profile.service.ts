@@ -99,6 +99,7 @@ export const profileService = {
     formData.append('avatar', file)
     return axiosInstance.patch<ApiResponse<{ avatarUrl: string }>>('/profile/avatar', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60000, // 1 minute for image uploads
       onUploadProgress: (e) => {
         if (onProgress && e.total) {
           onProgress(Math.round((e.loaded / e.total) * 100))
@@ -120,6 +121,7 @@ export const profileService = {
       formData,
       {
         headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 120000, // 2 minutes for large file uploads
         onUploadProgress: (e) => {
           if (onProgress && e.total) {
             onProgress(Math.round((e.loaded / e.total) * 100))
@@ -132,6 +134,10 @@ export const profileService = {
   /** DELETE /api/profile/resume — remove resume */
   deleteResume: () =>
     axiosInstance.delete<ApiResponse<{ resumeUrl: null }>>('/profile/resume'),
+
+  /** GET /api/profile/resume/signed-url — get signed URL for preview/download */
+  getResumeSignedUrl: () =>
+    axiosInstance.get<ApiResponse<{ signedUrl: string | null; fileName: string | null }>>('/profile/resume/signed-url'),
 
   /** GET /api/profile/resume — get resume metadata */
   getResume: () =>

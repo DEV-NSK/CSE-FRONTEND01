@@ -435,11 +435,11 @@ export function Sidebar() {
               aria-hidden="true"
             />
             <motion.aside
-              initial={{ x: -220 }}
+              initial={{ x: -240 }}
               animate={{ x: 0 }}
-              exit={{ x: -220 }}
-              transition={{ duration: 0.26, ease: [0.4, 0, 0.2, 1] }}
-              className="fixed left-0 top-0 z-50 h-full w-[220px] bg-card border-r border-border lg:hidden flex flex-col"
+              exit={{ x: -240 }}
+              transition={{ duration: 0.24, ease: [0.4, 0, 0.2, 1] }}
+              className="fixed left-0 top-0 z-50 h-full w-[240px] bg-card border-r border-border lg:hidden flex flex-col shadow-xl"
               aria-label="Mobile sidebar"
             >
               <button
