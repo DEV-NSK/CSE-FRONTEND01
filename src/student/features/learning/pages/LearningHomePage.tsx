@@ -14,12 +14,11 @@ import { EmptyLearningState } from '@/student/components/learning/EmptyLearningS
 import { ProgressRing } from '@/student/components/learning/ProgressRing'
 import { DifficultyBadge } from '@/student/components/learning/DifficultyBadge'
 import {
-  useRoadmaps,
+  useRoadmaps, useRoadmap,
   useLearningStats, useRecentlyViewed, useBookmarks,
 } from '@/shared/hooks/useLearning'
 import { useAuthStore } from '@/shared/store/authStore'
 import { cn } from '@/shared/lib/utils'
-import type { Roadmap } from '@/shared/types/learning'
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 const container = {
@@ -218,7 +217,11 @@ export function LearningHomePage() {
     () => roadmapsData?.data?.filter((r) => isPythonRoadmap(r)) ?? [],
     [roadmapsData],
   )
-  const pythonRoadmap: Roadmap | undefined = pythonRoadmaps[0]
+  // Use the list entry to get the slug, then fetch the full roadmap for accurate progress/sections
+  const pythonRoadmapListEntry = pythonRoadmaps[0]
+  const { data: pythonRoadmapDetail } = useRoadmap(pythonRoadmapListEntry?.slug ?? '')
+  // Prefer detailed data (has sections + accurate progress), fall back to list entry
+  const pythonRoadmap = (pythonRoadmapDetail ?? pythonRoadmapListEntry) as typeof pythonRoadmapListEntry & { sections?: any[] } | undefined
 
   const pythonRecentlyViewed = useMemo(
     () => recentlyViewed?.filter((r) => r.roadmapTitle?.toLowerCase().includes('python') ?? true) ?? [],

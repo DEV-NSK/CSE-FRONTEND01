@@ -4,7 +4,7 @@ import type { DashboardActivityDay } from '@/shared/services/dashboard.service'
 
 // ── Color levels (GitHub-style) ───────────────────────────────────────────────
 const LEVEL_COLORS_LIGHT = ['#ebedf0', '#0E4429', '#006D32', '#26A641', '#39D353']
-const LEVEL_COLORS_DARK  = ['#161b22', '#0E4429', '#006D32', '#26A641', '#39D353']
+const LEVEL_COLORS_DARK  = ['#2d333b', '#0E4429', '#006D32', '#26A641', '#39D353']
 
 function getThemeLevelColors(): string[] {
   if (typeof document !== 'undefined' && document.documentElement.classList.contains('dark')) {

@@ -89,6 +89,9 @@ export function useMarkLessonComplete() {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: learningKeys.lesson(id) })
       queryClient.invalidateQueries({ queryKey: learningKeys.all })
+      // Also invalidate profile analytics and coding analytics so profile page updates
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
+      queryClient.invalidateQueries({ queryKey: ['coding', 'analytics'] })
     },
   })
 }

@@ -152,6 +152,8 @@ export function useSubmitCode() {
       queryClient.invalidateQueries({ queryKey: codingKeys.problemSubmissions(vars.problemId) })
       queryClient.invalidateQueries({ queryKey: codingKeys.submissions() })
       queryClient.invalidateQueries({ queryKey: codingKeys.analytics() })
+      // Also refresh profile analytics so profile page shows updated stats
+      queryClient.invalidateQueries({ queryKey: ['profile', 'analytics'] })
     },
   })
 }
@@ -329,7 +331,8 @@ export function useCodingAnalytics() {
   return useQuery({
     queryKey: codingKeys.analytics(),
     queryFn: () => codingService.getAnalytics().then((r) => r.data.data),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 2, // 2 min — keeps profile stats fresh
+    refetchOnMount: true,
     enabled: isAuthenticated,
   })
 }
