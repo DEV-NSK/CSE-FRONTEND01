@@ -11,7 +11,6 @@ interface MarkdownRendererProps {
  * Those packages are not in package.json yet — this provides a working fallback.
  */
 export default function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
-  // Basic markdown to HTML conversion (handles most common patterns)
   const html = convertMarkdown(content)
 
   return (
@@ -24,10 +23,13 @@ export default function MarkdownRenderer({ content, className }: MarkdownRendere
         '[&_pre_code]:bg-transparent [&_pre_code]:p-0',
         // blockquotes
         '[&_blockquote]:border-l-4 [&_blockquote]:border-primary/40 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground',
-        // tables
-        '[&_table]:w-full [&_table]:border-collapse',
-        '[&_th]:border [&_th]:border-border [&_th]:bg-muted [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:text-sm [&_th]:font-semibold',
-        '[&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-2 [&_td]:text-sm',
+        // table wrapper — horizontal scroll on mobile, no overflow clipping
+        '[&_.table-wrapper]:w-full [&_.table-wrapper]:overflow-x-auto [&_.table-wrapper]:-mx-0',
+        // tables — proper bordered layout
+        '[&_table]:min-w-full [&_table]:border-collapse [&_table]:text-sm',
+        '[&_th]:border [&_th]:border-border [&_th]:bg-muted/70 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:whitespace-nowrap',
+        '[&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-2 [&_td]:align-top',
+        '[&_tr:nth-child(even)_td]:bg-muted/30',
         // images
         '[&_img]:rounded-lg [&_img]:max-w-full [&_img]:h-auto',
         // links
@@ -53,6 +55,35 @@ function convertMarkdown(md: string): string {
 
   // Inline code
   html = html.replace(/`([^`]+)`/g, '<code>$1</code>')
+
+  // ── GFM Pipe Tables ────────────────────────────────────────────────────────
+  // Match a block of lines where every line starts and ends with |
+  html = html.replace(
+    /((?:\|.+\|\n?)+)/g,
+    (block) => {
+      const lines = block.trim().split('\n').map(l => l.trim()).filter(Boolean)
+      if (lines.length < 2) return block
+
+      // Detect separator row (second line with dashes like |---|---|)
+      const isSep = (line: string) => /^\|[-:| ]+\|$/.test(line)
+      if (!isSep(lines[1])) return block
+
+      const parseRow = (line: string) =>
+        line.replace(/^\||\|$/g, '').split('|').map(c => c.trim())
+
+      const headers = parseRow(lines[0])
+      const bodyRows = lines.slice(2)
+
+      const thead = `<thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>`
+      const tbody = bodyRows.length
+        ? `<tbody>${bodyRows.map(r =>
+            `<tr>${parseRow(r).map(c => `<td>${c}</td>`).join('')}</tr>`
+          ).join('')}</tbody>`
+        : ''
+
+      return `<div class="table-wrapper"><table>${thead}${tbody}</table></div>`
+    }
+  )
 
   // Headings
   html = html.replace(/^#{6} (.+)$/gm, '<h6>$1</h6>')
@@ -94,7 +125,7 @@ function convertMarkdown(md: string): string {
   // Horizontal rule
   html = html.replace(/^---$/gm, '<hr />')
 
-  // Paragraphs — wrap lines not already wrapped
+  // Paragraphs — wrap lines not already wrapped in block elements
   const lines = html.split('\n')
   const result: string[] = []
   let inBlock = false
@@ -106,7 +137,7 @@ function convertMarkdown(md: string): string {
       result.push('')
       continue
     }
-    const isBlock = /^<(h[1-6]|ul|ol|li|pre|blockquote|hr|img|table)/.test(trimmed)
+    const isBlock = /^<(h[1-6]|ul|ol|li|pre|blockquote|hr|img|table|div|thead|tbody)/.test(trimmed)
     if (isBlock) {
       inBlock = false
       result.push(trimmed)

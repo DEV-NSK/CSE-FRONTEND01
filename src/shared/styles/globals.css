@@ -434,7 +434,10 @@ body {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 1em;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .learning-prose th,
@@ -442,6 +445,7 @@ body {
   padding: 0.5rem 0.75rem;
   border: 1px solid hsl(var(--border));
   text-align: left;
+  white-space: nowrap;
 }
 
 .learning-prose th {
@@ -450,7 +454,7 @@ body {
 }
 
 .learning-prose tr:nth-child(even) td {
-  background-color: hsl(var(--muted) / 50%);
+  background-color: hsl(var(--muted) / 30%);
 }
 
 

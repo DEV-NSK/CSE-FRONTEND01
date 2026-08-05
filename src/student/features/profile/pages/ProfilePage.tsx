@@ -940,7 +940,7 @@ export function ProfilePage() {
   ]
 
   return (
-    <div className="space-y-3 pb-2">
+    <div className="flex flex-col gap-3">
       {/* Upload error */}
       <AnimatePresence>
         {uploadError && (
@@ -952,7 +952,7 @@ export function ProfilePage() {
         )}
       </AnimatePresence>
 
-      {/* Hero */}
+      {/* ── ROW 1: Hero banner (full width) ── */}
       <HeroBanner
         user={user}
         onAvatarChange={handleAvatarChange}
@@ -960,40 +960,39 @@ export function ProfilePage() {
         uploadProgress={uploadProgress}
         onDeleteAvatar={deleteAvatar}
       />
-
-      {/* Completion banner (if not 100%) */}
       <CompletionBar user={user} />
 
-      {/* Stats row — 2 cols on mobile, 4 on desktop */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {stats.map((s) => (
-          <StatCard key={s.label} icon={s.icon} label={s.label} value={s.value}
-            delta={s.delta} color={s.color} />
-        ))}
-      </div>
+      {/* ── ROW 2: [stat×4 (3/4 width)] [Recent Activity (1/4)] ──────────────
+          On desktop Activity spans rows 2-4 as a right sidebar.
+          On mobile Activity shows inline after coding stats.              ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 items-start">
 
-      {/* ── Main content: single col on mobile, two cols on xl — items-start stops columns stretching ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 items-start">
-
-        {/* LEFT column: 2 spans */}
-        <div className="xl:col-span-2 flex flex-col gap-3">
-          <CodingCard analytics={analytics} />
-          <ActivityCard activity={activity} isLoading={isActivityLoading} />
-          {projects.length > 0 && <ProjectsCard projects={projects} />}
+        {/* 4 stat cards — left 3 cols */}
+        <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {stats.map((s) => (
+            <StatCard key={s.label} icon={s.icon} label={s.label} value={s.value}
+              delta={s.delta} color={s.color} />
+          ))}
         </div>
 
-        {/* RIGHT column: 1 span */}
-        <div className="flex flex-col gap-3">
-          <CompletionCard completion={completion} />
+        {/* Recent Activity — right col, desktop only (shown in row 3 on mobile) */}
+        <div className="hidden lg:block">
+          <ActivityCard activity={activity} isLoading={isActivityLoading} />
+        </div>
+      </div>
+
+      {/* ── ROW 3: [Coding Stats (2/4)] [Resume (1/4)] [─Activity right─] ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 items-start">
+        <div className="lg:col-span-2">
+          <CodingCard analytics={analytics} />
+        </div>
+        <div className="lg:col-span-1">
           <ResumeCard
             user={user}
             onUploadResume={async (file, onProgress) => {
               setResumeUploadError('')
-              try {
-                await uploadResume(file, onProgress)
-              } catch (err: any) {
-                setResumeUploadError(err?.response?.data?.message ?? 'Resume upload failed.')
-              }
+              try { await uploadResume(file, onProgress) }
+              catch (err: any) { setResumeUploadError(err?.response?.data?.message ?? 'Resume upload failed.') }
             }}
             onDeleteResume={deleteResume}
             isUploading={isUploadingResume}
@@ -1002,13 +1001,27 @@ export function ProfilePage() {
             uploadError={resumeUploadError}
             clearUploadError={() => setResumeUploadError('')}
           />
-          <SocialsCard user={user} />
-          <ShareCard user={user} />
-          <PrivacyCard user={user} onUpdate={updatePrivacy} />
+        </div>
+        {/* Activity on mobile — shows here */}
+        <div className="lg:hidden">
+          <ActivityCard activity={activity} isLoading={isActivityLoading} />
         </div>
       </div>
 
-      {/* Achievements — only shown when earned */}
+      {/* ── ROW 4: [Connect (1/4)] [Share+Privacy (1/4)] [Projects (1/4)] [Profile Strength (1/4)] ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-start">
+        <SocialsCard user={user} />
+        <div className="flex flex-col gap-3">
+          <ShareCard user={user} />
+          <PrivacyCard user={user} onUpdate={updatePrivacy} />
+        </div>
+        {projects.length > 0
+          ? <ProjectsCard projects={projects} />
+          : <div className="hidden lg:block" />}
+        <CompletionCard completion={completion} />
+      </div>
+
+      {/* ── ROW 5: Achievements (full width) — only when earned ── */}
       {achievements.length > 0 && <AchievementsCard achievements={achievements} />}
     </div>
   )

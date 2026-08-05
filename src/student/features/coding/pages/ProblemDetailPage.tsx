@@ -17,6 +17,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs'
 import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import { Badge } from '@/shared/components/ui/badge'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip'
 import { Skeleton } from '@/shared/components/feedback/Skeleton'
 import { ErrorState } from '@/shared/components/feedback/ErrorState'
 import { MonacoEditorWrapper } from '@/student/components/coding/MonacoEditorWrapper'
@@ -67,6 +68,8 @@ export function ProblemDetailPage() {
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 })
   const editorRef = useRef<{ getModel: () => unknown } | null>(null)
 
+  const [mobileTab, setMobileTab] = useState<'problem' | 'editor' | 'output'>('problem')
+
   // Poll result after run
   const { data: polledResult } = useSubmissionResult(
     runSubmissionId ?? submitSubmissionId ?? '',
@@ -80,6 +83,7 @@ export function ProblemDetailPage() {
       if (done) {
         setRunResult(polledResult)
         setRightPanelTab('output')
+        setMobileTab('output')   // auto-switch to output on mobile
         setRunSubmissionId(null)
         setSubmitSubmissionId(null)
       }
@@ -116,6 +120,7 @@ export function ProblemDetailPage() {
     if (!problem) return
     setRunResult(null)
     setRightPanelTab('output')
+    setMobileTab('output')   // switch to output tab on mobile immediately
     runCode(
       { problemId: problem.id, language: editorSettings.language, code, customInput },
       {
@@ -134,8 +139,31 @@ export function ProblemDetailPage() {
 
   const handleSubmit = useCallback(() => {
     if (!problem) return
+
+    // Gate: must run first and all visible test cases must pass
+    if (!runResult) {
+      setRunResult({
+        status: 'runtime_error',
+        errorMessage: 'Run your code first. All test cases must pass before submitting.',
+      })
+      setRightPanelTab('output')
+      setMobileTab('output')
+      return
+    }
+    if (runResult.status !== 'accepted') {
+      setRunResult({
+        ...runResult,
+        errorMessage: (runResult.errorMessage ?? '') ||
+          'Fix all test cases before submitting. Run your code again to check.',
+      })
+      setRightPanelTab('output')
+      setMobileTab('output')
+      return
+    }
+
     setRunResult(null)
     setRightPanelTab('output')
+    setMobileTab('output')
     submitCode(
       { problemId: problem.id, language: editorSettings.language, code },
       {
@@ -150,7 +178,7 @@ export function ProblemDetailPage() {
         },
       }
     )
-  }, [problem, code, editorSettings.language, submitCode, setRightPanelTab])
+  }, [problem, code, editorSettings.language, submitCode, setRightPanelTab, runResult])
 
   const handleReset = useCallback(() => {
     if (!problem) return
@@ -229,18 +257,35 @@ export function ProblemDetailPage() {
             Run
           </Button>
 
-          {/* Submit */}
-          <Button
-            size="sm"
-            onClick={handleSubmit}
-            disabled={isExecuting}
-            loading={isSubmitting || !!(submitSubmissionId)}
-            aria-label="Submit code"
-            className="h-8 text-xs gap-1"
-          >
-            <Send className="h-3.5 w-3.5" />
-            Submit
-          </Button>
+          {/* Submit — only enabled after a passing run */}
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    size="sm"
+                    onClick={handleSubmit}
+                    disabled={isExecuting}
+                    loading={isSubmitting || !!(submitSubmissionId)}
+                    aria-label="Submit code"
+                    className={cn(
+                      'h-8 text-xs gap-1',
+                      (!runResult || runResult.status !== 'accepted') &&
+                        'opacity-70'
+                    )}
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                    Submit
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {(!runResult || runResult.status !== 'accepted') && (
+                <TooltipContent side="bottom" className="text-xs max-w-[200px] text-center">
+                  Run your code first. All test cases must pass to submit.
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
 
           {/* Reset */}
           <Button
@@ -341,25 +386,61 @@ export function ProblemDetailPage() {
       {/* Desktop: three panels. Tablet: two panels. Mobile: tabbed. */}
 
       {/* Mobile tabs */}
-      <div className="md:hidden flex-1 overflow-hidden">
-        <Tabs defaultValue="problem" className="flex flex-col h-full">
-          <TabsList className="mx-3 mt-2 h-8 w-fit shrink-0">
+      <div className="md:hidden flex-1 flex flex-col overflow-hidden">
+        <Tabs value={mobileTab} onValueChange={(v) => setMobileTab(v as typeof mobileTab)} className="flex flex-col h-full">
+          <TabsList className="mx-3 mt-2 h-8 shrink-0 w-auto grid grid-cols-3">
             <TabsTrigger value="problem" className="text-xs h-7">Problem</TabsTrigger>
             <TabsTrigger value="editor" className="text-xs h-7">Editor</TabsTrigger>
+            <TabsTrigger value="output" className="text-xs h-7">
+              Output
+              {runResult && (
+                <span className={cn(
+                  'ml-1 h-1.5 w-1.5 rounded-full inline-block',
+                  runResult.status === 'accepted' ? 'bg-green-500' : 'bg-red-500'
+                )} />
+              )}
+            </TabsTrigger>
           </TabsList>
+
           <TabsContent value="problem" className="flex-1 overflow-y-auto mt-0 p-4">
             <ProblemPanel problem={problem} isLoading={isLoading} />
           </TabsContent>
+
           <TabsContent value="editor" className="flex-1 overflow-hidden mt-0">
-            <MonacoEditorWrapper
-              value={code}
-              language={editorSettings.language}
-              theme={editorSettings.theme}
-              fontSize={editorSettings.fontSize}
-              wordWrap={editorSettings.wordWrap}
-              minimap={editorSettings.minimap}
-              onChange={setCode}
-            />
+            <div className="flex flex-col h-full">
+              <div className="flex-1 overflow-hidden">
+                <MonacoEditorWrapper
+                  value={code}
+                  language={editorSettings.language}
+                  theme={editorSettings.theme}
+                  fontSize={editorSettings.fontSize}
+                  wordWrap={editorSettings.wordWrap}
+                  minimap={false}
+                  onChange={setCode}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="output" className="flex-1 overflow-hidden mt-0">
+            <div className="flex flex-col h-full">
+              {/* Test cases */}
+              <div className="shrink-0 border-b border-border">
+                <TestCasePanel
+                  testCases={testCases ?? []}
+                  isLoading={tcLoading}
+                  customInput={customInput}
+                  onCustomInputChange={setCustomInput}
+                />
+              </div>
+              {/* Output */}
+              <div className="flex-1 overflow-hidden">
+                <OutputPanel
+                  result={runResult}
+                  isRunning={isExecuting && (rightPanelTab === 'output' || true)}
+                />
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
