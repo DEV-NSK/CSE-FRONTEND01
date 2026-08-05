@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -380,14 +380,6 @@ export function LearningHomePage() {
                             Open Course
                           </Link>
                         </Button>
-                        {pythonContinueLearning && (
-                          <Button variant="outline" asChild className="gap-2 w-full sm:min-w-[180px]">
-                            <Link to={`/dashboard/learning/lesson/${pythonContinueLearning.lesson.id}`}>
-                              <ArrowRight className="h-4 w-4" />
-                              Resume Lesson
-                            </Link>
-                          </Button>
-                        )}
                       </div>
                     </div>
                   </div>

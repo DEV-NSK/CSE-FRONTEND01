@@ -907,7 +907,6 @@ export function ProfilePage() {
     if (!file) return
     setUploadError('')
 
-    // Validate
     const allowed = ['image/jpeg', 'image/png', 'image/webp']
     if (!allowed.includes(file.type)) {
       setUploadError('Only JPEG, PNG, or WebP images are allowed.')
@@ -924,35 +923,32 @@ export function ProfilePage() {
     } catch {
       setUploadError('Upload failed. Please retry.')
     }
-    // Reset input
     e.target.value = ''
   }
 
-  // Problems Solved = distinct accepted problems (from coding analytics)
-  // Falls back to profile analytics accepted count if coding analytics not yet loaded
   const problemsSolved = codingStats?.stats?.totalSolved ?? analytics?.accepted ?? 0
 
   const stats = [
-    { icon: Code2,     label: 'Problems Solved', value: problemsSolved, color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', delta: codingStats?.stats?.acceptanceRate !== undefined ? `${codingStats.stats.acceptanceRate}% rate` : undefined },
-    { icon: BookOpen,  label: 'Lessons Done',    value: analytics?.lessonsCompleted ?? 0, color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400' },
-    { icon: FolderOpen,label: 'Projects',         value: projects.length, color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
-    { icon: Zap,       label: 'XP Earned',        value: problemsSolved * 20 + (analytics?.lessonsCompleted ?? 0) * 10, color: 'bg-purple-500/10 text-purple-500' },
+    { icon: Code2,      label: 'Problems Solved', value: problemsSolved,                                                  color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', delta: codingStats?.stats?.acceptanceRate !== undefined ? `${codingStats.stats.acceptanceRate}% rate` : undefined },
+    { icon: BookOpen,   label: 'Lessons Done',     value: analytics?.lessonsCompleted ?? 0,                               color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400' },
+    { icon: FolderOpen, label: 'Projects',          value: projects.length,                                                color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
+    { icon: Zap,        label: 'XP Earned',         value: problemsSolved * 20 + (analytics?.lessonsCompleted ?? 0) * 10, color: 'bg-purple-500/10 text-purple-500' },
   ]
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-0">
       {/* Upload error */}
       <AnimatePresence>
         {uploadError && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center justify-between">
+            className="mb-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center justify-between">
             {uploadError}
             <button onClick={() => setUploadError('')} className="ml-2 text-destructive/70 hover:text-destructive">✕</button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── ROW 1: Hero banner (full width) ── */}
+      {/* ── ROW 1: Hero banner — flush, no bottom gap ── */}
       <HeroBanner
         user={user}
         onAvatarChange={handleAvatarChange}
@@ -960,69 +956,69 @@ export function ProfilePage() {
         uploadProgress={uploadProgress}
         onDeleteAvatar={deleteAvatar}
       />
-      <CompletionBar user={user} />
 
-      {/* ── ROW 2: [stat×4 (3/4 width)] [Recent Activity (1/4)] ──────────────
-          On desktop Activity spans rows 2-4 as a right sidebar.
-          On mobile Activity shows inline after coding stats.              ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 items-start">
+      {/* Main grid — 2 columns: left content + right sidebar */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-0 items-start mt-3">
 
-        {/* 4 stat cards — left 3 cols */}
-        <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {stats.map((s) => (
-            <StatCard key={s.label} icon={s.icon} label={s.label} value={s.value}
-              delta={s.delta} color={s.color} />
-          ))}
+        {/* ── LEFT COLUMN ── */}
+        <div className="flex flex-col gap-3 lg:pr-3">
+
+          {/* Profile completion bar (if not 100%) */}
+          <CompletionBar user={user} />
+
+          {/* ── ROW 2: 4 stat cards ── */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {stats.map((s) => (
+              <StatCard key={s.label} icon={s.icon} label={s.label} value={s.value}
+                delta={s.delta} color={s.color} />
+            ))}
+          </div>
+
+          {/* ── ROW 3: Coding Stats (left 2/3) + Resume (right 1/3) ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-start">
+            <div className="sm:col-span-2">
+              <CodingCard analytics={analytics} />
+            </div>
+            <div className="sm:col-span-1">
+              <ResumeCard
+                user={user}
+                onUploadResume={async (file, onProgress) => {
+                  setResumeUploadError('')
+                  try { await uploadResume(file, onProgress) }
+                  catch (err: any) { setResumeUploadError(err?.response?.data?.message ?? 'Resume upload failed.') }
+                }}
+                onDeleteResume={deleteResume}
+                isUploading={isUploadingResume}
+                uploadProgress={resumeUploadProgress}
+                setUploadProgress={setResumeUploadProgress}
+                uploadError={resumeUploadError}
+                clearUploadError={() => setResumeUploadError('')}
+              />
+            </div>
+          </div>
+
+          {/* ── ROW 4: Connect (left ~40%) + Share Profile (right ~60%) ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+            <SocialsCard user={user} />
+            <div className="flex flex-col gap-3">
+              <ShareCard user={user} />
+              <PrivacyCard user={user} onUpdate={updatePrivacy} />
+            </div>
+          </div>
+
+          {/* ── ROW 5: Projects (full width of left col) ── */}
+          {projects.length > 0 && <ProjectsCard projects={projects} />}
+
+          {/* ── ROW 6: Achievements badges (full width of left col) ── */}
+          {achievements.length > 0 && <AchievementsCard achievements={achievements} />}
         </div>
 
-        {/* Recent Activity — right col, desktop only (shown in row 3 on mobile) */}
-        <div className="hidden lg:block">
+        {/* ── RIGHT SIDEBAR: Recent Activity + Profile Strength (sticky) ── */}
+        <div className="flex flex-col gap-3 lg:sticky lg:top-[72px]">
           <ActivityCard activity={activity} isLoading={isActivityLoading} />
+          <CompletionCard completion={completion} />
         </div>
       </div>
-
-      {/* ── ROW 3: [Coding Stats (2/4)] [Resume (1/4)] [─Activity right─] ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 items-start">
-        <div className="lg:col-span-2">
-          <CodingCard analytics={analytics} />
-        </div>
-        <div className="lg:col-span-1">
-          <ResumeCard
-            user={user}
-            onUploadResume={async (file, onProgress) => {
-              setResumeUploadError('')
-              try { await uploadResume(file, onProgress) }
-              catch (err: any) { setResumeUploadError(err?.response?.data?.message ?? 'Resume upload failed.') }
-            }}
-            onDeleteResume={deleteResume}
-            isUploading={isUploadingResume}
-            uploadProgress={resumeUploadProgress}
-            setUploadProgress={setResumeUploadProgress}
-            uploadError={resumeUploadError}
-            clearUploadError={() => setResumeUploadError('')}
-          />
-        </div>
-        {/* Activity on mobile — shows here */}
-        <div className="lg:hidden">
-          <ActivityCard activity={activity} isLoading={isActivityLoading} />
-        </div>
-      </div>
-
-      {/* ── ROW 4: [Connect (1/4)] [Share+Privacy (1/4)] [Projects (1/4)] [Profile Strength (1/4)] ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-start">
-        <SocialsCard user={user} />
-        <div className="flex flex-col gap-3">
-          <ShareCard user={user} />
-          <PrivacyCard user={user} onUpdate={updatePrivacy} />
-        </div>
-        {projects.length > 0
-          ? <ProjectsCard projects={projects} />
-          : <div className="hidden lg:block" />}
-        <CompletionCard completion={completion} />
-      </div>
-
-      {/* ── ROW 5: Achievements (full width) — only when earned ── */}
-      {achievements.length > 0 && <AchievementsCard achievements={achievements} />}
     </div>
   )
 }
