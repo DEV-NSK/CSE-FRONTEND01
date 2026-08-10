@@ -28,6 +28,7 @@ export interface LearningLevel {
 }
 
 export interface LearningLevelFormData {
+  courseId?: string;   // required for create (flat POST /admin/learning/levels)
   levelNumber: number;
   title: string;
   description?: string;
@@ -79,6 +80,7 @@ export interface LearningResource {
 }
 
 export interface LearningContentFormData {
+  courseId?: string;   // derived from level; required on create
   levelId: string;
   dayNumber: number;
   topicName: string;

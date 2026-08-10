@@ -13,17 +13,24 @@ import {
   useUpdateLearningLevel,
   useDeleteLearningLevel,
 } from '@/shared/hooks/useAdminLearning'
+import { useQuery } from '@tanstack/react-query'
+import axiosInstance from '@/shared/lib/axios'
 import type { LearningLevelFormData } from '@/shared/types/learning-cms'
+import type { ApiResponse } from '@/types'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
 import { Textarea } from '@/shared/components/ui/textarea'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select'
+import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/shared/components/ui/card'
 import {
   Dialog,
@@ -40,7 +47,21 @@ import { EmptyState } from '@/shared/components/feedback/EmptyState'
 import { useToast } from '@/shared/hooks/useToast'
 import { cn } from '@/shared/lib/utils'
 
+interface Course { id: string; title: string; slug: string; status: string }
+
+function useCourses() {
+  return useQuery({
+    queryKey: ['admin-learning', 'courses'],
+    queryFn: () =>
+      axiosInstance
+        .get<ApiResponse<{ data: Course[] }>>('/admin/learning/courses')
+        .then((r) => r.data.data?.data ?? []),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
 const levelSchema = z.object({
+  courseId: z.string().min(1, 'Course is required'),
   levelNumber: z.number().int().min(0, 'Level number must be >= 0'),
   title: z.string().min(2, 'Title is required').max(100),
   description: z.string().max(500).optional().or(z.literal('')),
@@ -58,11 +79,12 @@ export default function AdminLearningLevelsPage() {
   const [deleteDialog, setDeleteDialog] = useState<string | null>(null)
 
   const { data: levels, isLoading, error, refetch } = useAdminLearningLevels({ includeInactive: true })
+  const { data: courses = [] } = useCourses()
   const createMutation = useCreateLearningLevel()
   const updateMutation = useUpdateLearningLevel()
   const deleteMutation = useDeleteLearningLevel()
 
-  const sortedLevels = [...(levels ?? [])].sort((a, b) => a.displayOrder - b.displayOrder)
+  const sortedLevels = [...(levels ?? [])].sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
 
   return (
     <div className="space-y-5 text-slate-200" role="main" aria-label="Learning Levels Management">
@@ -223,6 +245,7 @@ export default function AdminLearningLevelsPage() {
       <LevelFormDialog
         open={isCreating || editingId !== null}
         onOpenChange={(o) => { if (!o) { setIsCreating(false); setEditingId(null) } }}
+        courses={courses}
         initial={editingId ? (levels ?? []).find((l) => l.id === editingId) : undefined}
         onSubmit={async (values) => {
           try {
@@ -283,11 +306,12 @@ export default function AdminLearningLevelsPage() {
 interface FormDialogProps {
   open: boolean
   onOpenChange: (o: boolean) => void
-  initial?: { id: string; levelNumber: number; title: string; description?: string | null; displayOrder: number; isActive: boolean }
+  courses: Course[]
+  initial?: { id: string; courseId?: string; levelNumber: number; title: string; description?: string | null; displayOrder?: number; isActive?: boolean }
   onSubmit: (values: LearningLevelFormData) => Promise<void>
 }
 
-function LevelFormDialog({ open, onOpenChange, initial, onSubmit }: FormDialogProps) {
+function LevelFormDialog({ open, onOpenChange, courses, initial, onSubmit }: FormDialogProps) {
   const isEdit = !!initial
   const {
     register,
@@ -295,10 +319,11 @@ function LevelFormDialog({ open, onOpenChange, initial, onSubmit }: FormDialogPr
     setValue,
     watch,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<LevelFormValues>({
     resolver: zodResolver(levelSchema),
     defaultValues: {
+      courseId: initial?.courseId ?? (courses[0]?.id ?? ''),
       levelNumber: initial?.levelNumber ?? 0,
       title: initial?.title ?? '',
       description: initial?.description ?? '',
@@ -307,7 +332,15 @@ function LevelFormDialog({ open, onOpenChange, initial, onSubmit }: FormDialogPr
     },
   })
 
+  // When courses load, set default courseId if not editing
+  const courseId = watch('courseId')
   const active = watch('isActive')
+
+  // Reset form defaults when courses arrive on create
+  const firstCourseId = courses[0]?.id
+  if (!isEdit && !courseId && firstCourseId) {
+    setValue('courseId', firstCourseId)
+  }
 
   return (
     <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) reset() }}>
@@ -319,6 +352,33 @@ function LevelFormDialog({ open, onOpenChange, initial, onSubmit }: FormDialogPr
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Course selector — required for creation */}
+          {!isEdit && (
+            <div className="space-y-1.5">
+              <Label className="text-slate-300">Course <span className="text-red-400">*</span></Label>
+              {courses.length === 0 ? (
+                <p className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+                  No courses found. Create a course first before adding levels.
+                </p>
+              ) : (
+                <Select
+                  value={courseId}
+                  onValueChange={(v) => setValue('courseId', v, { shouldDirty: true })}
+                >
+                  <SelectTrigger className="bg-slate-950 border-slate-700">
+                    <SelectValue placeholder="Select course" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-900 border-slate-700">
+                    {courses.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {errors.courseId && <p className="text-xs text-red-400">{errors.courseId.message}</p>}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-slate-300">Level Number <span className="text-red-400">*</span></Label>
@@ -373,7 +433,9 @@ function LevelFormDialog({ open, onOpenChange, initial, onSubmit }: FormDialogPr
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="text-slate-400">
               Cancel
             </Button>
-            <Button type="submit">{isEdit ? 'Save Changes' : 'Create Level'}</Button>
+            <Button type="submit" disabled={isSubmitting || (!isEdit && courses.length === 0)}>
+              {isSubmitting ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Level'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

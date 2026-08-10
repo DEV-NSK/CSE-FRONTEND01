@@ -109,14 +109,21 @@ export const useAuthStore = create<AuthStore>()(
             isAuthenticated: true,
             isLoading: false,
           })
-        } catch {
-          set({
-            user: null,
-            tokens: null,
-            permissions: [],
-            isAuthenticated: false,
-            isLoading: false,
-          })
+        } catch (err: unknown) {
+          const status = (err as { response?: { status?: number } })?.response?.status
+          // Only clear auth on explicit auth rejection — NOT on network/5xx errors
+          if (status === 401 || status === 403) {
+            set({
+              user: null,
+              tokens: null,
+              permissions: [],
+              isAuthenticated: false,
+              isLoading: false,
+            })
+          } else {
+            // Network error / 5xx / server restart — keep cached session
+            set({ isLoading: false })
+          }
         }
       },
 

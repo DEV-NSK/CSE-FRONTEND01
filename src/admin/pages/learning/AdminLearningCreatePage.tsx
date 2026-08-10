@@ -115,7 +115,7 @@ export default function AdminLearningCreatePage() {
       setValue('dayNumber', existingContent.dayNumber)
       setValue('topicName', existingContent.topicName)
       setValue('description', existingContent.description ?? '')
-      setValue('reelUrl', existingContent.reelUrl)
+      setValue('reelUrl', existingContent.reelUrl ?? '')
       setValue('youtubeUrl', existingContent.youtubeUrl ?? '')
       setStatus(existingContent.status)
       if (existingContent.resources && existingContent.resources.length > 0) {
@@ -168,7 +168,7 @@ export default function AdminLearningCreatePage() {
     try {
       for (const file of validFiles) {
         const fd = new FormData()
-        fd.append('file', file)
+        fd.append('noteImage', file)   // must match backend multer field name
         const res = await uploadNotesMutation.mutateAsync({ contentId: id!, formData: fd })
         if (res.data.data?.images) {
           setNotes(res.data.data.images)
@@ -209,8 +209,18 @@ export default function AdminLearningCreatePage() {
   }
 
   const submitContent = async (values: FormValues, publishAfter: boolean) => {
+    // Derive courseId from the selected level
+    const selectedLevel = levels?.find((l) => l.id === values.levelId)
+    const courseId = selectedLevel?.courseId
+
+    if (!courseId && !isEdit) {
+      toast({ title: 'Selected level has no course associated', variant: 'error' })
+      return
+    }
+
     const contentPayload: LearningContentFormData = {
       ...values,
+      ...(courseId ? { courseId } : {}),
       description: values.description || undefined,
       youtubeUrl: values.youtubeUrl || undefined,
       resources: resources.filter((r) => r.title && r.url).map((r) => ({ title: r.title, url: r.url })),

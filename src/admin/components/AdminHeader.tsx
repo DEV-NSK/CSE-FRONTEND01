@@ -1,7 +1,8 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Bell, ChevronRight, LogOut, Search, Activity } from 'lucide-react'
+import { Bell, ChevronRight, LogOut, Search, Activity, Sun, Moon } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { useAuthStore } from '@/shared/store/authStore'
+import { useThemeStore } from '@/shared/store/themeStore'
 import { authService } from '@/shared/services/auth.service'
 import { queryClient } from '@/shared/lib/queryClient'
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar'
@@ -16,23 +17,43 @@ import { useAdminDashboard } from '@/shared/hooks/useAdminAnalytics'
 import { cn } from '@/shared/lib/utils'
 
 const ROUTE_LABELS: Record<string, string> = {
-  '/admin':             'Admin',
-  '/admin/dashboard':   'Dashboard',
-  '/admin/users':       'User Management',
-  '/admin/managers':    'Manager Management',
-  '/admin/permissions': 'Permission Management',
-  '/admin/analytics':   'Platform Analytics',
-  '/admin/platform':    'Platform Settings',
-  '/admin/audit':       'Audit Logs',
-  '/admin/system':      'System Monitor',
-  '/admin/settings':    'Settings',
-  '/admin/profile':     'Profile',
+  '/admin':                      'Admin',
+  '/admin/dashboard':            'Dashboard',
+  '/admin/learning':             'Learning Overview',
+  '/admin/learning/content':     'Content Library',
+  '/admin/learning/create':      'Create Content',
+  '/admin/learning/levels':      'Levels',
+  '/admin/users':                'User Management',
+  '/admin/managers':             'Manager Management',
+  '/admin/permissions':          'Permission Management',
+  '/admin/analytics':            'Platform Analytics',
+  '/admin/platform':             'Platform Settings',
+  '/admin/audit':                'Audit Logs',
+  '/admin/system':               'System Monitor',
+  '/admin/settings':             'Settings',
+  '/admin/profile':              'Profile',
 }
 
 function getBreadcrumbs(pathname: string) {
   const crumbs: { label: string; href: string }[] = [{ label: 'Admin', href: '/admin/dashboard' }]
+
+  // Handle /admin/learning/:id/edit and /admin/learning/:id patterns
+  if (pathname.startsWith('/admin/learning/') && pathname !== '/admin/learning/content' && pathname !== '/admin/learning/create' && pathname !== '/admin/learning/levels') {
+    crumbs.push({ label: 'Learning Overview', href: '/admin/learning' })
+    if (pathname.endsWith('/edit')) {
+      crumbs.push({ label: 'Edit Content', href: pathname })
+    } else {
+      crumbs.push({ label: 'View Content', href: pathname })
+    }
+    return crumbs
+  }
+
   const label = ROUTE_LABELS[pathname]
   if (label && pathname !== '/admin' && pathname !== '/admin/dashboard') {
+    // Add parent breadcrumb for learning sub-pages
+    if (pathname.startsWith('/admin/learning/')) {
+      crumbs.push({ label: 'Learning Overview', href: '/admin/learning' })
+    }
     crumbs.push({ label, href: pathname })
   }
   return crumbs
@@ -41,6 +62,7 @@ function getBreadcrumbs(pathname: string) {
 export function AdminHeader() {
   const location      = useLocation()
   const { user, logout } = useAuthStore()
+  const { resolvedTheme, setTheme } = useThemeStore()
   const navigate      = useNavigate()
   const breadcrumbs   = getBreadcrumbs(location.pathname)
 
@@ -58,6 +80,10 @@ export function AdminHeader() {
     logout()
     queryClient.clear()
     navigate('/auth/login', { replace: true })
+  }
+
+  const toggleTheme = () => {
+    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
   }
 
   return (
@@ -96,6 +122,22 @@ export function AdminHeader() {
           aria-label="Search"
         >
           <Search className="w-4 h-4" />
+        </Button>
+
+        {/* Theme toggle */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={toggleTheme}
+          className="h-8 w-8 p-0 text-slate-500 hover:text-slate-200 hover:bg-slate-800"
+          aria-label={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          title={resolvedTheme === 'dark' ? 'Light mode' : 'Dark mode'}
+        >
+          {resolvedTheme === 'dark' ? (
+            <Sun className="w-4 h-4" />
+          ) : (
+            <Moon className="w-4 h-4" />
+          )}
         </Button>
 
         {/* Bell with live unread badge */}
