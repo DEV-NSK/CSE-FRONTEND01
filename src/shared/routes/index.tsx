@@ -11,42 +11,105 @@ import { PageLoader } from "@/shared/components/feedback/LoadingSpinner";
 
 // ── Lazy-load role-specific layouts ───────────────────────────────────────────
 const ManagerLayout = lazy(() =>
-  import("@/manager/layouts/ManagerLayout").then((m) => ({ default: m.ManagerLayout }))
+  import("@/manager/layouts/ManagerLayout").then((m) => ({
+    default: m.ManagerLayout,
+  })),
 );
 const AdminLayout = lazy(() =>
-  import("@/admin/layouts/AdminLayout").then((m) => ({ default: m.AdminLayout }))
+  import("@/admin/layouts/AdminLayout").then((m) => ({
+    default: m.AdminLayout,
+  })),
 );
 
 // ── Lazy-load Manager pages ───────────────────────────────────────────────────
-const ManagerDashboardPage = lazy(() => import("@/manager/pages/dashboard/ManagerDashboardPage"));
-const ManagerLearningPage = lazy(() => import("@/manager/pages/learning/ManagerLearningPage"));
-const ManagerCodingPage = lazy(() => import("@/manager/pages/coding/ManagerCodingPage"));
-const ManagerProjectsPage = lazy(() => import("@/manager/pages/projects/ManagerProjectsPage"));
-const ManagerPlacementsPage = lazy(() => import("@/manager/pages/placements/ManagerPlacementsPage"));
-const ManagerEventsPage = lazy(() => import("@/manager/pages/events/ManagerEventsPage"));
-const ManagerNotificationsPage = lazy(() => import("@/manager/pages/notifications/ManagerNotificationsPage"));
-const ManagerReportsPage = lazy(() => import("@/manager/pages/reports/ManagerReportsPage"));
-const ManagerProfilePage = lazy(() => import("@/manager/pages/profile/ManagerProfilePage"));
-const ManagerSettingsPage = lazy(() => import("@/manager/pages/settings/ManagerSettingsPage"));
+const ManagerDashboardPage = lazy(
+  () => import("@/manager/pages/dashboard/ManagerDashboardPage"),
+);
+const ManagerLearningPage = lazy(
+  () => import("@/manager/pages/learning/ManagerLearningPage"),
+);
+const ManagerCodingPage = lazy(
+  () => import("@/manager/pages/coding/ManagerCodingPage"),
+);
+const ManagerProjectsPage = lazy(
+  () => import("@/manager/pages/projects/ManagerProjectsPage"),
+);
+const ManagerPlacementsPage = lazy(
+  () => import("@/manager/pages/placements/ManagerPlacementsPage"),
+);
+const ManagerEventsPage = lazy(
+  () => import("@/manager/pages/events/ManagerEventsPage"),
+);
+const ManagerNotificationsPage = lazy(
+  () => import("@/manager/pages/notifications/ManagerNotificationsPage"),
+);
+const ManagerReportsPage = lazy(
+  () => import("@/manager/pages/reports/ManagerReportsPage"),
+);
+const ManagerProfilePage = lazy(
+  () => import("@/manager/pages/profile/ManagerProfilePage"),
+);
+const ManagerSettingsPage = lazy(
+  () => import("@/manager/pages/settings/ManagerSettingsPage"),
+);
 // FPRD-10 new pages
-const ManagerBannersPage = lazy(() => import("@/manager/pages/banners/ManagerBannersPage"));
+const ManagerBannersPage = lazy(
+  () => import("@/manager/pages/banners/ManagerBannersPage"),
+);
 const ManagerFaqPage = lazy(() => import("@/manager/pages/faq/ManagerFaqPage"));
-const ManagerTestimonialsPage = lazy(() => import("@/manager/pages/testimonials/ManagerTestimonialsPage"));
-const ManagerMediaPage = lazy(() => import("@/manager/pages/media/ManagerMediaPage"));
-const ManagerSearchPage = lazy(() => import("@/manager/pages/search/ManagerSearchPage"));
-const ManagerActivityPage = lazy(() => import("@/manager/pages/activity/ManagerActivityPage"));
+const ManagerTestimonialsPage = lazy(
+  () => import("@/manager/pages/testimonials/ManagerTestimonialsPage"),
+);
+const ManagerMediaPage = lazy(
+  () => import("@/manager/pages/media/ManagerMediaPage"),
+);
+const ManagerSearchPage = lazy(
+  () => import("@/manager/pages/search/ManagerSearchPage"),
+);
+const ManagerActivityPage = lazy(
+  () => import("@/manager/pages/activity/ManagerActivityPage"),
+);
 
 // ── Lazy-load Admin pages ─────────────────────────────────────────────────────
-const AdminDashboardPage = lazy(() => import("@/admin/pages/dashboard/AdminDashboardPage"));
+const AdminDashboardPage = lazy(
+  () => import("@/admin/pages/dashboard/AdminDashboardPage"),
+);
 const AdminUsersPage = lazy(() => import("@/admin/pages/users/AdminUsersPage"));
-const AdminManagersPage = lazy(() => import("@/admin/pages/managers/AdminManagersPage"));
-const AdminPermissionsPage = lazy(() => import("@/admin/pages/permissions/AdminPermissionsPage"));
-const AdminAnalyticsPage = lazy(() => import("@/admin/pages/analytics/AdminAnalyticsPage"));
-const AdminPlatformPage = lazy(() => import("@/admin/pages/platform/AdminPlatformPage"));
+const AdminManagersPage = lazy(
+  () => import("@/admin/pages/managers/AdminManagersPage"),
+);
+const AdminPermissionsPage = lazy(
+  () => import("@/admin/pages/permissions/AdminPermissionsPage"),
+);
+const AdminAnalyticsPage = lazy(
+  () => import("@/admin/pages/analytics/AdminAnalyticsPage"),
+);
+const AdminPlatformPage = lazy(
+  () => import("@/admin/pages/platform/AdminPlatformPage"),
+);
 const AdminAuditPage = lazy(() => import("@/admin/pages/audit/AdminAuditPage"));
-const AdminSystemPage = lazy(() => import("@/admin/pages/system/AdminSystemPage"));
-const AdminSettingsPage = lazy(() => import("@/admin/pages/settings/AdminSettingsPage"));
-const AdminProfilePage = lazy(() => import("@/admin/pages/profile/AdminProfilePage"));
+const AdminSystemPage = lazy(
+  () => import("@/admin/pages/system/AdminSystemPage"),
+);
+const AdminSettingsPage = lazy(
+  () => import("@/admin/pages/settings/AdminSettingsPage"),
+);
+const AdminProfilePage = lazy(
+  () => import("@/admin/pages/profile/AdminProfilePage"),
+);
+// CAMPUSRANK+INSTA: Learning CMS (SUPER_ADMIN)
+const AdminLearningDashboardPage = lazy(
+  () => import("@/admin/pages/learning/AdminLearningDashboardPage"),
+);
+const AdminLearningContentPage = lazy(
+  () => import("@/admin/pages/learning/AdminLearningContentPage"),
+);
+const AdminLearningCreatePage = lazy(
+  () => import("@/admin/pages/learning/AdminLearningCreatePage"),
+);
+const AdminLearningLevelsPage = lazy(
+  () => import("@/admin/pages/learning/AdminLearningLevelsPage"),
+);
 
 // ── Pages - Public ────────────────────────────────────────────────────────────
 import { LandingPage } from "@/shared/pages/LandingPage";
@@ -65,16 +128,10 @@ import { EditProfilePage } from "@/student/features/profile/pages/EditProfilePag
 import { SettingsPage } from "@/shared/pages/SettingsPage";
 
 // ── Pages - Learning ──────────────────────────────────────────────────────────
-import { LearningHomePage } from "@/student/features/learning/pages/LearningHomePage";
-import { CategoriesPage } from "@/student/features/learning/pages/CategoriesPage";
-import { RoadmapsPage } from "@/student/features/learning/pages/RoadmapsPage";
-import { RoadmapDetailPage } from "@/student/features/learning/pages/RoadmapDetailPage";
-import { LessonViewerPage } from "@/student/features/learning/pages/LessonViewerPage";
-import { ResourceViewerPage } from "@/student/features/learning/pages/ResourceViewerPage";
-import { ContinueLearningPage } from "@/student/features/learning/pages/ContinueLearningPage";
-import { BookmarksPage } from "@/student/features/learning/pages/BookmarksPage";
-import { RecentlyViewedPage } from "@/student/features/learning/pages/RecentlyViewedPage";
-import { SearchResultsPage } from "@/student/features/learning/pages/SearchResultsPage";
+// CAMPUSRANK+INSTA: New CMS-driven Learning pages (replace old Python/hardcoded)
+import StudentLearningDashboardPage from "@/student/features/learning/pages/StudentLearningDashboardPage";
+import StudentLearningRoadmapPage from "@/student/features/learning/pages/StudentLearningRoadmapPage";
+import StudentLearningDetailPage from "@/student/features/learning/pages/StudentLearningDetailPage";
 
 // ── Pages - Coding ────────────────────────────────────────────────────────────
 import { CodingHomePage } from "@/student/features/coding/pages/CodingHomePage";
@@ -185,17 +242,10 @@ export const router = createBrowserRouter([
       { path: "settings", element: <SettingsPage /> },
       { path: "notifications", element: <NotificationsPage /> },
 
-      // Learning
-      { path: "learning", element: <LearningHomePage /> },
-      { path: "learning/categories", element: <CategoriesPage /> },
-      { path: "learning/roadmaps", element: <RoadmapsPage /> },
-      { path: "learning/roadmaps/:slug", element: <RoadmapDetailPage /> },
-      { path: "learning/lesson/:id", element: <LessonViewerPage /> },
-      { path: "learning/resources/:id", element: <ResourceViewerPage /> },
-      { path: "learning/continue", element: <ContinueLearningPage /> },
-      { path: "learning/bookmarks", element: <BookmarksPage /> },
-      { path: "learning/recent", element: <RecentlyViewedPage /> },
-      { path: "learning/search", element: <SearchResultsPage /> },
+      // Learning — CAMPUSRANK+INSTA: CMS-driven (replaces old Python/hardcoded routes)
+      { path: "learning", element: <StudentLearningDashboardPage /> },
+      { path: "learning/roadmap", element: <StudentLearningRoadmapPage /> },
+      { path: "learning/:id", element: <StudentLearningDetailPage /> },
 
       // Coding
       { path: "coding", element: <CodingHomePage /> },
@@ -210,30 +260,60 @@ export const router = createBrowserRouter([
       // FPRD-16: Question Bank routes
       { path: "coding/question-bank", element: <QuestionBankPage /> },
       { path: "coding/question-bank/:slug", element: <TopicDetailPage /> },
-      { path: "coding/question-bank/:slug/:problemSlug", element: <QuestionDetailPage /> },
+      {
+        path: "coding/question-bank/:slug/:problemSlug",
+        element: <QuestionDetailPage />,
+      },
       { path: "coding/contests", element: <ContestsPage /> },
       // Legacy /coding/problems route still works — ProblemsListPage is the advanced filter view
       // DiscussionsPage also routed from problem detail page link
 
       // ── FPRD-13: Non-MVP modules redirect to Launching Soon ─────────────────
       // Projects → /launching-soon/projects
-      { path: "projects", element: <Navigate to="/dashboard/launching-soon/projects" replace /> },
-      { path: "projects/*", element: <Navigate to="/dashboard/launching-soon/projects" replace /> },
+      {
+        path: "projects",
+        element: <Navigate to="/dashboard/launching-soon/projects" replace />,
+      },
+      {
+        path: "projects/*",
+        element: <Navigate to="/dashboard/launching-soon/projects" replace />,
+      },
 
       // Placement → /launching-soon/placement
-      { path: "placement", element: <Navigate to="/dashboard/launching-soon/placement" replace /> },
-      { path: "placement/*", element: <Navigate to="/dashboard/launching-soon/placement" replace /> },
+      {
+        path: "placement",
+        element: <Navigate to="/dashboard/launching-soon/placement" replace />,
+      },
+      {
+        path: "placement/*",
+        element: <Navigate to="/dashboard/launching-soon/placement" replace />,
+      },
 
       // Resume (part of Placement) → /launching-soon/placement
-      { path: "resume", element: <Navigate to="/dashboard/launching-soon/placement" replace /> },
-      { path: "resume/*", element: <Navigate to="/dashboard/launching-soon/placement" replace /> },
+      {
+        path: "resume",
+        element: <Navigate to="/dashboard/launching-soon/placement" replace />,
+      },
+      {
+        path: "resume/*",
+        element: <Navigate to="/dashboard/launching-soon/placement" replace />,
+      },
 
       // Events → /launching-soon/events
-      { path: "events", element: <Navigate to="/dashboard/launching-soon/events" replace /> },
-      { path: "events/*", element: <Navigate to="/dashboard/launching-soon/events" replace /> },
+      {
+        path: "events",
+        element: <Navigate to="/dashboard/launching-soon/events" replace />,
+      },
+      {
+        path: "events/*",
+        element: <Navigate to="/dashboard/launching-soon/events" replace />,
+      },
 
       // Analytics → /launching-soon/analytics
-      { path: "analytics", element: <Navigate to="/dashboard/launching-soon/analytics" replace /> },
+      {
+        path: "analytics",
+        element: <Navigate to="/dashboard/launching-soon/analytics" replace />,
+      },
 
       // Launching Soon page (catch-all for non-MVP modules)
       { path: "launching-soon/:module", element: <LaunchingSoonPage /> },
@@ -257,23 +337,135 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <Navigate to="/manager/dashboard" replace /> },
-      { path: "dashboard", element: <LazyPage><ManagerDashboardPage /></LazyPage> },
-      { path: "learning", element: <LazyPage><ManagerLearningPage /></LazyPage> },
-      { path: "coding", element: <LazyPage><ManagerCodingPage /></LazyPage> },
-      { path: "projects", element: <LazyPage><ManagerProjectsPage /></LazyPage> },
-      { path: "placements", element: <LazyPage><ManagerPlacementsPage /></LazyPage> },
-      { path: "events", element: <LazyPage><ManagerEventsPage /></LazyPage> },
-      { path: "notifications", element: <LazyPage><ManagerNotificationsPage /></LazyPage> },
-      { path: "reports", element: <LazyPage><ManagerReportsPage /></LazyPage> },
-      { path: "profile", element: <LazyPage><ManagerProfilePage /></LazyPage> },
-      { path: "settings", element: <LazyPage><ManagerSettingsPage /></LazyPage> },
+      {
+        path: "dashboard",
+        element: (
+          <LazyPage>
+            <ManagerDashboardPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "learning",
+        element: (
+          <LazyPage>
+            <ManagerLearningPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "coding",
+        element: (
+          <LazyPage>
+            <ManagerCodingPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "projects",
+        element: (
+          <LazyPage>
+            <ManagerProjectsPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "placements",
+        element: (
+          <LazyPage>
+            <ManagerPlacementsPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "events",
+        element: (
+          <LazyPage>
+            <ManagerEventsPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "notifications",
+        element: (
+          <LazyPage>
+            <ManagerNotificationsPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "reports",
+        element: (
+          <LazyPage>
+            <ManagerReportsPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "profile",
+        element: (
+          <LazyPage>
+            <ManagerProfilePage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "settings",
+        element: (
+          <LazyPage>
+            <ManagerSettingsPage />
+          </LazyPage>
+        ),
+      },
       // FPRD-10 new routes
-      { path: "banners", element: <LazyPage><ManagerBannersPage /></LazyPage> },
-      { path: "faq", element: <LazyPage><ManagerFaqPage /></LazyPage> },
-      { path: "testimonials", element: <LazyPage><ManagerTestimonialsPage /></LazyPage> },
-      { path: "media", element: <LazyPage><ManagerMediaPage /></LazyPage> },
-      { path: "search", element: <LazyPage><ManagerSearchPage /></LazyPage> },
-      { path: "activity", element: <LazyPage><ManagerActivityPage /></LazyPage> },
+      {
+        path: "banners",
+        element: (
+          <LazyPage>
+            <ManagerBannersPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "faq",
+        element: (
+          <LazyPage>
+            <ManagerFaqPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "testimonials",
+        element: (
+          <LazyPage>
+            <ManagerTestimonialsPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "media",
+        element: (
+          <LazyPage>
+            <ManagerMediaPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "search",
+        element: (
+          <LazyPage>
+            <ManagerSearchPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "activity",
+        element: (
+          <LazyPage>
+            <ManagerActivityPage />
+          </LazyPage>
+        ),
+      },
     ],
   },
 
@@ -290,16 +482,135 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <Navigate to="/admin/dashboard" replace /> },
-      { path: "dashboard", element: <LazyPage><AdminDashboardPage /></LazyPage> },
-      { path: "users", element: <LazyPage><AdminUsersPage /></LazyPage> },
-      { path: "managers", element: <LazyPage><AdminManagersPage /></LazyPage> },
-      { path: "permissions", element: <LazyPage><AdminPermissionsPage /></LazyPage> },
-      { path: "analytics", element: <LazyPage><AdminAnalyticsPage /></LazyPage> },
-      { path: "platform", element: <LazyPage><AdminPlatformPage /></LazyPage> },
-      { path: "audit", element: <LazyPage><AdminAuditPage /></LazyPage> },
-      { path: "system", element: <LazyPage><AdminSystemPage /></LazyPage> },
-      { path: "settings", element: <LazyPage><AdminSettingsPage /></LazyPage> },
-      { path: "profile", element: <LazyPage><AdminProfilePage /></LazyPage> },
+      {
+        path: "dashboard",
+        element: (
+          <LazyPage>
+            <AdminDashboardPage />
+          </LazyPage>
+        ),
+      },
+      // Learning CMS — CAMPUSRANK+INSTA
+      {
+        path: "learning",
+        element: (
+          <LazyPage>
+            <AdminLearningDashboardPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "learning/content",
+        element: (
+          <LazyPage>
+            <AdminLearningContentPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "learning/create",
+        element: (
+          <LazyPage>
+            <AdminLearningCreatePage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "learning/levels",
+        element: (
+          <LazyPage>
+            <AdminLearningLevelsPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "learning/:id",
+        element: (
+          <LazyPage>
+            <AdminLearningCreatePage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "learning/:id/edit",
+        element: (
+          <LazyPage>
+            <AdminLearningCreatePage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "users",
+        element: (
+          <LazyPage>
+            <AdminUsersPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "managers",
+        element: (
+          <LazyPage>
+            <AdminManagersPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "permissions",
+        element: (
+          <LazyPage>
+            <AdminPermissionsPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "analytics",
+        element: (
+          <LazyPage>
+            <AdminAnalyticsPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "platform",
+        element: (
+          <LazyPage>
+            <AdminPlatformPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "audit",
+        element: (
+          <LazyPage>
+            <AdminAuditPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "system",
+        element: (
+          <LazyPage>
+            <AdminSystemPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "settings",
+        element: (
+          <LazyPage>
+            <AdminSettingsPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "profile",
+        element: (
+          <LazyPage>
+            <AdminProfilePage />
+          </LazyPage>
+        ),
+      },
     ],
   },
 
