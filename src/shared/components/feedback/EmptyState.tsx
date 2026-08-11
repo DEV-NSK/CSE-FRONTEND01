@@ -26,27 +26,58 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ icon, title, description, action, className, compact }: EmptyStateProps) {
-  // Render icon safely: component constructor → JSX element, React element → as-is
+  // Render icon safely: handles all valid React component types and elements
   const iconNode: React.ReactNode = React.useMemo(() => {
-    if (!icon) return null
-    // Already a rendered React element (has $$typeof Symbol)
+    if (icon == null) return null
+
+    // Already a rendered React element — render as-is
     if (React.isValidElement(icon)) return icon
-    // Component constructor (function or class) — render it
+
+    // Plain function component or class component
     if (typeof icon === 'function') {
-      const Icon = icon
+      const Icon = icon as React.ElementType
       return <Icon className={compact ? 'h-8 w-8' : 'h-10 w-10'} />
     }
-    // Fallback: treat as ReactNode (string, number, etc.)
-    return icon as React.ReactNode
+
+    // React.forwardRef / React.memo components (typeof === 'object' with $$typeof symbol)
+    // e.g. Lucide v1.x icons — forwardRef returns { $$typeof: Symbol(react.forward_ref), render }
+    if (
+      typeof icon === 'object' &&
+      icon !== null &&
+      '$$typeof' in (icon as object)
+    ) {
+      const Icon = icon as React.ElementType
+      return <Icon className={compact ? 'h-8 w-8' : 'h-10 w-10'} />
+    }
+
+    // Primitives (string, number) are valid React children — render directly
+    if (typeof icon === 'string' || typeof icon === 'number') {
+      return icon
+    }
+
+    // Anything else (plain object, boolean, etc.) — swallow it; never render raw objects
+    return null
   }, [icon, compact])
 
   // Render action safely: {label, onClick} config → Button, React node → as-is
   const actionNode: React.ReactNode = React.useMemo(() => {
-    if (!action) return null
+    if (action == null) return null
+
+    // Already a rendered React element (e.g. <Button>...</Button>)
     if (React.isValidElement(action)) return action
-    if (typeof action === 'object' && 'label' in action && 'onClick' in action) {
-      return <Button onClick={action.onClick}>{action.label}</Button>
+
+    // Config object with label + onClick
+    if (
+      typeof action === 'object' &&
+      action !== null &&
+      'label' in (action as object) &&
+      'onClick' in (action as object)
+    ) {
+      const cfg = action as { label: string; onClick: () => void }
+      return <Button onClick={cfg.onClick}>{cfg.label}</Button>
     }
+
+    // Everything else: do NOT render — avoids Error #31 from plain objects
     return null
   }, [action])
 
