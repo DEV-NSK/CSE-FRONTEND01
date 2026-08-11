@@ -72,9 +72,12 @@ export function useCompleteLesson() {
   return useMutation({
     mutationFn: (contentId: string) => studentLearningService.completeLesson(contentId),
     onSuccess: () => {
+      // PRD-FINAL-01 §70: invalidate only related queries
       queryClient.invalidateQueries({ queryKey: studentLearningKeys.dashboard() })
       queryClient.invalidateQueries({ queryKey: studentLearningKeys.roadmap() })
       queryClient.invalidateQueries({ queryKey: studentLearningKeys.continueLearning() })
+      // Also invalidate legacy stats since /learning/stats reads from lesson_progress
+      queryClient.invalidateQueries({ queryKey: ['learning', 'stats'] })
     },
   })
 }

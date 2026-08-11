@@ -59,9 +59,7 @@ export function useRoadmaps(filters?: Partial<RoadmapFilters>) {
   return useQuery({
     queryKey: learningKeys.roadmaps(filters),
     queryFn: () => learningService.getRoadmaps(filters).then((r) => r.data.data),
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    staleTime: 2 * 60 * 1000,   // 2 min — roadmap list doesn't change per-second
     placeholderData: (prev) => prev,
   })
 }
@@ -71,9 +69,7 @@ export function useRoadmap(slug: string) {
     queryKey: learningKeys.roadmap(slug),
     queryFn: () => learningService.getRoadmapBySlug(slug).then((r) => r.data.data),
     enabled: !!slug,
-    staleTime: 0,          // always re-fetch to get live progress
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    staleTime: 30 * 1000,   // 30s — progress updates happen after mutations which invalidate
   })
 }
 
@@ -92,11 +88,11 @@ export function useMarkLessonComplete() {
   return useMutation({
     mutationFn: (id: string) => learningService.markLessonComplete(id),
     onSuccess: (_, id) => {
+      // PRD-FINAL-01 §70: invalidate only related queries, not the entire cache
       queryClient.invalidateQueries({ queryKey: learningKeys.lesson(id) })
-      queryClient.invalidateQueries({ queryKey: learningKeys.all })
-      // Also invalidate profile analytics and coding analytics so profile page updates
-      queryClient.invalidateQueries({ queryKey: ['profile'] })
-      queryClient.invalidateQueries({ queryKey: ['coding', 'analytics'] })
+      queryClient.invalidateQueries({ queryKey: learningKeys.stats() })
+      queryClient.invalidateQueries({ queryKey: learningKeys.continueLearning() })
+      queryClient.invalidateQueries({ queryKey: learningKeys.recentlyViewed() })
     },
   })
 }
@@ -123,15 +119,16 @@ export function useResource(id: string) {
 }
 
 // ─── Stats ───────────────────────────────────────────────────────────────────
+// PRD-FINAL-01 §34: /api/learning/stats is a moderately-expensive query.
+// 60s staleTime prevents re-fetching on every render while staying fresh.
+// refetchOnWindowFocus disabled globally by queryClient default.
 
 export function useLearningStats() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   return useQuery({
     queryKey: learningKeys.stats(),
     queryFn: () => learningService.getLearningStats().then((r) => r.data.data),
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    staleTime: 60 * 1000,   // 60 seconds
     enabled: isAuthenticated,
   })
 }

@@ -6,14 +6,31 @@ import type {
   LeaderboardResponse,
   DailyTasksResponse,
   DashboardActivityDay,
+  AggregatedDashboard,
 } from '@/shared/services/dashboard.service'
 import type { OverallAnalytics, HeatmapData } from '@/shared/types/analytics'
 
 export const dashboardKeys = {
+  aggregated: () => ['dashboard', 'aggregated'] as const,
   leaderboard: () => ['dashboard', 'leaderboard'] as const,
   dailyTasks: () => ['dashboard', 'daily-tasks'] as const,
   activity: (year?: number) => ['dashboard', 'activity', year] as const,
   analytics: () => ['dashboard', 'analytics'] as const,
+}
+
+/**
+ * PRD-FINAL-01 §36-37: Replaces 10 individual requests with one aggregated call.
+ * Use this on the main student dashboard page.
+ * Individual hooks below remain available for pages that navigate to specific widgets.
+ */
+export function useAggregatedDashboard() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  return useQuery<AggregatedDashboard>({
+    queryKey: dashboardKeys.aggregated(),
+    queryFn: () => dashboardService.getAggregated().then((r) => r.data.data),
+    staleTime: 1000 * 60,   // 60 seconds — PRD §34
+    enabled: isAuthenticated,
+  })
 }
 
 export function useLeaderboard() {
