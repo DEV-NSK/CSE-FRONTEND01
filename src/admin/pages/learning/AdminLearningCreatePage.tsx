@@ -331,7 +331,7 @@ export default function AdminLearningCreatePage() {
                     <SelectContent className="bg-slate-900 border-slate-700">
                       {levels?.map((l) => (
                         <SelectItem key={l.id} value={l.id}>
-                          Level {l.levelNumber.toString().padStart(2, '0')} — {l.title}
+                          Level {String(l.levelNumber ?? 0).padStart(2, '0')} — {l.title}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -585,12 +585,12 @@ export default function AdminLearningCreatePage() {
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">Level</span>
                 <span className="text-slate-300 font-mono">
-                  {watchAll.levelId ? (levels?.find((l) => l.id === watchAll.levelId)?.levelNumber?.toString().padStart(2, '0') ?? '—') : '—'}
+                  {watchAll.levelId ? (String(levels?.find((l) => l.id === watchAll.levelId)?.levelNumber ?? '—').padStart(2, '0')) : '—'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">Day</span>
-                <span className="text-slate-300 font-mono">{watchAll.dayNumber?.toString().padStart(2, '0') ?? '—'}</span>
+                <span className="text-slate-300 font-mono">{watchAll.dayNumber != null ? String(watchAll.dayNumber).padStart(2, '0') : '—'}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">Notes</span>
@@ -616,9 +616,9 @@ export default function AdminLearningCreatePage() {
         <DialogContent className="bg-slate-900 border-slate-700 max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-slate-100">
-              Level {watchAll.levelId ? (levels?.find((l) => l.id === watchAll.levelId)?.levelNumber?.toString().padStart(2, '0') ?? '00') : '00'}
+              Level {watchAll.levelId ? (String(levels?.find((l) => l.id === watchAll.levelId)?.levelNumber ?? '00').padStart(2, '0')) : '00'}
               {' · '}
-              Day {watchAll.dayNumber?.toString().padStart(2, '0') ?? '00'}
+              Day {watchAll.dayNumber != null ? String(watchAll.dayNumber).padStart(2, '0') : '00'}
             </DialogTitle>
             <DialogDescription className="text-lg font-semibold text-slate-200">
               {watchAll.topicName || 'Untitled Topic'}
@@ -669,7 +669,7 @@ export default function AdminLearningCreatePage() {
       <Dialog open={publishDialog} onOpenChange={(o) => !o && setPublishDialog(false)}>
         <DialogContent className="bg-slate-900 border-slate-700">
           <DialogHeader>
-            <DialogTitle className="text-slate-100">Publish Day {watchAll.dayNumber?.toString().padStart(2, '0') ?? '00'}?</DialogTitle>
+            <DialogTitle className="text-slate-100">Publish Day {watchAll.dayNumber != null ? String(watchAll.dayNumber).padStart(2, '0') : '00'}?</DialogTitle>
             <DialogDescription className="text-slate-400 text-sm">
               This content will become available to students immediately.
             </DialogDescription>

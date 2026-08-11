@@ -159,12 +159,12 @@ export default function AdminDashboardPage() {
       {/* Section 3+: Content Analytics */}
       {!loadingOverview && overview && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <AnalyticsCard title="Roadmaps" value={overview.learning.totalRoadmaps.toString()} sub={`${overview.learning.publishedRoadmaps} published`} icon={BookOpen} />
-          <AnalyticsCard title="Lessons" value={overview.learning.totalLessons.toString()} sub={`${overview.learning.publishedLessons} published`} icon={BookOpen} />
-          <AnalyticsCard title="Problems" value={overview.coding.totalProblems.toString()} sub={`Solved today: ${overview.coding.solvedToday}`} icon={Code2} />
-          <AnalyticsCard title="Projects" value={overview.projects.total.toString()} sub={`${overview.projects.published} published`} icon={FolderGit2} />
-          <AnalyticsCard title="Jobs & Internships" value={(overview.placement.jobs + overview.placement.internships).toString()} sub={`${overview.placement.applications} applications`} icon={Briefcase} />
-          <AnalyticsCard title="Events" value={overview.events.upcoming.toString()} sub={`${overview.events.registrations} registrations`} icon={Calendar} change="upcoming" />
+          <AnalyticsCard title="Courses" value={String(overview.learning.totalCourses ?? 0)} sub={`${overview.learning.publishedCourses ?? 0} published`} icon={BookOpen} />
+          <AnalyticsCard title="Lessons" value={String(overview.learning.totalContent ?? 0)} sub={`${overview.learning.publishedContent ?? 0} published`} icon={BookOpen} />
+          <AnalyticsCard title="Problems" value={String(overview.coding.totalProblems ?? 0)} sub={`Solved today: ${overview.coding.solvedToday ?? 0}`} icon={Code2} />
+          <AnalyticsCard title="Projects" value={String(overview.projects.total ?? 0)} sub={`${overview.projects.published ?? 0} published`} icon={FolderGit2} />
+          <AnalyticsCard title="Jobs & Internships" value={String((overview.placement.jobs ?? 0) + (overview.placement.internships ?? 0))} sub={`${overview.placement.applications ?? 0} applications`} icon={Briefcase} />
+          <AnalyticsCard title="Events" value={String(overview.events.upcoming ?? 0)} sub={`${overview.events.registrations ?? 0} registrations`} icon={Calendar} change="upcoming" />
         </div>
       )}
 

@@ -104,7 +104,7 @@ export default function AdminSystemPage() {
             { label: 'Requests Today', value: apiStats.totalRequestsToday.toLocaleString(), color: 'text-blue-400' },
             { label: 'Success Rate', value: `${apiStats.successRate}%`, color: apiStats.successRate > 95 ? 'text-emerald-400' : 'text-amber-400' },
             { label: 'Error Rate', value: `${apiStats.errorRate}%`, color: apiStats.errorRate < 5 ? 'text-emerald-400' : 'text-red-400' },
-            { label: 'Warnings', value: apiStats.warningCount.toString(), color: 'text-amber-400' },
+            { label: 'Warnings', value: String(apiStats.warningCount ?? 0), color: 'text-amber-400' },
           ].map(({ label, value, color }) => (
             <div key={label} className="bg-slate-900 border border-slate-800 rounded-xl p-4">
               <p className="text-xs text-slate-500 mb-1">{label}</p>

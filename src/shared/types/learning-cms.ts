@@ -210,11 +210,18 @@ export interface ContinueLearningResult {
 }
 
 // ─── Lesson Completion Result ────────────────────────────────────────────────
+// NOTE: Backend completedContent only returns { id } — levelNumber/dayNumber/topicName
+// must be sourced from the already-loaded content object on the frontend.
 
 export interface LessonCompletionResult {
   completed: boolean;
-  completedContent: LearningContentSummary;
-  nextContent: LearningContentSummary | null;
+  completedContent: {
+    id: string;
+    levelNumber?: number;
+    dayNumber?: number;
+    topicName?: string;
+  };
+  nextContent: (Partial<LearningContentSummary> & { id: string }) | null;
   progress: {
     completed: number;
     total: number;

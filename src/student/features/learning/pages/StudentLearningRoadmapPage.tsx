@@ -92,7 +92,7 @@ function DayRow({ day, level }: { day: RoadmapDay; level: RoadmapLevel }) {
             'font-mono text-xs font-semibold',
             day.state === 'CURRENT' ? 'text-primary' : 'text-muted-foreground/70',
           )}>
-            Day {day.dayNumber.toString().padStart(2, '0')}
+            Day {String(day.dayNumber ?? 0).padStart(2, '0')}
           </span>
           <p className={cn(
             'text-sm font-medium truncate',
@@ -122,7 +122,7 @@ function LevelSection({ level, isFirst }: { level: RoadmapLevel; isFirst: boolea
             <div className="flex items-start gap-3 min-w-0">
               <div className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
                 <span className="font-mono font-bold text-primary text-sm">
-                  {level.levelNumber.toString().padStart(2, '0')}
+                  {String(level.levelNumber ?? 0).padStart(2, '0')}
                 </span>
               </div>
               <div className="min-w-0">
@@ -143,10 +143,10 @@ function LevelSection({ level, isFirst }: { level: RoadmapLevel; isFirst: boolea
             </div>
             <div className="text-right flex-shrink-0 space-y-1.5">
               <div className="text-[11px] font-mono text-muted-foreground whitespace-nowrap">
-                {level.completedDays}/{level.totalDays} days
+                {level.completedDays ?? 0}/{level.totalDays ?? 0} days
               </div>
               <Progress
-                value={level.totalDays > 0 ? (level.completedDays / level.totalDays) * 100 : 0}
+                value={(level.totalDays ?? 0) > 0 ? ((level.completedDays ?? 0) / (level.totalDays ?? 1)) * 100 : 0}
                 className="h-1.5 w-28 ml-auto"
               />
             </div>

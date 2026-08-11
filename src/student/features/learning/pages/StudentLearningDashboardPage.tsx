@@ -78,10 +78,10 @@ export default function StudentLearningDashboardPage() {
               <>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-bold font-mono text-pink-400">
-                    Day {platformCurrentDay.dayNumber.toString().padStart(2, '0')}
+                    Day {String(platformCurrentDay.dayNumber ?? 0).padStart(2, '0')}
                   </span>
                   <span className="text-xs text-pink-400/60 font-mono">
-                    L{platformCurrentDay.levelNumber.toString().padStart(2, '0')}
+                    L{String(platformCurrentDay.levelNumber ?? 0).padStart(2, '0')}
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-1">
@@ -106,10 +106,10 @@ export default function StudentLearningDashboardPage() {
               <>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-bold font-mono text-emerald-400">
-                    Day {studentCurrentDay.dayNumber.toString().padStart(2, '0')}
+                    Day {String(studentCurrentDay.dayNumber ?? 0).padStart(2, '0')}
                   </span>
                   <span className="text-xs text-emerald-400/60 font-mono">
-                    L{studentCurrentDay.levelNumber.toString().padStart(2, '0')}
+                    L{String(studentCurrentDay.levelNumber ?? 0).padStart(2, '0')}
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-1">
@@ -133,12 +133,12 @@ export default function StudentLearningDashboardPage() {
               </span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold">{progress.completed}</span>
-              <span className="text-lg text-muted-foreground">/ {progress.total}</span>
+              <span className="text-3xl font-bold">{progress.completed ?? 0}</span>
+              <span className="text-lg text-muted-foreground">/ {progress.total ?? 0}</span>
             </div>
-            <Progress value={progress.percentage} className="h-1.5" />
+            <Progress value={progress.percentage ?? 0} className="h-1.5" />
             <p className="text-[11px] text-muted-foreground">
-              {progress.percentage.toFixed(1)}% complete
+              {(progress.percentage ?? 0).toFixed(1)}% complete
             </p>
           </CardContent>
         </Card>
@@ -155,7 +155,7 @@ export default function StudentLearningDashboardPage() {
               <>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-bold font-mono text-indigo-400">
-                    L{currentLevel.levelNumber.toString().padStart(2, '0')}
+                    L{String(currentLevel.levelNumber ?? 0).padStart(2, '0')}
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-1">{currentLevel.title}</p>
@@ -182,7 +182,7 @@ export default function StudentLearningDashboardPage() {
               <div>
                 <div className="flex items-center gap-2 mb-1.5">
                   <Badge variant="outline" className="font-mono text-xs border-primary/30 text-primary">
-                    L{studentCurrentDay?.levelNumber.toString().padStart(2, '0') ?? '00'} · Day {studentCurrentDay?.dayNumber.toString().padStart(2, '0') ?? '01'}
+                    L{String(studentCurrentDay?.levelNumber ?? 0).padStart(2, '0')} · Day {String(studentCurrentDay?.dayNumber ?? 0).padStart(2, '0')}
                   </Badge>
                   {currentLevel && (
                     <Badge variant="outline" className="text-xs">
@@ -220,18 +220,18 @@ export default function StudentLearningDashboardPage() {
               </div>
             </div>
 
-            {progress.total > 0 && (
+            {(progress.total ?? 0) > 0 && (
               <div className="lg:w-64 flex flex-col justify-center gap-3 p-4 lg:p-6 bg-card/50 rounded-xl border border-border/60 lg:border-0 lg:bg-transparent">
                 <div>
                   <div className="flex items-baseline justify-between mb-1.5">
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Progress</span>
                     <span className="text-xs font-mono text-foreground">
-                      {progress.completed}/{progress.total}
+                      {progress.completed ?? 0}/{progress.total ?? 0}
                     </span>
                   </div>
-                  <Progress value={progress.percentage} className="h-2" />
+                  <Progress value={progress.percentage ?? 0} className="h-2" />
                   <p className="text-xs text-muted-foreground mt-1.5">
-                    {progress.percentage.toFixed(1)}%
+                    {(progress.percentage ?? 0).toFixed(1)}%
                   </p>
                 </div>
                 {continueLearning?.progressStatus === 'IN_PROGRESS' && (
@@ -241,10 +241,10 @@ export default function StudentLearningDashboardPage() {
                         Today's lesson
                       </span>
                       <span className="text-xs font-mono text-primary">
-                        {continueLearning.percentageThroughDay}%
+                        {continueLearning.percentageThroughDay ?? 0}%
                       </span>
                     </div>
-                    <Progress value={continueLearning.percentageThroughDay} className="h-2" />
+                    <Progress value={continueLearning.percentageThroughDay ?? 0} className="h-2" />
                   </div>
                 )}
               </div>
@@ -287,19 +287,19 @@ export default function StudentLearningDashboardPage() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
                     <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-primary/10 text-primary font-mono text-xs">
-                      {lvl.levelNumber.toString().padStart(2, '0')}
+                      {String(lvl.levelNumber ?? 0).padStart(2, '0')}
                     </span>
                     {lvl.title}
                   </CardTitle>
                   <span className="text-[11px] font-mono text-muted-foreground">
-                    {lvl.completedDays}/{lvl.totalDays}
+                    {lvl.completedDays ?? 0}/{lvl.totalDays ?? 0}
                   </span>
                 </div>
               </CardHeader>
               <CardContent className="px-4 pt-0 pb-4 space-y-1.5">
-                <Progress value={lvl.percentage} className="h-1.5" />
+                <Progress value={lvl.percentage ?? 0} className="h-1.5" />
                 <p className="text-[11px] text-muted-foreground">
-                  {lvl.percentage.toFixed(1)}% complete
+                  {(lvl.percentage ?? 0).toFixed(1)}% complete
                 </p>
               </CardContent>
             </Card>

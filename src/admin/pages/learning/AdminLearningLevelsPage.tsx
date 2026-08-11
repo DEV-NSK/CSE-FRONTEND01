@@ -135,7 +135,8 @@ export default function AdminLearningLevelsPage() {
       ) : (
         <div className="space-y-3">
           {sortedLevels.map((lvl, idx) => {
-            const contentCount = lvl.contents?.length ?? 0
+            // Backend returns contentCount (number) from _count, not a contents array
+            const contentCount = (lvl as any).contentCount ?? lvl.contents?.length ?? 0
             const publishedCount = lvl.contents?.filter((c) => c.status === 'PUBLISHED').length ?? 0
             return (
               <Card key={lvl.id} className="bg-slate-900 border-slate-800">
@@ -176,7 +177,7 @@ export default function AdminLearningLevelsPage() {
 
                   <div className="w-14 h-14 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0">
                     <span className="font-mono font-bold text-blue-400 text-lg">
-                      {lvl.levelNumber.toString().padStart(2, '0')}
+                      {String(lvl.levelNumber ?? 0).padStart(2, '0')}
                     </span>
                   </div>
 

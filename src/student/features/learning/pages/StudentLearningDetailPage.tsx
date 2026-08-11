@@ -291,7 +291,7 @@ function CompletionDialog({
             transition={{ delay: 0.1 }}
           >
             <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-mono text-xs mb-3">
-              L{completed.levelNumber.toString().padStart(2, '0')} · Day {completed.dayNumber.toString().padStart(2, '0')}
+              L{String(completed.levelNumber ?? 0).padStart(2, '0')} · Day {String(completed.dayNumber ?? 0).padStart(2, '0')}
             </Badge>
             <DialogTitle className="text-2xl font-bold text-foreground mb-2">
               Lesson Completed!
@@ -311,10 +311,10 @@ function CompletionDialog({
             <div className="flex items-center justify-between text-xs font-mono text-muted-foreground mb-1.5">
               <span>Your Journey</span>
               <span>
-                {progress.completed}/{progress.total} · {progress.percentage.toFixed(1)}%
+                {progress.completed ?? 0}/{progress.total ?? 0} · {(progress.percentage ?? 0).toFixed(1)}%
               </span>
             </div>
-            <Progress value={progress.percentage} className="h-2" />
+            <Progress value={progress.percentage ?? 0} className="h-2" />
           </motion.div>
 
           {next ? (
@@ -329,11 +329,11 @@ function CompletionDialog({
               </p>
               <div className="flex items-center gap-3">
                 <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center font-mono font-bold text-primary text-xs">
-                  D{next.dayNumber.toString().padStart(2, '0')}
+                  D{String(next.dayNumber ?? 0).padStart(2, '0')}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-mono text-muted-foreground">
-                    L{next.levelNumber.toString().padStart(2, '0')} · Day {next.dayNumber.toString().padStart(2, '0')}
+                    L{String(next.levelNumber ?? 0).padStart(2, '0')} · Day {String(next.dayNumber ?? 0).padStart(2, '0')}
                   </p>
                   <p className="text-sm font-semibold truncate">{next.topicName}</p>
                 </div>
@@ -360,7 +360,7 @@ function CompletionDialog({
             </Button>
             {next ? (
               <Button onClick={() => onContinue(next.contentId)} className="sm:flex-1 gap-1.5">
-                Continue to Day {next.dayNumber.toString().padStart(2, '0')}
+                Continue to Day {String(next.dayNumber ?? 0).padStart(2, '0')}
                 <ChevronRight className="w-4 h-4" />
               </Button>
             ) : (
@@ -411,22 +411,28 @@ export default function StudentLearningDetailPage() {
     try {
       const res = await completeMutation.mutateAsync(content.id)
       const result = res.data.data!
+      // Backend returns completedContent with only { id }; use the already-loaded
+      // content object as the canonical source for levelNumber/dayNumber/topicName.
       setCompletionDialog({
         open: true,
         completed: {
-          levelNumber: result.completedContent.levelNumber,
-          dayNumber: result.completedContent.dayNumber,
-          topicName: result.completedContent.topicName,
+          levelNumber: result.completedContent.levelNumber ?? content.levelNumber,
+          dayNumber: result.completedContent.dayNumber ?? content.dayNumber,
+          topicName: result.completedContent.topicName ?? content.topicName,
         },
         next: result.nextContent
           ? {
               contentId: result.nextContent.id,
-              levelNumber: result.nextContent.levelNumber,
-              dayNumber: result.nextContent.dayNumber,
-              topicName: result.nextContent.topicName,
+              levelNumber: result.nextContent.levelNumber ?? 0,
+              dayNumber: result.nextContent.dayNumber ?? 0,
+              topicName: result.nextContent.topicName ?? '',
             }
           : null,
-        progress: result.progress,
+        progress: {
+          completed: result.progress?.completed ?? 0,
+          total: result.progress?.total ?? 0,
+          percentage: result.progress?.percentage ?? 0,
+        },
       })
       toast({ title: 'Lesson completed!', variant: 'success' })
     } catch {
@@ -502,7 +508,7 @@ export default function StudentLearningDetailPage() {
           <div>
             <div className="flex items-center gap-2 flex-wrap mb-1.5">
               <Badge variant="outline" className="font-mono text-xs border-primary/30 text-primary">
-                L{content.levelNumber.toString().padStart(2, '0')} · Day {content.dayNumber.toString().padStart(2, '0')}
+                L{String(content.levelNumber ?? 0).padStart(2, '0')} · Day {String(content.dayNumber ?? 0).padStart(2, '0')}
               </Badge>
               {statusBadge(content.progressStatus)}
             </div>
@@ -549,7 +555,7 @@ export default function StudentLearningDetailPage() {
                     </div>
                     <p className="font-bold text-foreground text-lg mb-1">🎥 Watch Reel</p>
                     <p className="text-xs text-muted-foreground max-w-[220px]">
-                      Day {content.dayNumber.toString().padStart(2, '0')} — {content.topicName}
+                      Day {String(content.dayNumber ?? 0).padStart(2, '0')} — {content.topicName}
                     </p>
                     <div className="mt-5 flex items-center gap-1.5 text-xs text-pink-400/80 font-medium">
                       Open in Instagram

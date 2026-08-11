@@ -306,7 +306,7 @@ export default function AdminLearningContentPage() {
             <SelectItem value="ALL">All Levels</SelectItem>
             {levels?.map((l) => (
               <SelectItem key={l.id} value={l.id}>
-                Level {l.levelNumber.toString().padStart(2, "0")} — {l.title}
+                Level {String(l.levelNumber ?? 0).padStart(2, "0")} — {l.title}
               </SelectItem>
             ))}
           </SelectContent>
@@ -419,10 +419,10 @@ export default function AdminLearningContentPage() {
                       />
                     </TableCell>
                     <TableCell className="py-3 text-sm font-mono text-slate-400">
-                      {row.dayNumber.toString().padStart(2, "0")}
+                      {String(row.dayNumber ?? 0).padStart(2, "0")}
                     </TableCell>
                     <TableCell className="py-3 text-sm font-mono text-slate-400">
-                      L{row.levelNumber.toString().padStart(2, "0")}
+                      L{String(row.levelNumber ?? 0).padStart(2, "0")}
                     </TableCell>
                     <TableCell className="py-3">
                       <p className="text-sm font-medium text-slate-200">

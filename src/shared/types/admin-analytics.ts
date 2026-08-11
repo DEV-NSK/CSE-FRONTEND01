@@ -18,14 +18,15 @@ export interface DashboardOverview {
     activeLast30: number
   }
   learning: {
-    totalRoadmaps: number
-    publishedRoadmaps: number
-    draftRoadmaps: number
-    archivedRoadmaps: number
-    totalLessons: number
-    publishedLessons: number
-    totalResources: number
-    mostViewedRoadmap: string | null
+    // New field names returned by backend (analytics.service.ts)
+    totalCourses: number
+    publishedCourses: number
+    draftCourses: number
+    archivedCourses: number
+    totalContent: number
+    publishedContent: number
+    totalNoteImages: number
+    mostViewedCourse: string | null
   }
   coding: {
     totalProblems: number

@@ -72,12 +72,12 @@ export default function AdminAnalyticsPage() {
       {overview && (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
           {[
-            { label: 'Total Users', value: overview.users.total.toLocaleString(), color: 'text-blue-400' },
-            { label: 'Active (30d)', value: overview.activity.activeLast30.toLocaleString(), color: 'text-emerald-400' },
-            { label: 'Roadmaps', value: overview.learning.publishedRoadmaps.toString(), color: 'text-purple-400' },
-            { label: 'Problems', value: overview.coding.totalProblems.toString(), color: 'text-amber-400' },
-            { label: 'Projects', value: overview.projects.total.toString(), color: 'text-cyan-400' },
-            { label: 'Applications', value: overview.placement.applications.toLocaleString(), color: 'text-rose-400' },
+            { label: 'Total Users', value: (overview.users.total ?? 0).toLocaleString(), color: 'text-blue-400' },
+            { label: 'Active (30d)', value: (overview.activity.activeLast30 ?? 0).toLocaleString(), color: 'text-emerald-400' },
+            { label: 'Courses', value: String(overview.learning.publishedCourses ?? 0), color: 'text-purple-400' },
+            { label: 'Problems', value: String(overview.coding.totalProblems ?? 0), color: 'text-amber-400' },
+            { label: 'Projects', value: String(overview.projects.total ?? 0), color: 'text-cyan-400' },
+            { label: 'Applications', value: (overview.placement.applications ?? 0).toLocaleString(), color: 'text-rose-400' },
           ].map(({ label, value, color }) => (
             <div key={label} className="bg-slate-900 border border-slate-800 rounded-xl p-4">
               <p className="text-xs text-slate-500 mb-1">{label}</p>
@@ -259,9 +259,9 @@ export default function AdminAnalyticsPage() {
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Content Split</h3>
               <div className="space-y-2">
                 {[
-                  { label: 'Roadmaps', value: overview.learning.totalRoadmaps, sub: `${overview.learning.publishedRoadmaps} published` },
-                  { label: 'Lessons', value: overview.learning.totalLessons, sub: `${overview.learning.publishedLessons} published` },
-                  { label: 'Resources', value: overview.learning.totalResources, sub: 'learning resources' },
+                  { label: 'Courses', value: overview.learning.totalCourses ?? 0, sub: `${overview.learning.publishedCourses ?? 0} published` },
+                  { label: 'Lessons', value: overview.learning.totalContent ?? 0, sub: `${overview.learning.publishedContent ?? 0} published` },
+                  { label: 'Note Images', value: overview.learning.totalNoteImages ?? 0, sub: 'note images' },
                 ].map(({ label, value, sub }) => (
                   <div key={label} className="flex items-center justify-between">
                     <span className="text-xs text-slate-400">{label}</span>
