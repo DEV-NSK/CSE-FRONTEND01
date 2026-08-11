@@ -1,6 +1,8 @@
 import axiosInstance from '@/shared/lib/axios'
 import type { ApiResponse } from '@/types'
 import type {
+  Course,
+  CourseFormData,
   LearningLevel,
   LearningLevelFormData,
   LearningContent,
@@ -15,6 +17,23 @@ import type {
 } from '@/shared/types/learning-cms'
 
 const ADMIN_BASE = '/admin/learning'
+
+// ─── Courses ─────────────────────────────────────────────────────────────────
+
+const getCourses = (params?: { search?: string; status?: string; page?: number; limit?: number }) =>
+  axiosInstance.get<ApiResponse<{ data: Course[]; total: number; page: number; limit: number; totalPages: number }>>(`${ADMIN_BASE}/courses`, { params })
+
+const getCourseById = (id: string) =>
+  axiosInstance.get<ApiResponse<Course>>(`${ADMIN_BASE}/courses/${id}`)
+
+const createCourse = (data: CourseFormData) =>
+  axiosInstance.post<ApiResponse<Course>>(`${ADMIN_BASE}/courses`, data)
+
+const updateCourse = (id: string, data: Partial<CourseFormData>) =>
+  axiosInstance.put<ApiResponse<Course>>(`${ADMIN_BASE}/courses/${id}`, data)
+
+const deleteCourse = (id: string) =>
+  axiosInstance.delete<ApiResponse<void>>(`${ADMIN_BASE}/courses/${id}`)
 
 // ─── Dashboard ───────────────────────────────────────────────────────────────
 
@@ -101,6 +120,12 @@ const reorderNoteImages = (contentId: string, reorderData: NoteImageReorderData[
 
 export const adminLearningService = {
   getDashboardStats,
+  // Courses
+  getCourses,
+  getCourseById,
+  createCourse,
+  updateCourse,
+  deleteCourse,
   // Levels
   getLevels,
   getLevelById,

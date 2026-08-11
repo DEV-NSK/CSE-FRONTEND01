@@ -110,6 +110,9 @@ const AdminLearningCreatePage = lazy(
 const AdminLearningLevelsPage = lazy(
   () => import("@/admin/pages/learning/AdminLearningLevelsPage"),
 );
+const AdminLearningCoursesPage = lazy(
+  () => import("@/admin/pages/learning/AdminLearningCoursesPage"),
+);
 
 // ── Pages - Public ────────────────────────────────────────────────────────────
 import { LandingPage } from "@/shared/pages/LandingPage";
@@ -520,6 +523,14 @@ export const router = createBrowserRouter([
         element: (
           <LazyPage>
             <AdminLearningLevelsPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "learning/courses",
+        element: (
+          <LazyPage>
+            <AdminLearningCoursesPage />
           </LazyPage>
         ),
       },

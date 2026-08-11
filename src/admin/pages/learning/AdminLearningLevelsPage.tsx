@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Plus, Pencil, Trash2, Layers, RefreshCw, AlertCircle,
-  GripVertical, ChevronUp, ChevronDown,
+  GripVertical, ChevronUp, ChevronDown, BookOpen,
 } from 'lucide-react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
@@ -12,11 +12,10 @@ import {
   useCreateLearningLevel,
   useUpdateLearningLevel,
   useDeleteLearningLevel,
+  useAdminCourses,
+  useCreateCourse,
 } from '@/shared/hooks/useAdminLearning'
-import { useQuery } from '@tanstack/react-query'
-import axiosInstance from '@/shared/lib/axios'
-import type { LearningLevelFormData } from '@/shared/types/learning-cms'
-import type { ApiResponse } from '@/types'
+import type { LearningLevelFormData, CourseFormData } from '@/shared/types/learning-cms'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
@@ -47,19 +46,6 @@ import { EmptyState } from '@/shared/components/feedback/EmptyState'
 import { useToast } from '@/shared/hooks/useToast'
 import { cn } from '@/shared/lib/utils'
 
-interface Course { id: string; title: string; slug: string; status: string }
-
-function useCourses() {
-  return useQuery({
-    queryKey: ['admin-learning', 'courses'],
-    queryFn: () =>
-      axiosInstance
-        .get<ApiResponse<{ data: Course[] }>>('/admin/learning/courses')
-        .then((r) => r.data.data?.data ?? []),
-    staleTime: 5 * 60 * 1000,
-  })
-}
-
 const levelSchema = z.object({
   courseId: z.string().min(1, 'Course is required'),
   levelNumber: z.number().int().min(0, 'Level number must be >= 0'),
@@ -79,7 +65,8 @@ export default function AdminLearningLevelsPage() {
   const [deleteDialog, setDeleteDialog] = useState<string | null>(null)
 
   const { data: levels, isLoading, error, refetch } = useAdminLearningLevels({ includeInactive: true })
-  const { data: courses = [] } = useCourses()
+  const { data: coursesData, refetch: refetchCourses } = useAdminCourses()
+  const courses = coursesData?.data ?? []
   const createMutation = useCreateLearningLevel()
   const updateMutation = useUpdateLearningLevel()
   const deleteMutation = useDeleteLearningLevel()
@@ -247,6 +234,7 @@ export default function AdminLearningLevelsPage() {
         open={isCreating || editingId !== null}
         onOpenChange={(o) => { if (!o) { setIsCreating(false); setEditingId(null) } }}
         courses={courses}
+        refetchCourses={refetchCourses}
         initial={editingId ? (levels ?? []).find((l) => l.id === editingId) : undefined}
         onSubmit={async (values) => {
           try {
@@ -307,13 +295,24 @@ export default function AdminLearningLevelsPage() {
 interface FormDialogProps {
   open: boolean
   onOpenChange: (o: boolean) => void
-  courses: Course[]
+  courses: { id: string; title: string; slug: string; status: string }[]
+  refetchCourses: () => void
   initial?: { id: string; courseId?: string; levelNumber: number; title: string; description?: string | null; displayOrder?: number; isActive?: boolean }
   onSubmit: (values: LearningLevelFormData) => Promise<void>
 }
 
-function LevelFormDialog({ open, onOpenChange, courses, initial, onSubmit }: FormDialogProps) {
+// ─── Quick-create course schema (minimal — just title required) ───────────────
+const quickCourseSchema = z.object({
+  title: z.string().min(2, 'Title must be at least 2 characters').max(120),
+})
+type QuickCourseValues = z.infer<typeof quickCourseSchema>
+
+function LevelFormDialog({ open, onOpenChange, courses, refetchCourses, initial, onSubmit }: FormDialogProps) {
   const isEdit = !!initial
+  const { toast } = useToast()
+  const createCourseMutation = useCreateCourse()
+  const [showQuickCourse, setShowQuickCourse] = useState(false)
+
   const {
     register,
     handleSubmit,
@@ -333,6 +332,13 @@ function LevelFormDialog({ open, onOpenChange, courses, initial, onSubmit }: For
     },
   })
 
+  const {
+    register: registerCourse,
+    handleSubmit: handleCourseSubmit,
+    reset: resetCourse,
+    formState: { errors: courseErrors, isSubmitting: isCourseSubmitting },
+  } = useForm<QuickCourseValues>({ resolver: zodResolver(quickCourseSchema) })
+
   // When courses load, set default courseId if not editing
   const courseId = watch('courseId')
   const active = watch('isActive')
@@ -343,8 +349,25 @@ function LevelFormDialog({ open, onOpenChange, courses, initial, onSubmit }: For
     setValue('courseId', firstCourseId)
   }
 
+  async function handleQuickCourseCreate(values: QuickCourseValues) {
+    try {
+      const res = await createCourseMutation.mutateAsync({ title: values.title } as CourseFormData)
+      const newCourse = res.data.data
+      refetchCourses()
+      resetCourse()
+      setShowQuickCourse(false)
+      if (newCourse?.id) {
+        // Give React Query a tick to update, then select the new course
+        setTimeout(() => setValue('courseId', newCourse.id, { shouldDirty: true }), 100)
+      }
+      toast({ title: 'Course created', variant: 'success' })
+    } catch {
+      toast({ title: 'Failed to create course', variant: 'error' })
+    }
+  }
+
   return (
-    <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) reset() }}>
+    <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) { reset(); resetCourse(); setShowQuickCourse(false) } }}>
       <DialogContent className="bg-slate-900 border-slate-700">
         <DialogHeader>
           <DialogTitle className="text-slate-100">{isEdit ? 'Edit Level' : 'Create New Level'}</DialogTitle>
@@ -358,9 +381,60 @@ function LevelFormDialog({ open, onOpenChange, courses, initial, onSubmit }: For
             <div className="space-y-1.5">
               <Label className="text-slate-300">Course <span className="text-red-400">*</span></Label>
               {courses.length === 0 ? (
-                <p className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
-                  No courses found. Create a course first before adding levels.
-                </p>
+                <div className="space-y-2">
+                  {!showQuickCourse ? (
+                    <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                      <BookOpen className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-amber-300 font-medium">No courses found</p>
+                        <p className="text-xs text-amber-400/70 mt-0.5">You need a course before adding levels.</p>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="h-7 text-xs flex-shrink-0"
+                        onClick={() => setShowQuickCourse(true)}
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        Create Course
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-slate-800/60 border border-slate-700 rounded-lg space-y-3">
+                      <p className="text-xs font-medium text-slate-300">Quick-create a course</p>
+                      <div className="flex gap-2">
+                        <div className="flex-1 space-y-1">
+                          <Input
+                            placeholder="Course title, e.g. Full Stack Development"
+                            {...registerCourse('title')}
+                            className="bg-slate-950 border-slate-700 text-sm h-8"
+                          />
+                          {courseErrors.title && (
+                            <p className="text-xs text-red-400">{courseErrors.title.message}</p>
+                          )}
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="h-8 flex-shrink-0"
+                          disabled={isCourseSubmitting}
+                          onClick={handleCourseSubmit(handleQuickCourseCreate)}
+                        >
+                          {isCourseSubmitting ? 'Creating…' : 'Save'}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 text-slate-500 flex-shrink-0"
+                          onClick={() => { setShowQuickCourse(false); resetCourse() }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <Select
                   value={courseId}
@@ -434,7 +508,7 @@ function LevelFormDialog({ open, onOpenChange, courses, initial, onSubmit }: For
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="text-slate-400">
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || (!isEdit && courses.length === 0)}>
+            <Button type="submit" disabled={isSubmitting || (!isEdit && courses.length === 0 && !showQuickCourse)}>
               {isSubmitting ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Level'}
             </Button>
           </DialogFooter>

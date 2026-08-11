@@ -20,6 +20,7 @@ import {
   Layers,
   PlusCircle,
   List,
+  GraduationCap,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useAdminStore } from "@/admin/store/adminStore";
@@ -54,6 +55,12 @@ const navItems = [
     label: "Create Content",
     href: "/admin/learning/create",
     icon: PlusCircle,
+    section: "Learning CMS",
+  },
+  {
+    label: "Courses",
+    href: "/admin/learning/courses",
+    icon: GraduationCap,
     section: "Learning CMS",
   },
   {

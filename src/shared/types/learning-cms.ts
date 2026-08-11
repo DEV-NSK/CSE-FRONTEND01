@@ -1,3 +1,32 @@
+// ─── Course ──────────────────────────────────────────────────────────────────
+
+export type CourseStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+
+export interface Course {
+  id: string;
+  title: string;
+  slug: string;
+  description?: string | null;
+  thumbnail?: string | null;
+  status: CourseStatus;
+  totalDays?: number | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CourseFormData {
+  title: string;
+  slug?: string;
+  description?: string;
+  thumbnail?: string;
+  status?: CourseStatus;
+  totalDays?: number;
+  startDate?: string;
+  endDate?: string;
+}
+
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
 export type LearningContentStatus =

@@ -6,6 +6,7 @@ import type {
   LearningLevelFormData,
   LearningContentFormData,
   NoteImageReorderData,
+  CourseFormData,
 } from '@/shared/types/learning-cms'
 
 // ─── Query Keys ──────────────────────────────────────────────────────────────
@@ -13,6 +14,8 @@ import type {
 export const adminLearningKeys = {
   all: ['admin-learning'] as const,
   dashboard: () => [...adminLearningKeys.all, 'dashboard'] as const,
+  courses: (params?: object) => [...adminLearningKeys.all, 'courses', params] as const,
+  course: (id: string) => [...adminLearningKeys.all, 'course', id] as const,
   levels: (params?: object) => [...adminLearningKeys.all, 'levels', params] as const,
   level: (id: string) => [...adminLearningKeys.all, 'level', id] as const,
   content: (filters?: AdminLearningContentFilters) =>
@@ -27,6 +30,51 @@ export function useAdminLearningDashboard() {
     queryKey: adminLearningKeys.dashboard(),
     queryFn: () => adminLearningService.getDashboardStats().then((r) => r.data.data),
     staleTime: 60 * 1000,
+  })
+}
+
+// ─── Courses ─────────────────────────────────────────────────────────────────
+
+export function useAdminCourses(params?: { search?: string; status?: string; page?: number; limit?: number }) {
+  return useQuery({
+    queryKey: adminLearningKeys.courses(params),
+    queryFn: () => adminLearningService.getCourses(params).then((r) => r.data.data),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useCreateCourse() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: CourseFormData) => adminLearningService.createCourse(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminLearningKeys.courses() })
+      queryClient.invalidateQueries({ queryKey: adminLearningKeys.dashboard() })
+    },
+  })
+}
+
+export function useUpdateCourse() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<CourseFormData> }) =>
+      adminLearningService.updateCourse(id, data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: adminLearningKeys.course(id) })
+      queryClient.invalidateQueries({ queryKey: adminLearningKeys.courses() })
+      queryClient.invalidateQueries({ queryKey: adminLearningKeys.dashboard() })
+    },
+  })
+}
+
+export function useDeleteCourse() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => adminLearningService.deleteCourse(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminLearningKeys.courses() })
+      queryClient.invalidateQueries({ queryKey: adminLearningKeys.dashboard() })
+    },
   })
 }
 
