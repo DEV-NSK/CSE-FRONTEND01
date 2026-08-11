@@ -129,7 +129,7 @@ export interface LearningProgress {
   status: LearningProgressStatus;
   startedAt?: string | null;
   completedAt?: string | null;
-  lastViewedAt?: string | null;
+  lastAccessedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
