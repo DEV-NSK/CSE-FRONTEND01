@@ -13,7 +13,6 @@ import {
   Award,
   Sparkles,
   BookOpen,
-  Instagram,
   Link2,
   CheckCircle2,
   Clock,
@@ -400,11 +399,25 @@ function ReelPanel({ reelUrl, topicName, dayNumber }: ReelPanelProps) {
         {/* Instagram badge bottom */}
         <div className="absolute bottom-0 left-0 right-0 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <div className="w-5 h-5 rounded-md bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 flex items-center justify-center">
-              <Instagram className="w-3 h-3 text-white" />
+              <div className="w-5 h-5 rounded-md bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 flex items-center justify-center">
+                {/* Instagram camera icon — inline SVG */}
+                <svg
+                  viewBox="0 0 24 24"
+                  className="w-3 h-3 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                  <circle cx="12" cy="12" r="4" />
+                  <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none" />
+                </svg>
+              </div>
+              <span className="text-[11px] text-white/70 font-medium">Instagram</span>
             </div>
-            <span className="text-[11px] text-white/70 font-medium">Instagram</span>
-          </div>
           <div className="flex items-center gap-1 text-[11px] text-white/50">
             Open
             <ExternalLink className="w-3 h-3" />
