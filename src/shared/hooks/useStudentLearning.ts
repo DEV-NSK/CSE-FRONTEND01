@@ -78,6 +78,8 @@ export function useCompleteLesson() {
       queryClient.invalidateQueries({ queryKey: studentLearningKeys.continueLearning() })
       // Also invalidate legacy stats since /learning/stats reads from lesson_progress
       queryClient.invalidateQueries({ queryKey: ['learning', 'stats'] })
+      // Invalidate profile analytics so Lessons Done count updates on profile page
+      queryClient.invalidateQueries({ queryKey: ['profile', 'analytics'] })
     },
   })
 }

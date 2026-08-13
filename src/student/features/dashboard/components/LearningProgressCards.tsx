@@ -133,9 +133,13 @@ interface LearningProgressCardsProps {
   learningStats?: LearningStats
   codingAnalytics?: CodingAnalytics
   continueLearning?: {
+    contentId?: string | null
+    topicName?: string | null
+    percentageThroughDay?: number | null
+    // legacy shape fields (kept for compatibility)
     roadmap?: { title: string } | null
     progress?: number
-  }
+  } | null
   isLoading?: boolean
 }
 
@@ -145,8 +149,13 @@ export const LearningProgressCards = memo(function LearningProgressCards({
   continueLearning,
   isLoading,
 }: LearningProgressCardsProps) {
-  const learningProgress = continueLearning?.progress ?? 0
-  const roadmapName      = continueLearning?.roadmap?.title ?? 'Start a roadmap'
+  // New CMS shape: percentageThroughDay + topicName + contentId
+  // Legacy shape fallback: progress + roadmap.title
+  const learningProgress = continueLearning?.percentageThroughDay ?? continueLearning?.progress ?? 0
+  const roadmapName      = continueLearning?.topicName ?? continueLearning?.roadmap?.title ?? 'Start a roadmap'
+  const continueHref     = continueLearning?.contentId
+    ? `/dashboard/learning/${continueLearning.contentId}`
+    : '/dashboard/learning/roadmap'
   // ── FIX: data lives inside codingAnalytics.stats ──
   const problemsSolved   = codingAnalytics?.stats?.totalSolved  ?? 0
   const currentStreak    = codingAnalytics?.stats?.currentStreak ?? 0
@@ -167,7 +176,7 @@ export const LearningProgressCards = memo(function LearningProgressCards({
         title="Learning"
         subtitle={roadmapName}
         progress={learningProgress}
-        href="/dashboard/learning/continue"
+        href={continueHref}
         buttonLabel="Continue Learning"
         accentClass="bg-violet-500"
         accentColor="#7C5CFC"

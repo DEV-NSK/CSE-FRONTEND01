@@ -11,7 +11,8 @@
 
 import { motion } from 'framer-motion'
 import { WidgetErrorBoundary }   from '@/shared/components/feedback/ErrorBoundary'
-import { useLearningStats, useContinueLearning } from '@/shared/hooks/useLearning'
+import { useLearningStats } from '@/shared/hooks/useLearning'
+import { useStudentContinueLearning } from '@/shared/hooks/useStudentLearning'
 import { useCodingAnalytics, useDailyChallenge } from '@/shared/hooks/useCoding'
 import { useLeaderboard, useDailyTasks, useDashboardActivity } from '@/shared/hooks/useDashboard'
 
@@ -45,7 +46,7 @@ function Cell({ children, className = '' }: { children: React.ReactNode; classNa
 export function DashboardPage() {
   const { data: learningStats,   isLoading: learningStatsLoading } = useLearningStats()
   const { data: codingAnalytics, isLoading: codingStatsLoading   } = useCodingAnalytics()
-  const { data: continueLearning                                  } = useContinueLearning()
+  const { data: continueLearning                                  } = useStudentContinueLearning()
   const { data: dailyChallenge                                    } = useDailyChallenge()
   const { data: leaderboard,     isLoading: leaderboardLoading    } = useLeaderboard()
   const { data: dailyTasks,      isLoading: dailyTasksLoading     } = useDailyTasks()

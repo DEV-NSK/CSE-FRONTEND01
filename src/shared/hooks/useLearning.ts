@@ -93,6 +93,8 @@ export function useMarkLessonComplete() {
       queryClient.invalidateQueries({ queryKey: learningKeys.stats() })
       queryClient.invalidateQueries({ queryKey: learningKeys.continueLearning() })
       queryClient.invalidateQueries({ queryKey: learningKeys.recentlyViewed() })
+      // Invalidate profile analytics so Lessons Done count updates on profile page
+      queryClient.invalidateQueries({ queryKey: ['profile', 'analytics'] })
     },
   })
 }

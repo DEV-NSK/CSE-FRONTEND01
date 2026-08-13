@@ -24,7 +24,7 @@ export function LessonCard({ lesson, className, compact = false }: LessonCardPro
   if (compact) {
     return (
       <Link
-        to={`/dashboard/learning/lesson/${lesson.id}`}
+        to={`/dashboard/learning/${lesson.id}`}
         className={cn(
           'flex items-center gap-3 p-3 rounded-lg hover:bg-accent/10 transition-colors group',
           status === 'completed' && 'opacity-75',
@@ -50,7 +50,7 @@ export function LessonCard({ lesson, className, compact = false }: LessonCardPro
 
   return (
     <motion.div whileHover={{ x: 2 }} transition={{ duration: 0.15 }}>
-      <Link to={`/dashboard/learning/lesson/${lesson.id}`} tabIndex={-1}>
+      <Link to={`/dashboard/learning/${lesson.id}`} tabIndex={-1}>
         <Card className={cn('hover:shadow-sm transition-shadow cursor-pointer group', className)}>
           <CardContent className="p-4 flex items-center gap-4">
             <span className="shrink-0">{icon}</span>

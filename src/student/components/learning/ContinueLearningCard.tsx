@@ -26,7 +26,7 @@ export function ContinueLearningCard({ data, className, compact = false }: Conti
             <p className="text-sm font-medium truncate">{lesson.title}</p>
           </div>
           <Button asChild size="sm" className="shrink-0 gap-1">
-            <Link to={`/dashboard/learning/lesson/${lesson.id}`}>
+            <Link to={`/dashboard/learning/${lesson.id}`}>
               <PlayCircle className="h-3.5 w-3.5" />
               Resume
             </Link>
@@ -54,7 +54,7 @@ export function ContinueLearningCard({ data, className, compact = false }: Conti
               <p className="text-sm text-muted-foreground mb-3 truncate">{roadmap.title}</p>
               <div className="flex items-center gap-3">
                 <Button asChild size="sm" className="gap-1.5">
-                  <Link to={`/dashboard/learning/lesson/${lesson.id}`}>
+                  <Link to={`/dashboard/learning/${lesson.id}`}>
                     <PlayCircle className="h-4 w-4" />
                     Resume Lesson
                   </Link>

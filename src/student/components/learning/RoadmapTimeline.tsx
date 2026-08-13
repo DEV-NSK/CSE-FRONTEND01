@@ -152,7 +152,7 @@ function LessonTimelineItem({ lesson, index, isCurrent, isLast }: LessonTimeline
       transition={{ delay: index * 0.03 }}
     >
       <Link
-        to={`/dashboard/learning/lesson/${lesson.id}`}
+        to={`/dashboard/learning/${lesson.id}`}
         className={cn(
           'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group',
           isCurrent

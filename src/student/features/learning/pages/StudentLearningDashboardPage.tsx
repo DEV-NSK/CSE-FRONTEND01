@@ -163,9 +163,6 @@ export default function StudentLearningDashboardPage() {
 
       {/* ── Page header ── */}
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
-          Dashboard · Learning
-        </p>
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
           Learning Journey
         </h1>

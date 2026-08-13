@@ -210,7 +210,7 @@ export function LessonCompletionModal({
                   </Button>
                   {nextLessonId ? (
                     <Button className="flex-1 gap-2" asChild>
-                      <Link to={`/dashboard/learning/lesson/${nextLessonId}`} onClick={onClose}>
+                      <Link to={`/dashboard/learning/${nextLessonId}`} onClick={onClose}>
                         Next Lesson
                         <ArrowRight className="h-4 w-4" />
                       </Link>

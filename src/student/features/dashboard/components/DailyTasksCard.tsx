@@ -9,10 +9,14 @@ interface DailyTasksCardProps {
   data?: DailyTasksResponse
   dailyChallenge?: DailyChallenge
   continueLearning?: {
+    // New CMS shape
+    contentId?: string | null
+    topicName?: string | null
+    // Legacy shape
     lesson?: { id: string; title: string } | null
     roadmap?: { title: string } | null
     progress?: number
-  }
+  } | null
   isLoading?: boolean
 }
 
@@ -101,7 +105,10 @@ export const DailyTasksCard = memo(function DailyTasksCard({
       }
     : null)
 
-  const lesson = data?.lesson ?? (continueLearning?.lesson
+  // Resolve lesson — prefer /dashboard/daily-tasks, fall back to continueLearning new CMS shape, then legacy
+  const lesson = data?.lesson ?? (continueLearning?.contentId
+    ? { id: continueLearning.contentId, title: continueLearning.topicName ?? 'Continue Learning', completed: false }
+    : continueLearning?.lesson
     ? { id: continueLearning.lesson.id, title: continueLearning.lesson.title, completed: false }
     : null)
 
@@ -166,11 +173,11 @@ export const DailyTasksCard = memo(function DailyTasksCard({
               icon={BookOpen}
               label="Today's Lesson"
               title={lesson.title}
-              href={`/dashboard/learning/lesson/${lesson.id}`}
+              href={`/dashboard/learning/${lesson.id}`}
               completed={lesson.completed}
             />
           ) : (
-            <TaskRow icon={BookOpen} label="Today's Lesson" title="Continue Learning" href="/dashboard/learning/continue" />
+            <TaskRow icon={BookOpen} label="Today's Lesson" title="Continue Learning" href="/dashboard/learning/roadmap" />
           )}
         </div>
       )}

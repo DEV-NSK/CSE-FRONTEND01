@@ -272,9 +272,6 @@ export default function StudentLearningRoadmapPage() {
       {/* ── Page header ── */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
-            Dashboard · Learning · Roadmap
-          </p>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
             Learning Roadmap
           </h1>
