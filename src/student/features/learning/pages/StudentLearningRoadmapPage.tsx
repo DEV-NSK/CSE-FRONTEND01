@@ -24,19 +24,20 @@ import { cn } from '@/shared/lib/utils'
 
 function RoadmapSkeleton() {
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
+    <div className="space-y-5">
+      <div className="space-y-1.5">
+        <Skeleton className="h-4 w-40" />
         <Skeleton className="h-7 w-52" />
         <Skeleton className="h-4 w-64" />
       </div>
-      <Skeleton className="h-20 w-full rounded-2xl" />
+      <Skeleton className="h-24 w-full rounded-2xl" />
       <div className="space-y-3">
         {Array.from({ length: 3 }).map((_, i) => (
           <div key={i} className="rounded-xl border border-border overflow-hidden">
             <Skeleton className="h-16 w-full" />
-            <div className="p-3 space-y-2">
+            <div className="p-3 space-y-px">
               {Array.from({ length: 4 }).map((_, j) => (
-                <Skeleton key={j} className="h-10 w-full rounded-lg" />
+                <Skeleton key={j} className="h-12 w-full" />
               ))}
             </div>
           </div>
@@ -48,35 +49,23 @@ function RoadmapSkeleton() {
 
 // ─── State icon ───────────────────────────────────────────────────────────────
 
-function StateIcon({ state, size = 'sm' }: { state: RoadmapItemState; size?: 'sm' | 'md' }) {
-  const sz = size === 'md' ? 'w-4.5 h-4.5' : 'w-4 h-4'
+function StateIcon({ state }: { state: RoadmapItemState }) {
   switch (state) {
     case 'COMPLETED':
-      return <CheckCircle2 className={cn(sz, 'text-emerald-500 shrink-0')} />
+      return <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
     case 'CURRENT':
       return (
-        <div className={cn('relative shrink-0', size === 'md' ? 'w-4.5 h-4.5' : 'w-4 h-4')}>
+        <div className="relative w-4 h-4 shrink-0">
           <span className="absolute inset-0 rounded-full bg-blue-500/25 animate-ping" />
-          <Circle className={cn(sz, 'text-blue-500 fill-blue-500/15 relative')} />
+          <Circle className="w-4 h-4 text-blue-500 fill-blue-500/15 relative" />
         </div>
       )
     case 'UPCOMING':
-      return <Circle className={cn(sz, 'text-muted-foreground/35 shrink-0')} />
+      return <Circle className="w-4 h-4 text-muted-foreground/30 shrink-0" />
     case 'LOCKED':
     default:
-      return <Lock className={cn(sz, 'text-muted-foreground/20 shrink-0')} />
+      return <Lock className="w-4 h-4 text-muted-foreground/20 shrink-0" />
   }
-}
-
-// ─── Legend dot ──────────────────────────────────────────────────────────────
-
-function LegendItem({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-      {icon}
-      {label}
-    </span>
-  )
 }
 
 // ─── Day row ─────────────────────────────────────────────────────────────────
@@ -91,56 +80,55 @@ function DayRow({ day }: { day: RoadmapDay }) {
       disabled={!clickable}
       onClick={() => clickable && navigate(`/dashboard/learning/${day.id}`)}
       className={cn(
-        'group w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg border transition-all duration-150',
+        'relative w-full text-left flex items-center gap-3 px-4 py-3.5 transition-colors duration-150',
         clickable
-          ? 'border-transparent hover:bg-muted/50 hover:border-border/40 cursor-pointer'
-          : 'border-transparent opacity-40 cursor-not-allowed',
-        day.state === 'CURRENT' &&
-          'bg-blue-500/5 border-blue-500/20! hover:bg-blue-500/8! hover:border-blue-500/30!',
+          ? 'hover:bg-muted/50 cursor-pointer active:bg-muted/70'
+          : 'opacity-40 cursor-not-allowed',
+        day.state === 'CURRENT' && 'bg-blue-500/4 hover:bg-blue-500/7',
       )}
     >
-      {/* Left accent for current */}
+      {/* Current left pill */}
       {day.state === 'CURRENT' && (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full bg-blue-500" />
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 rounded-r-full bg-blue-500" />
       )}
 
-      <StateIcon state={day.state} size="md" />
+      <StateIcon state={day.state} />
 
-      <div className="flex-1 min-w-0 flex items-center gap-2.5">
-        <span
-          className={cn(
-            'font-mono text-xs font-bold shrink-0',
-            day.state === 'CURRENT' ? 'text-blue-500' : 'text-muted-foreground/50',
-          )}
-        >
-          Day {String(day.dayNumber ?? 0).padStart(2, '0')}
-        </span>
-        <span
-          className={cn(
-            'text-sm font-medium truncate',
-            day.state === 'CURRENT' && 'text-foreground font-semibold',
-            day.state === 'COMPLETED' && 'text-foreground/80',
-            (day.state === 'UPCOMING' || day.state === 'LOCKED') && 'text-muted-foreground',
-          )}
-        >
-          {day.topicName}
-        </span>
-        {day.state === 'CURRENT' && (
-          <Badge variant="outline" className="text-[10px] border-blue-500/30 text-blue-500 bg-blue-500/5 shrink-0 ml-auto mr-6 hidden sm:inline-flex">
-            Current
-          </Badge>
+      {/* Day number */}
+      <span
+        className={cn(
+          'font-mono text-[11px] font-bold shrink-0 w-12',
+          day.state === 'CURRENT' ? 'text-blue-600' : 'text-muted-foreground/50',
         )}
-      </div>
+      >
+        Day {String(day.dayNumber ?? 0).padStart(2, '0')}
+      </span>
 
-      {clickable && (
-        <ChevronRight
-          className={cn(
-            'w-4 h-4 shrink-0 transition-colors ml-auto',
-            day.state === 'CURRENT'
-              ? 'text-blue-500'
-              : 'text-muted-foreground/25 group-hover:text-muted-foreground/60',
-          )}
-        />
+      {/* Topic */}
+      <span
+        className={cn(
+          'flex-1 min-w-0 text-sm truncate',
+          day.state === 'CURRENT' && 'font-semibold text-foreground',
+          day.state === 'COMPLETED' && 'font-medium text-foreground/80',
+          day.state === 'UPCOMING' && 'font-normal text-muted-foreground',
+          day.state === 'LOCKED' && 'font-normal text-muted-foreground/60',
+        )}
+      >
+        {day.topicName}
+      </span>
+
+      {/* Current badge — visible on all screens */}
+      {day.state === 'CURRENT' && (
+        <span className="shrink-0 text-[10px] font-bold text-blue-600 bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded-full">
+          Now
+        </span>
+      )}
+
+      {clickable && day.state !== 'CURRENT' && (
+        <ChevronRight className="w-4 h-4 shrink-0 text-muted-foreground/25 group-hover:text-muted-foreground/50" />
+      )}
+      {day.state === 'CURRENT' && (
+        <ChevronRight className="w-4 h-4 shrink-0 text-blue-500" />
       )}
     </button>
   )
@@ -161,9 +149,9 @@ function LevelSection({ level }: { level: RoadmapLevel }) {
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
+      transition={{ duration: 0.22 }}
       className={cn(
-        'rounded-xl border bg-card overflow-hidden transition-all',
+        'rounded-xl border bg-card overflow-hidden',
         isActive ? 'border-blue-500/25' : 'border-border',
         allCompleted && 'border-emerald-500/20',
       )}
@@ -171,76 +159,66 @@ function LevelSection({ level }: { level: RoadmapLevel }) {
       {/* Level header */}
       <div
         className={cn(
-          'flex items-center gap-4 px-5 py-4 border-b',
-          isActive ? 'border-blue-500/15 bg-blue-500/3' : 'border-border/60 bg-muted/20',
-          allCompleted && 'border-emerald-500/15 bg-emerald-500/3',
+          'flex items-center gap-3 px-4 py-3.5 border-b',
+          isActive
+            ? 'border-blue-500/15 bg-blue-500/3'
+            : allCompleted
+            ? 'border-emerald-500/15 bg-emerald-500/3'
+            : 'border-border/60 bg-muted/20',
         )}
       >
-        {/* Level badge */}
+        {/* Level number badge */}
         <div
           className={cn(
             'shrink-0 flex items-center justify-center w-10 h-10 rounded-lg border font-mono font-bold text-sm',
             isActive
-              ? 'bg-blue-500/10 border-blue-500/30 text-blue-500'
+              ? 'bg-blue-500/10 border-blue-500/30 text-blue-600'
               : allCompleted
-              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600'
               : 'bg-muted border-border text-muted-foreground',
           )}
         >
           {String(level.levelNumber ?? 0).padStart(2, '0')}
         </div>
 
-        {/* Title + description */}
+        {/* Title + meta */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-sm font-semibold text-foreground">{level.title}</h3>
-            {!level.isActive && (
-              <Badge variant="outline" className="text-[10px] text-muted-foreground/60">
-                Inactive
-              </Badge>
-            )}
+            <h3 className="text-sm font-semibold text-foreground leading-snug">{level.title}</h3>
             {allCompleted && (
-              <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-500 bg-emerald-500/5">
-                ✓ Complete
+              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded-full">
+                Done
+              </span>
+            )}
+            {!level.isActive && (
+              <Badge variant="outline" className="text-[10px] text-muted-foreground/50 h-4 px-1.5">
+                Inactive
               </Badge>
             )}
           </div>
           {level.description && (
-            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{level.description}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1 leading-snug">
+              {level.description}
+            </p>
           )}
         </div>
 
-        {/* Progress */}
-        <div className="shrink-0 text-right space-y-1.5 hidden sm:block">
-          <span className="text-[11px] font-mono text-muted-foreground">
-            {level.completedDays}/{level.totalDays} days
-          </span>
-          <Progress
-            value={pct}
-            className={cn('h-1.5 w-24 ml-auto', allCompleted && '[&>div]:bg-emerald-500')}
-          />
-        </div>
+        {/* Days count */}
+        <span className="shrink-0 text-[11px] font-mono font-semibold text-muted-foreground bg-muted px-2 py-1 rounded-md">
+          {level.completedDays}/{level.totalDays}
+        </span>
       </div>
 
-      {/* Mobile progress */}
-      <div className="sm:hidden px-5 py-2 border-b border-border/40">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-[10px] text-muted-foreground">Progress</span>
-          <span className="text-[10px] font-mono text-muted-foreground">
-            {level.completedDays}/{level.totalDays} days
-          </span>
-        </div>
-        <Progress value={pct} className={cn('h-1', allCompleted && '[&>div]:bg-emerald-500')} />
-      </div>
-
-      {/* Day rows */}
-      <div className="px-3 py-2 space-y-0.5 relative">
-        {/* Vertical connector line */}
-        <div
-          className="absolute left-[28px] top-4 bottom-4 w-px bg-border/50"
-          aria-hidden="true"
+      {/* Progress bar */}
+      <div className="px-4 py-2.5 border-b border-border/40">
+        <Progress
+          value={pct}
+          className={cn('h-1.5', allCompleted && '[&>div]:bg-emerald-500')}
         />
+      </div>
 
+      {/* Day list */}
+      <div className="divide-y divide-border/40">
         {level.days.length === 0 ? (
           <div className="py-8 px-4">
             <EmptyState
@@ -251,11 +229,7 @@ function LevelSection({ level }: { level: RoadmapLevel }) {
             />
           </div>
         ) : (
-          level.days.map((day) => (
-            <div key={day.id} className="relative pl-1">
-              <DayRow day={day} />
-            </div>
-          ))
+          level.days.map((day) => <DayRow key={day.id} day={day} />)
         )}
       </div>
     </motion.div>
@@ -293,93 +267,136 @@ export default function StudentLearningRoadmapPage() {
   }
 
   return (
-    <div className="space-y-8 pb-10" role="main" aria-label="Learning Roadmap">
+    <div className="space-y-5 pb-10" role="main" aria-label="Learning Roadmap">
 
-      {/* ── Header ── */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">
+      {/* ── Page header ── */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
             Dashboard · Learning · Roadmap
           </p>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Learning Roadmap</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+            Learning Roadmap
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             Your complete journey, one day at a time.
           </p>
         </div>
 
-        {/* Top-right stats + CTA */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <Badge
-            variant="outline"
-            className="gap-1.5 py-1 border-emerald-500/30 bg-emerald-500/5 text-emerald-600"
-          >
-            <CheckCircle2 className="w-3 h-3" />
-            {roadmap.totalCompleted} Completed
-          </Badge>
-          <Badge variant="outline" className="gap-1.5 py-1">
-            <BookOpen className="w-3 h-3" />
-            {roadmap.totalAvailable} Available
-          </Badge>
-          {dashboard?.currentContent?.id && (
-            <Button size="sm" onClick={handleContinue} className="gap-1.5">
-              Continue <ChevronRight className="w-3.5 h-3.5" />
-            </Button>
-          )}
-        </div>
+        {/* Continue button — always visible */}
+        {dashboard?.currentContent?.id && (
+          <Button size="sm" onClick={handleContinue} className="shrink-0 gap-1.5 mt-1">
+            Continue
+            <ChevronRight className="w-3.5 h-3.5" />
+          </Button>
+        )}
       </div>
 
-      {/* ── Course Progress Bar ── */}
+      {/* ── Course progress card ── */}
       <div
-        className="rounded-xl border border-border bg-card px-6 py-5 space-y-4"
+        className="rounded-xl border border-border bg-card px-4 sm:px-5 py-4 space-y-3"
         style={{ boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.05)' }}
       >
-        <div className="flex items-center justify-between gap-4">
+        {/* Header row */}
+        <div className="flex items-center justify-between gap-2">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-0.5">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">
               Course Progress
             </p>
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-foreground">{roadmap.totalCompleted}</span>
-              <span className="text-base text-muted-foreground">/ {roadmap.totalAvailable} Days</span>
-              <span className="text-sm font-mono text-blue-500 font-semibold ml-1">
-                {pct.toFixed(1)}% Complete
+            <div className="flex items-baseline gap-1.5 flex-wrap">
+              <span className="text-2xl font-bold text-foreground leading-none">
+                {roadmap.totalCompleted}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                / {roadmap.totalAvailable} Days
               </span>
             </div>
           </div>
+          <div className="text-right">
+            <span className="text-xl font-bold text-blue-600 leading-none">
+              {pct.toFixed(1)}%
+            </span>
+            <p className="text-[10px] text-muted-foreground mt-0.5">complete</p>
+          </div>
         </div>
 
+        {/* Bar */}
         <Progress value={pct} className="h-2" />
 
         {/* Legend */}
-        <div className="flex items-center gap-4 flex-wrap">
-          <LegendItem
-            icon={<CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-            label="Completed"
-          />
-          <LegendItem
-            icon={
-              <div className="relative w-3.5 h-3.5">
-                <span className="absolute inset-0 rounded-full bg-blue-500/25 animate-ping" />
-                <Circle className="w-3.5 h-3.5 text-blue-500 fill-blue-500/15 relative" />
-              </div>
-            }
-            label="Current"
-          />
-          <LegendItem
-            icon={<Circle className="w-3.5 h-3.5 text-muted-foreground/35" />}
-            label="Upcoming"
-          />
-          <LegendItem
-            icon={<Lock className="w-3.5 h-3.5 text-muted-foreground/20" />}
-            label="Locked"
-          />
+        <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+          {[
+            {
+              icon: <CheckCircle2 className="w-3 h-3 text-emerald-500" />,
+              label: 'Completed',
+            },
+            {
+              icon: (
+                <div className="relative w-3 h-3">
+                  <span className="absolute inset-0 rounded-full bg-blue-500/25 animate-ping" />
+                  <Circle className="w-3 h-3 text-blue-500 fill-blue-500/15 relative" />
+                </div>
+              ),
+              label: 'Current',
+            },
+            {
+              icon: <Circle className="w-3 h-3 text-muted-foreground/35" />,
+              label: 'Upcoming',
+            },
+            {
+              icon: <Lock className="w-3 h-3 text-muted-foreground/20" />,
+              label: 'Locked',
+            },
+          ].map(({ icon, label }) => (
+            <span key={label} className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+              {icon}
+              {label}
+            </span>
+          ))}
         </div>
       </div>
 
+      {/* ── Stats row (mobile: 2 pills) ── */}
+      <div className="flex items-center gap-2 sm:hidden">
+        <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl border border-emerald-500/25 bg-emerald-500/5">
+          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+          <div>
+            <p className="text-xs font-bold text-emerald-700 leading-none">
+              {roadmap.totalCompleted}
+            </p>
+            <p className="text-[10px] text-muted-foreground leading-none mt-0.5">completed</p>
+          </div>
+        </div>
+        <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl border border-border bg-muted/30">
+          <BookOpen className="w-4 h-4 text-muted-foreground shrink-0" />
+          <div>
+            <p className="text-xs font-bold text-foreground leading-none">
+              {roadmap.totalAvailable}
+            </p>
+            <p className="text-[10px] text-muted-foreground leading-none mt-0.5">available</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Desktop badge row ── */}
+      <div className="hidden sm:flex items-center gap-2">
+        <Badge
+          variant="outline"
+          className="gap-1.5 py-1 border-emerald-500/30 bg-emerald-500/5 text-emerald-600 font-semibold"
+        >
+          <CheckCircle2 className="w-3 h-3" />
+          {roadmap.totalCompleted} Completed
+        </Badge>
+        <Badge variant="outline" className="gap-1.5 py-1 font-semibold">
+          <BookOpen className="w-3 h-3" />
+          {roadmap.totalAvailable} Available
+        </Badge>
+      </div>
+
       {/* ── Level sections ── */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {roadmap.levels.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-muted/20 py-16">
+          <div className="rounded-2xl border border-dashed border-border bg-muted/20 py-14">
             <EmptyState
               icon={RoadmapIcon}
               title="Roadmap is empty"
