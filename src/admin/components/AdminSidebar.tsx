@@ -21,6 +21,7 @@ import {
   PlusCircle,
   List,
   GraduationCap,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useAdminStore } from "@/admin/store/adminStore";
@@ -67,6 +68,12 @@ const navItems = [
     label: "Levels",
     href: "/admin/learning/levels",
     icon: Layers,
+    section: "Learning CMS",
+  },
+  {
+    label: "Course PDFs",
+    href: "/admin/pdfs",
+    icon: FileText,
     section: "Learning CMS",
   },
   { label: "Users", href: "/admin/users", icon: Users, section: "Access" },

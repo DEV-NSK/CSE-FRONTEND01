@@ -19,6 +19,7 @@ import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { Progress } from '@/shared/components/ui/progress'
 import { cn } from '@/shared/lib/utils'
+import { CoursePdfsSection } from '../components/CoursePdfsSection'
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
@@ -406,6 +407,9 @@ export default function StudentLearningRoadmapPage() {
           ))
         )}
       </div>
+
+      {/* ── Course PDFs / Study Materials ── */}
+      <CoursePdfsSection />
     </div>
   )
 }
