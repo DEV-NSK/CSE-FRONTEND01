@@ -44,13 +44,13 @@ export const ExecutionControls: React.FC<Props> = ({
   const atStart = currentStepIndex <= -1;
 
   const btnBase = isDark
-    ? 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-zinc-300'
-    : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900';
+    ? 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-zinc-300 hover:text-white'
+    : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700 hover:text-slate-900';
 
-  const dividerCls = isDark ? 'bg-zinc-700' : 'bg-slate-200';
+  const dividerCls = isDark ? 'bg-zinc-700' : 'bg-slate-300';
 
-  const speedActiveCls = isDark ? 'bg-zinc-600 text-white' : 'bg-slate-200 text-slate-900';
-  const speedInactiveCls = isDark ? 'text-zinc-500 hover:text-zinc-300' : 'text-slate-400 hover:text-slate-700';
+  const speedActiveCls = isDark ? 'bg-zinc-600 text-white' : 'bg-slate-700 text-white';
+  const speedInactiveCls = isDark ? 'text-zinc-500 hover:text-zinc-300' : 'text-slate-500 hover:text-slate-800';
 
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
@@ -131,7 +131,7 @@ export const ExecutionControls: React.FC<Props> = ({
       <ControlBtn
         onClick={onReset}
         title="Reset — clear all steps"
-        className={isDark ? 'text-zinc-400 hover:text-zinc-200' : 'text-slate-400 hover:text-slate-700'}
+        className={isDark ? 'text-zinc-400 hover:text-zinc-200' : 'text-slate-600 hover:text-slate-900'}
         baseClass={btnBase}
       >
         <RotateCcw size={12} />

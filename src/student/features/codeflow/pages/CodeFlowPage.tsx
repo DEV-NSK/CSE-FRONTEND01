@@ -206,6 +206,7 @@ export const CodeFlowPage: React.FC = () => {
 
         {/* Examples */}
         <ExamplesDropdown
+          language={language}
           onSelect={(c) => { setCode(c); reset(); }}
           isDark={isDark}
         />
@@ -296,7 +297,7 @@ export const CodeFlowPage: React.FC = () => {
           <Panel defaultSize={37} minSize={24} className="flex flex-col min-h-0">
             <PanelHeader
               label="EXECUTION VISUALIZER"
-              sublabel="Runtime Environment"
+              sublabel={langConfig.runtimeLabel}
               bgClass={panelHeaderBg}
               textClass={panelHeaderText}
               subClass={panelHeaderSub}
@@ -328,16 +329,25 @@ export const CodeFlowPage: React.FC = () => {
 
                 <PanelResizeHandle className={`h-px ${resizeHandleV} cursor-row-resize my-0.5`} />
 
-                {/* Async runtime (bottom) */}
+                {/* Async runtime (bottom) — JS only; other languages show their runtime model */}
                 <Panel defaultSize={45} minSize={20} className="overflow-y-auto min-h-0">
-                  <SectionHeader label="Async Runtime" textClass={sectionHeaderText} />
-                  <AsyncRuntimePanel
-                    webApis={currentState.webApis}
-                    microtaskQueue={currentState.microtaskQueue}
-                    taskQueue={currentState.taskQueue}
-                    eventLoopPhase={currentState.eventLoopPhase}
-                    isDark={isDark}
-                  />
+                  {language === 'javascript' ? (
+                    <>
+                      <SectionHeader label="Async Runtime" textClass={sectionHeaderText} />
+                      <AsyncRuntimePanel
+                        webApis={currentState.webApis}
+                        microtaskQueue={currentState.microtaskQueue}
+                        taskQueue={currentState.taskQueue}
+                        eventLoopPhase={currentState.eventLoopPhase}
+                        isDark={isDark}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <SectionHeader label="Runtime Model" textClass={sectionHeaderText} />
+                      <LanguageRuntimeInfo language={language} isDark={isDark} />
+                    </>
+                  )}
                 </Panel>
               </PanelGroup>
             </div>
@@ -490,3 +500,89 @@ const StatusBlock: React.FC<{
 };
 
 export default CodeFlowPage;
+
+// ── Language Runtime Info Panel ────────────────────────────────────────────────
+// Shown in the "Async Runtime" slot for non-JS languages.
+
+interface RuntimeStage {
+  icon: string;
+  label: string;
+  description: string;
+}
+
+const RUNTIME_STAGES: Record<string, RuntimeStage[]> = {
+  python: [
+    { icon: '📄', label: 'Source Code', description: '.py file' },
+    { icon: '⚙️', label: 'Compilation', description: 'CPython compiler' },
+    { icon: '💾', label: 'Bytecode', description: '.pyc / __pycache__' },
+    { icon: '🐍', label: 'Python VM', description: 'CPython interpreter' },
+    { icon: '📦', label: 'Execution Frames', description: 'Call stack frames' },
+    { icon: '🗂️', label: 'Variables / Objects', description: 'Heap & namespace dicts' },
+  ],
+  c: [
+    { icon: '📄', label: 'Source (.c)', description: 'C source file' },
+    { icon: '🔧', label: 'Preprocessor', description: '#include, #define' },
+    { icon: '⚙️', label: 'Compiler (gcc/clang)', description: 'Generates assembly' },
+    { icon: '📋', label: 'Object Code (.o)', description: 'Compiled object file' },
+    { icon: '🔗', label: 'Linker', description: 'Links libraries' },
+    { icon: '▶️', label: 'Executable', description: 'Native binary' },
+    { icon: '🏃', label: 'Runtime', description: 'Stack & Heap' },
+  ],
+  cpp: [
+    { icon: '📄', label: 'Source (.cpp)', description: 'C++ source file' },
+    { icon: '🔧', label: 'Preprocessor', description: '#include, templates' },
+    { icon: '⚙️', label: 'Compiler (g++/clang++)', description: 'Assembly + objects' },
+    { icon: '🔗', label: 'Linker', description: 'Links std & libs' },
+    { icon: '▶️', label: 'Executable', description: 'Native binary' },
+    { icon: '🏃', label: 'Runtime', description: 'Stack, Heap, Objects' },
+    { icon: '📌', label: 'References/Pointers', description: 'Manual memory' },
+  ],
+  csharp: [
+    { icon: '📄', label: 'Source (.cs)', description: 'C# source file' },
+    { icon: '⚙️', label: 'Roslyn Compiler', description: 'Microsoft C# compiler' },
+    { icon: '💾', label: 'MSIL / CIL', description: 'Intermediate Language' },
+    { icon: '🔧', label: 'CLR', description: 'Common Language Runtime' },
+    { icon: '⚡', label: 'JIT Compiler', description: 'Just-In-Time compilation' },
+    { icon: '▶️', label: 'Native Execution', description: 'Managed code runs' },
+    { icon: '🗂️', label: 'Managed Heap', description: 'GC-managed objects' },
+  ],
+  java: [
+    { icon: '📄', label: 'Source (.java)', description: 'Java source file' },
+    { icon: '⚙️', label: 'javac', description: 'Java compiler' },
+    { icon: '💾', label: 'Bytecode (.class)', description: 'Platform-neutral' },
+    { icon: '☕', label: 'JVM', description: 'Java Virtual Machine' },
+    { icon: '⚡', label: 'JIT Compiler', description: 'Hotspot optimization' },
+    { icon: '📦', label: 'Stack Frames', description: 'Method call frames' },
+    { icon: '🗂️', label: 'Heap / Objects', description: 'GC-managed objects' },
+  ],
+};
+
+const LanguageRuntimeInfo: React.FC<{ language: string; isDark: boolean }> = ({ language, isDark }) => {
+  const stages = RUNTIME_STAGES[language] ?? [];
+  if (stages.length === 0) return null;
+
+  const containerBg = isDark ? 'bg-zinc-900/40' : 'bg-slate-50';
+  const cardBg = isDark ? 'bg-zinc-800/60 border-zinc-700/50' : 'bg-white border-slate-200';
+  const labelText = isDark ? 'text-zinc-200' : 'text-slate-700';
+  const descText = isDark ? 'text-zinc-500' : 'text-slate-400';
+  const arrowColor = isDark ? 'text-zinc-600' : 'text-slate-300';
+
+  return (
+    <div className={`rounded-lg ${containerBg} p-2 flex flex-col gap-1 overflow-y-auto`}>
+      {stages.map((stage, idx) => (
+        <React.Fragment key={stage.label}>
+          <div className={`flex items-center gap-2 rounded border px-2 py-1.5 ${cardBg}`}>
+            <span className="text-sm shrink-0">{stage.icon}</span>
+            <div className="min-w-0">
+              <div className={`text-[10px] font-semibold font-mono ${labelText}`}>{stage.label}</div>
+              <div className={`text-[9px] ${descText}`}>{stage.description}</div>
+            </div>
+          </div>
+          {idx < stages.length - 1 && (
+            <div className={`text-center text-[10px] leading-none ${arrowColor}`}>↓</div>
+          )}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
