@@ -11,31 +11,44 @@ import type { ConsoleEntry } from '../types/codeflow.types';
 interface Props {
   entries: ConsoleEntry[];
   currentStepIndex: number;
+  isDark?: boolean;
 }
 
-export const ConsolePanel: React.FC<Props> = ({ entries, currentStepIndex }) => {
+export const ConsolePanel: React.FC<Props> = ({ entries, currentStepIndex, isDark = true }) => {
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom as new outputs appear
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [entries.length]);
 
+  const containerClass = isDark
+    ? 'bg-zinc-950 border-zinc-800'
+    : 'bg-slate-50 border-slate-200';
+  const headerClass = isDark
+    ? 'border-zinc-800 bg-zinc-900'
+    : 'border-slate-200 bg-white';
+  const titleClass = isDark ? 'text-emerald-400' : 'text-emerald-600';
+  const countClass = isDark ? 'text-zinc-500' : 'text-slate-400';
+  const emptyClass = isDark ? 'text-zinc-600' : 'text-slate-400';
+  const outputBg = isDark ? '' : 'bg-white';
+
   return (
-    <div className="flex flex-col h-full bg-zinc-950 rounded-lg border border-zinc-800 overflow-hidden">
+    <div className={`flex flex-col h-full rounded-lg border overflow-hidden ${containerClass}`}>
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-zinc-800 bg-zinc-900">
-        <span className="text-emerald-400 text-xs font-semibold font-mono">CONSOLE</span>
+      <div className={`flex items-center gap-2 px-3 py-1.5 border-b ${headerClass}`}>
+        <span className={`text-xs font-semibold font-mono ${titleClass}`}>CONSOLE</span>
         {entries.length > 0 && (
-          <span className="ml-auto text-[9px] text-zinc-500">{entries.length} output{entries.length !== 1 ? 's' : ''}</span>
+          <span className={`ml-auto text-[9px] ${countClass}`}>
+            {entries.length} output{entries.length !== 1 ? 's' : ''}
+          </span>
         )}
       </div>
 
       {/* Output area */}
-      <div className="flex-1 overflow-y-auto p-2 font-mono text-xs">
+      <div className={`flex-1 overflow-y-auto p-2 font-mono text-xs ${outputBg}`}>
         <AnimatePresence mode="popLayout">
           {entries.length === 0 ? (
-            <p className="text-zinc-600 italic text-[11px] p-2">No output yet.</p>
+            <p className={`italic text-[11px] p-2 ${emptyClass}`}>No output yet.</p>
           ) : (
             entries.map((entry) => {
               const isNew = entry.stepIndex === currentStepIndex;
@@ -51,15 +64,17 @@ export const ConsolePanel: React.FC<Props> = ({ entries, currentStepIndex }) => 
                     flex items-start gap-2 px-2 py-1 rounded mb-0.5 border-l-2
                     ${isNew
                       ? 'bg-emerald-900/20 border-emerald-500 text-emerald-300'
-                      : 'border-zinc-800 text-zinc-300'
+                      : isDark
+                        ? 'border-zinc-800 text-zinc-300'
+                        : 'border-slate-200 text-slate-700'
                     }
                   `}
                 >
-                  <span className="text-zinc-600 text-[9px] shrink-0 mt-0.5">
+                  <span className={`text-[9px] shrink-0 mt-0.5 ${isDark ? 'text-zinc-600' : 'text-slate-400'}`}>
                     {String(entry.stepIndex).padStart(3, '0')}
                   </span>
                   <span className="whitespace-pre-wrap break-all">{entry.value}</span>
-                  <span className="ml-auto text-zinc-600 text-[9px] shrink-0">
+                  <span className={`ml-auto text-[9px] shrink-0 ${isDark ? 'text-zinc-600' : 'text-slate-400'}`}>
                     L{entry.line}
                   </span>
                 </motion.div>

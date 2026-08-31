@@ -12,24 +12,26 @@ import { formatValue, valueColorClass } from '../utils/codeflow.utils';
 interface Props {
   scopes: Scope[];
   currentStepIndex: number;
+  isDark?: boolean;
 }
 
-export const VariablePanel: React.FC<Props> = ({ scopes, currentStepIndex }) => {
+export const VariablePanel: React.FC<Props> = ({ scopes, currentStepIndex, isDark = true }) => {
   const visibleScopes = scopes.filter((s) => s.variables.length > 0 || s.type === 'global');
+  const emptyText = isDark ? 'text-zinc-500' : 'text-slate-400';
 
   return (
-    <div className="flex flex-col gap-3 h-full overflow-y-auto">
+    <div className="flex flex-col gap-2 h-full overflow-y-auto">
       {visibleScopes.map((scope) => (
-        <ScopeBlock key={scope.id} scope={scope} currentStepIndex={currentStepIndex} />
+        <ScopeBlock key={scope.id} scope={scope} currentStepIndex={currentStepIndex} isDark={isDark} />
       ))}
       {visibleScopes.every((s) => s.variables.length === 0) && (
-        <p className="text-xs text-zinc-500 text-center mt-4">No variables yet.</p>
+        <p className={`text-xs text-center mt-4 ${emptyText}`}>No variables yet.</p>
       )}
     </div>
   );
 };
 
-const ScopeBlock: React.FC<{ scope: Scope; currentStepIndex: number }> = ({ scope, currentStepIndex }) => {
+const ScopeBlock: React.FC<{ scope: Scope; currentStepIndex: number; isDark: boolean }> = ({ scope, currentStepIndex, isDark }) => {
   const scopeLabel =
     scope.type === 'global' ? 'Global Execution Context' :
     scope.type === 'function' ? `Function: ${scope.name}` :
@@ -45,18 +47,22 @@ const ScopeBlock: React.FC<{ scope: Scope; currentStepIndex: number }> = ({ scop
     scope.type === 'function' ? 'text-purple-400' :
     'text-teal-400';
 
+  const blockBg = isDark ? 'bg-zinc-900/60' : 'bg-white';
+  const headerBg = isDark ? 'bg-zinc-900' : 'bg-slate-50';
+  const emptyText = isDark ? 'text-zinc-600' : 'text-slate-400';
+
   return (
-    <div className={`rounded-lg border ${borderColor} bg-zinc-900/60 overflow-hidden`}>
-      <div className={`px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest ${labelColor} bg-zinc-900`}>
+    <div className={`rounded-lg border ${borderColor} ${blockBg} overflow-hidden`}>
+      <div className={`px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest ${labelColor} ${headerBg}`}>
         {scopeLabel}
       </div>
       <div className="px-2 py-1">
         <AnimatePresence mode="popLayout">
           {scope.variables.length === 0 ? (
-            <p className="text-xs text-zinc-600 px-1 py-1">empty</p>
+            <p className={`text-xs px-1 py-1 ${emptyText}`}>empty</p>
           ) : (
             scope.variables.map((v) => (
-              <VariableRow key={v.name} variable={v} currentStepIndex={currentStepIndex} />
+              <VariableRow key={v.name} variable={v} currentStepIndex={currentStepIndex} isDark={isDark} />
             ))
           )}
         </AnimatePresence>
@@ -65,9 +71,13 @@ const ScopeBlock: React.FC<{ scope: Scope; currentStepIndex: number }> = ({ scop
   );
 };
 
-const VariableRow: React.FC<{ variable: Variable; currentStepIndex: number }> = ({ variable, currentStepIndex }) => {
+const VariableRow: React.FC<{ variable: Variable; currentStepIndex: number; isDark: boolean }> = ({ variable, currentStepIndex, isDark }) => {
   const justChanged = variable.changedAtStep === currentStepIndex;
   const isTdz = variable.state === 'tdz';
+
+  const kindText = isDark ? 'text-zinc-500' : 'text-slate-400';
+  const nameText = isDark ? 'text-zinc-200' : 'text-slate-800';
+  const undefinedText = isDark ? 'text-zinc-500' : 'text-slate-400';
 
   return (
     <motion.div
@@ -83,10 +93,10 @@ const VariableRow: React.FC<{ variable: Variable; currentStepIndex: number }> = 
       className="flex items-center justify-between rounded px-2 py-1 text-xs group"
     >
       <div className="flex items-center gap-2 min-w-0">
-        <span className="text-zinc-500 text-[9px] font-mono font-semibold uppercase shrink-0">
+        <span className={`text-[9px] font-mono font-semibold uppercase shrink-0 ${kindText}`}>
           {variable.kind}
         </span>
-        <span className="text-zinc-200 font-mono truncate">{variable.name}</span>
+        <span className={`font-mono truncate ${nameText}`}>{variable.name}</span>
       </div>
       <div className="flex items-center gap-1.5 shrink-0 ml-2">
         {justChanged && (
@@ -97,7 +107,7 @@ const VariableRow: React.FC<{ variable: Variable; currentStepIndex: number }> = 
             TDZ
           </span>
         ) : variable.state === 'hoisted_undefined' ? (
-          <span className="text-zinc-500 font-mono text-[10px]">undefined</span>
+          <span className={`font-mono text-[10px] ${undefinedText}`}>undefined</span>
         ) : (
           <span className={`font-mono text-[11px] max-w-[120px] truncate ${valueColorClass(variable.value)}`}>
             {formatValue(variable.value)}

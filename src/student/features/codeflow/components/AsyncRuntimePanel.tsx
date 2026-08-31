@@ -17,6 +17,7 @@ interface Props {
   microtaskQueue: QueueEntry[];
   taskQueue: QueueEntry[];
   eventLoopPhase: EventLoopPhase;
+  isDark?: boolean;
 }
 
 export const AsyncRuntimePanel: React.FC<Props> = ({
@@ -24,11 +25,15 @@ export const AsyncRuntimePanel: React.FC<Props> = ({
   microtaskQueue,
   taskQueue,
   eventLoopPhase,
+  isDark = true,
 }) => {
   const eventLoopActive = eventLoopPhase !== 'idle';
 
+  const loopActiveBorder = 'border-emerald-500/60 bg-emerald-900/20 shadow-[0_0_10px_rgba(16,185,129,0.2)]';
+  const loopIdleBorder = isDark ? 'border-zinc-700/40 bg-zinc-900/30' : 'border-slate-200 bg-slate-50';
+
   return (
-    <div className="flex flex-col gap-3 h-full overflow-y-auto">
+    <div className="flex flex-col gap-2 h-full overflow-y-auto">
       {/* Web APIs */}
       <ZoneBlock
         title="Web APIs"
@@ -36,9 +41,10 @@ export const AsyncRuntimePanel: React.FC<Props> = ({
         items={webApis.map((w) => ({ id: w.id, label: w.label }))}
         emptyText="No active Web APIs"
         icon="🌐"
+        isDark={isDark}
       />
 
-      {/* Microtask Queue — higher priority (PRD §16) */}
+      {/* Microtask Queue */}
       <ZoneBlock
         title="Microtask Queue"
         subtitle="Promise .then / .catch / .finally"
@@ -46,9 +52,10 @@ export const AsyncRuntimePanel: React.FC<Props> = ({
         items={microtaskQueue}
         emptyText="Empty"
         icon="⚡"
+        isDark={isDark}
       />
 
-      {/* Task Queue / Macrotask Queue */}
+      {/* Task Queue */}
       <ZoneBlock
         title="Task Queue"
         subtitle="setTimeout / setInterval callbacks"
@@ -56,21 +63,14 @@ export const AsyncRuntimePanel: React.FC<Props> = ({
         items={taskQueue}
         emptyText="Empty"
         icon="📋"
+        isDark={isDark}
       />
 
       {/* Event Loop indicator */}
-      <div
-        className={`
-          rounded-lg border px-3 py-2 transition-all duration-300
-          ${eventLoopActive
-            ? 'border-emerald-500/60 bg-emerald-900/20 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
-            : 'border-zinc-700/40 bg-zinc-900/30'
-          }
-        `}
-      >
+      <div className={`rounded-lg border px-3 py-2 transition-all duration-300 ${eventLoopActive ? loopActiveBorder : loopIdleBorder}`}>
         <div className="flex items-center gap-2">
           <span className={`text-sm ${eventLoopActive ? 'animate-spin' : ''}`}>🔄</span>
-          <span className={`text-xs font-semibold ${eventLoopActive ? 'text-emerald-400' : 'text-zinc-500'}`}>
+          <span className={`text-xs font-semibold ${eventLoopActive ? 'text-emerald-400' : isDark ? 'text-zinc-500' : 'text-slate-400'}`}>
             Event Loop
           </span>
           {eventLoopActive && (
@@ -98,31 +98,59 @@ interface ZoneBlockProps {
   items: QueueEntry[];
   emptyText: string;
   icon: string;
+  isDark?: boolean;
 }
 
-const colorMap = {
+const colorMapDark = {
   sky: {
     border: 'border-sky-500/40',
     label: 'text-sky-400',
     header: 'bg-sky-950/40',
     item: 'bg-sky-900/30 border-sky-700/50 text-sky-300',
+    empty: 'text-zinc-600',
   },
   indigo: {
     border: 'border-indigo-500/40',
     label: 'text-indigo-400',
     header: 'bg-indigo-950/40',
     item: 'bg-indigo-900/30 border-indigo-700/50 text-indigo-300',
+    empty: 'text-zinc-600',
   },
   amber: {
     border: 'border-amber-500/40',
     label: 'text-amber-400',
     header: 'bg-amber-950/20',
     item: 'bg-amber-900/20 border-amber-700/40 text-amber-300',
+    empty: 'text-zinc-600',
   },
 };
 
-const ZoneBlock: React.FC<ZoneBlockProps> = ({ title, subtitle, color, items, emptyText, icon }) => {
-  const c = colorMap[color];
+const colorMapLight = {
+  sky: {
+    border: 'border-sky-200',
+    label: 'text-sky-600',
+    header: 'bg-sky-50',
+    item: 'bg-sky-50 border-sky-200 text-sky-700',
+    empty: 'text-slate-400',
+  },
+  indigo: {
+    border: 'border-indigo-200',
+    label: 'text-indigo-600',
+    header: 'bg-indigo-50',
+    item: 'bg-indigo-50 border-indigo-200 text-indigo-700',
+    empty: 'text-slate-400',
+  },
+  amber: {
+    border: 'border-amber-200',
+    label: 'text-amber-600',
+    header: 'bg-amber-50',
+    item: 'bg-amber-50 border-amber-200 text-amber-700',
+    empty: 'text-slate-400',
+  },
+};
+
+const ZoneBlock: React.FC<ZoneBlockProps> = ({ title, subtitle, color, items, emptyText, icon, isDark = true }) => {
+  const c = isDark ? colorMapDark[color] : colorMapLight[color];
   return (
     <div className={`rounded-lg border ${c.border} overflow-hidden`}>
       <div className={`px-3 py-1.5 ${c.header} flex items-center gap-1.5`}>
@@ -132,7 +160,7 @@ const ZoneBlock: React.FC<ZoneBlockProps> = ({ title, subtitle, color, items, em
             {title}
           </span>
           {subtitle && (
-            <p className="text-[9px] text-zinc-500 mt-px">{subtitle}</p>
+            <p className={`text-[9px] mt-px ${isDark ? 'text-zinc-500' : 'text-slate-400'}`}>{subtitle}</p>
           )}
         </div>
         {items.length > 0 && (
@@ -144,7 +172,7 @@ const ZoneBlock: React.FC<ZoneBlockProps> = ({ title, subtitle, color, items, em
       <div className="px-2 py-1.5 flex flex-col gap-1 min-h-[28px]">
         <AnimatePresence mode="popLayout">
           {items.length === 0 ? (
-            <p className="text-[10px] text-zinc-600 italic px-1">{emptyText}</p>
+            <p className={`text-[10px] italic px-1 ${c.empty}`}>{emptyText}</p>
           ) : (
             items.map((item) => (
               <motion.div

@@ -13,6 +13,7 @@ interface Props {
   currentEvent: ExecutionEvent | null;
   currentStepIndex: number;
   totalSteps: number;
+  isDark?: boolean;
 }
 
 export const ExplanationPanel: React.FC<Props> = ({
@@ -20,12 +21,16 @@ export const ExplanationPanel: React.FC<Props> = ({
   currentEvent,
   currentStepIndex,
   totalSteps,
+  isDark = true,
 }) => {
+  const labelText = isDark ? 'text-zinc-500' : 'text-slate-400';
+  const counterText = isDark ? 'text-zinc-500' : 'text-slate-400';
+  const bodyText = isDark ? 'text-zinc-200' : 'text-slate-700';
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1">
       {/* What's happening label */}
       <div className="flex items-center gap-2">
-        <span className="text-[9px] uppercase tracking-widest text-zinc-500 font-semibold">
+        <span className={`text-[9px] uppercase tracking-widest font-semibold ${labelText}`}>
           What's happening?
         </span>
         {currentEvent && (
@@ -34,7 +39,7 @@ export const ExplanationPanel: React.FC<Props> = ({
           </span>
         )}
         {totalSteps > 0 && (
-          <span className="ml-auto text-[9px] text-zinc-500 font-mono">
+          <span className={`ml-auto text-[9px] font-mono ${counterText}`}>
             {currentStepIndex < 0 ? 0 : currentStepIndex + 1} / {totalSteps}
           </span>
         )}
@@ -48,7 +53,7 @@ export const ExplanationPanel: React.FC<Props> = ({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="text-[11px] text-zinc-200 leading-relaxed min-h-[20px]"
+          className={`text-[11px] leading-relaxed min-h-[18px] ${bodyText}`}
         >
           {explanation || 'Press Run to start.'}
         </motion.div>

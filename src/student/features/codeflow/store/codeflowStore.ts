@@ -13,8 +13,22 @@ import type {
 } from '../types/codeflow.types';
 import { createInitialRuntimeState } from '../utils/codeflow.utils';
 
-/** Default starter code shown in the editor */
-const DEFAULT_CODE = `// CODEFLOW — JavaScript Execution Visualizer
+/** Supported CodeFlow languages */
+export type CodeflowLanguage = 'javascript' | 'python' | 'c' | 'cpp' | 'csharp' | 'java';
+
+export interface LanguageConfig {
+  id: CodeflowLanguage;
+  name: string;
+  monacoLanguage: string;
+  defaultCode: string;
+}
+
+export const CODEFLOW_LANGUAGES: LanguageConfig[] = [
+  {
+    id: 'javascript',
+    name: 'JavaScript',
+    monacoLanguage: 'javascript',
+    defaultCode: `// CODEFLOW — JavaScript Execution Visualizer
 // Press Run to generate all steps, then use Step / Play to walk through them.
 
 let x = 10;
@@ -25,15 +39,112 @@ function add(a, b) {
 }
 
 let result = add(x, y);
-console.log(result);
-`;
+console.log(result);`,
+  },
+  {
+    id: 'python',
+    name: 'Python',
+    monacoLanguage: 'python',
+    defaultCode: `# CODEFLOW — Python Execution Visualizer
+# Press Run to generate all steps, then use Step / Play to walk through them.
+
+x = 10
+y = 20
+
+def add(a, b):
+    return a + b
+
+result = add(x, y)
+print(result)`,
+  },
+  {
+    id: 'c',
+    name: 'C',
+    monacoLanguage: 'c',
+    defaultCode: `// CODEFLOW — C Execution Visualizer
+#include <stdio.h>
+
+int add(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    int x = 10;
+    int y = 20;
+    int result = add(x, y);
+    printf("%d\\n", result);
+    return 0;
+}`,
+  },
+  {
+    id: 'cpp',
+    name: 'C++',
+    monacoLanguage: 'cpp',
+    defaultCode: `// CODEFLOW — C++ Execution Visualizer
+#include <iostream>
+using namespace std;
+
+int add(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    int x = 10;
+    int y = 20;
+    int result = add(x, y);
+    cout << result << endl;
+    return 0;
+}`,
+  },
+  {
+    id: 'csharp',
+    name: 'C#',
+    monacoLanguage: 'csharp',
+    defaultCode: `// CODEFLOW — C# Execution Visualizer
+using System;
+
+class Program {
+    static int Add(int a, int b) {
+        return a + b;
+    }
+
+    static void Main() {
+        int x = 10;
+        int y = 20;
+        int result = Add(x, y);
+        Console.WriteLine(result);
+    }
+}`,
+  },
+  {
+    id: 'java',
+    name: 'Java',
+    monacoLanguage: 'java',
+    defaultCode: `// CODEFLOW — Java Execution Visualizer
+public class Main {
+    static int add(int a, int b) {
+        return a + b;
+    }
+
+    public static void main(String[] args) {
+        int x = 10;
+        int y = 20;
+        int result = add(x, y);
+        System.out.println(result);
+    }
+}`,
+  },
+];
+
+/** Default starter code shown in the editor */
+const DEFAULT_CODE = CODEFLOW_LANGUAGES[0].defaultCode;
 
 type ExecutionStatus = 'idle' | 'loading' | 'ready' | 'playing' | 'paused' | 'error';
 
 interface CodeflowState {
   // Editor
   code: string;
-  language: 'javascript';
+  language: CodeflowLanguage;
 
   // Execution data
   steps: ExecutionStep[];
@@ -49,6 +160,7 @@ interface CodeflowState {
 
   // Actions
   setCode: (code: string) => void;
+  setLanguage: (lang: CodeflowLanguage) => void;
   loadResult: (result: ExecutionResult) => void;
   setLoading: (v: boolean) => void;
   setParseError: (msg: string) => void;
@@ -79,6 +191,23 @@ export const useCodeflowStore = create<CodeflowState>((set, get) => ({
   playIntervalId: null,
 
   setCode: (code) => set({ code }),
+
+  setLanguage: (language) => {
+    const { playIntervalId } = get();
+    if (playIntervalId) clearInterval(playIntervalId);
+    const langConfig = CODEFLOW_LANGUAGES.find((l) => l.id === language);
+    set({
+      language,
+      code: langConfig?.defaultCode ?? '',
+      steps: [],
+      totalSteps: 0,
+      currentStepIndex: -1,
+      currentState: createInitialRuntimeState(),
+      parseError: null,
+      executionStatus: 'idle',
+      playIntervalId: null,
+    });
+  },
 
   loadResult: (result) => {
     set({

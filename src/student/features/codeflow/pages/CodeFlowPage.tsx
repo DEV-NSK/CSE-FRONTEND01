@@ -1,14 +1,17 @@
 /**
  * CODEFLOW — Main Page
  *
- * 3-panel layout as specified in PRD §3:
- *   LEFT:   Code Editor (Monaco, JS syntax highlight, line highlight, error highlight)
+ * 3-panel layout:
+ *   LEFT:   Code Editor (Monaco, dynamic language, dynamic theme)
  *   MIDDLE: Execution Visualizer (Global Context, Call Stack, Web APIs, Queues, Event Loop)
  *   RIGHT:  Output (Console, Variables, Call Stack summary, Status)
  *
- * PRD §26: No gamification, no competitions, no badges.
- * PRD §4:  Monaco Editor, dark theme, line highlight
- * PRD §5:  Run | Reset | Prev | Step | Play | Pause | Stop | Speed
+ * Fixes applied:
+ *  - All 6 languages selectable (JS / Python / C / C++ / C# / Java)
+ *  - Theme respects global themeStore (light/dark)
+ *  - Fixed desktop viewport — no page scroll
+ *  - Monaco language + theme reactive
+ *  - Language sent correctly to backend on execute
  */
 
 import React, { useCallback, useRef, useEffect } from 'react';
@@ -17,11 +20,13 @@ import type * as Monaco from 'monaco-editor';
 import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels';
 import { AlertTriangle, CheckCircle2, Zap } from 'lucide-react';
 
-import { useCodeflowStore } from '../store/codeflowStore';
+import { useThemeStore } from '@/shared/store/themeStore';
+import { useCodeflowStore, CODEFLOW_LANGUAGES } from '../store/codeflowStore';
 import { codeflowService } from '../services/codeflow.service';
 
 import { ExecutionControls } from '../components/ExecutionControls';
 import { ExamplesDropdown } from '../components/ExamplesDropdown';
+import { LanguageSelector } from '../components/LanguageSelector';
 import { VariablePanel } from '../components/VariablePanel';
 import { CallStackPanel } from '../components/CallStackPanel';
 import { AsyncRuntimePanel } from '../components/AsyncRuntimePanel';
@@ -35,8 +40,15 @@ export const CodeFlowPage: React.FC = () => {
   const monacoRef = useRef<typeof Monaco | null>(null);
   const decorationsRef = useRef<Monaco.editor.IEditorDecorationsCollection | null>(null);
 
+  // ── Theme ────────────────────────────────────────────────────────────────────
+  const { resolvedTheme } = useThemeStore();
+  const isDark = resolvedTheme === 'dark';
+  const monacoTheme = isDark ? 'vs-dark' : 'light';
+
+  // ── Store ────────────────────────────────────────────────────────────────────
   const {
     code, setCode,
+    language, setLanguage,
     steps, totalSteps, currentStepIndex, currentState,
     executionStatus, speed, parseError,
     loadResult, setLoading, setParseError,
@@ -44,24 +56,31 @@ export const CodeFlowPage: React.FC = () => {
     setSpeed, jumpToStep,
   } = useCodeflowStore();
 
+  // Derived language config
+  const langConfig = CODEFLOW_LANGUAGES.find((l) => l.id === language) ?? CODEFLOW_LANGUAGES[0];
+
   // ── Monaco editor mount ──────────────────────────────────────────────────────
   const handleEditorMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
     decorationsRef.current = editor.createDecorationsCollection([]);
 
-    // PRD §4: keyboard shortcut Ctrl+Enter → Run
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
       void handleRun();
     });
   };
 
-  // ── Highlight current line in editor (PRD §4) ────────────────────────────────
+  // ── Sync Monaco theme when app theme changes ─────────────────────────────────
+  useEffect(() => {
+    if (!monacoRef.current) return;
+    monacoRef.current.editor.setTheme(monacoTheme);
+  }, [monacoTheme]);
+
+  // ── Highlight current line in editor ─────────────────────────────────────────
   useEffect(() => {
     if (!editorRef.current || !monacoRef.current) return;
     const monaco = monacoRef.current;
 
-    // Error highlight (PRD §19)
     if (currentState.error) {
       decorationsRef.current?.set([{
         range: new monaco.Range(currentState.error.line, 1, currentState.error.line, 9999),
@@ -83,7 +102,6 @@ export const CodeFlowPage: React.FC = () => {
           className: 'codeflow-current-line',
         },
       }]);
-      // Reveal the line in editor (PRD §4: highlight moves as execution progresses)
       editorRef.current.revealLineInCenterIfOutsideViewport(line);
     } else {
       decorationsRef.current?.set([]);
@@ -95,10 +113,9 @@ export const CodeFlowPage: React.FC = () => {
     if (!code?.trim()) return;
     setLoading(true);
     try {
-      const res = await codeflowService.execute(code);
+      const res = await codeflowService.execute(code, language);
       if (res.data?.data) {
         loadResult(res.data.data);
-        // Auto-step to first step
         setTimeout(() => {
           useCodeflowStore.getState().stepForward();
         }, 50);
@@ -109,31 +126,65 @@ export const CodeFlowPage: React.FC = () => {
         ?? 'Execution failed';
       setParseError(msg);
     }
-  }, [code, setLoading, loadResult, setParseError]);
+  }, [code, language, setLoading, loadResult, setParseError]);
 
   // ── Derived state ────────────────────────────────────────────────────────────
   const currentStep = currentStepIndex >= 0 ? steps[currentStepIndex] : null;
   const currentEvent = currentStep?.event ?? null;
 
-  // All variables across all scopes flattened (for right panel summary)
-  const globalScope = currentState.scopes.find((s) => s.type === 'global');
+  // ── Theme-based class helpers ────────────────────────────────────────────────
+  const pageBg = isDark ? 'bg-zinc-950 text-zinc-100' : 'bg-slate-50 text-slate-900';
+  const headerBg = isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-slate-200';
+  const dividerColor = isDark ? 'bg-zinc-700' : 'bg-slate-300';
+  const timelineBg = isDark ? 'bg-zinc-900/50 border-zinc-800' : 'bg-slate-100/80 border-slate-200';
+  const explanationBg = isDark ? 'bg-zinc-900/30 border-zinc-800' : 'bg-white/70 border-slate-200';
+  const panelHeaderBg = isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-slate-100 border-slate-200';
+  const panelHeaderText = isDark ? 'text-zinc-400' : 'text-slate-500';
+  const panelHeaderSub = isDark ? 'text-zinc-600' : 'text-slate-400';
+  const sectionHeaderText = isDark ? 'text-zinc-600' : 'text-slate-400';
+  const resizeHandle = isDark
+    ? 'bg-zinc-800 hover:bg-zinc-600'
+    : 'bg-slate-200 hover:bg-slate-300';
+  const resizeHandleV = isDark
+    ? 'bg-zinc-800 hover:bg-zinc-600'
+    : 'bg-slate-200 hover:bg-slate-300';
 
   return (
-    <div className="flex flex-col h-screen bg-zinc-950 text-zinc-100 overflow-hidden">
+    <div className={`flex flex-col h-full ${pageBg} overflow-hidden`} style={{ minHeight: 0 }}>
+      {/* Monaco line highlight CSS */}
+      <style>{`
+        .codeflow-current-line {
+          background: rgba(234, 179, 8, 0.12) !important;
+          border-left: 3px solid #eab308 !important;
+        }
+        .codeflow-error-line {
+          background: rgba(239, 68, 68, 0.12) !important;
+          border-left: 3px solid #ef4444 !important;
+        }
+      `}</style>
+
       {/* ── Top bar ──────────────────────────────────────────────────────────── */}
-      <header className="flex items-center gap-3 px-4 py-2 border-b border-zinc-800 bg-zinc-900 shrink-0">
+      <header className={`flex items-center gap-2 px-3 py-1.5 border-b ${headerBg} shrink-0 flex-wrap`}>
         {/* Brand */}
-        <div className="flex items-center gap-2">
-          <Zap size={16} className="text-yellow-400" />
-          <span className="text-sm font-bold tracking-tight text-white">CODEFLOW</span>
-          <span className="text-[10px] text-zinc-500 font-mono bg-zinc-800 px-1.5 py-0.5 rounded">
-            JavaScript
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Zap size={14} className="text-yellow-400" />
+          <span className={`text-sm font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+            CODEFLOW
           </span>
         </div>
 
-        <div className="w-px h-5 bg-zinc-700" />
+        <div className={`w-px h-4 ${dividerColor} shrink-0`} />
 
-        {/* Controls */}
+        {/* Language selector */}
+        <LanguageSelector
+          language={language}
+          onSelect={(lang) => setLanguage(lang)}
+          isDark={isDark}
+        />
+
+        <div className={`w-px h-4 ${dividerColor} shrink-0`} />
+
+        {/* Execution controls */}
         <ExecutionControls
           onRun={handleRun}
           onReset={reset}
@@ -148,35 +199,41 @@ export const CodeFlowPage: React.FC = () => {
           currentStepIndex={currentStepIndex}
           totalSteps={totalSteps}
           hasCode={!!(code?.trim())}
+          isDark={isDark}
         />
 
-        <div className="w-px h-5 bg-zinc-700" />
+        <div className={`w-px h-4 ${dividerColor} shrink-0`} />
 
         {/* Examples */}
-        <ExamplesDropdown onSelect={(c) => { setCode(c); reset(); }} />
+        <ExamplesDropdown
+          onSelect={(c) => { setCode(c); reset(); }}
+          isDark={isDark}
+        />
 
         {/* Status indicator */}
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2 shrink-0">
           <StatusBadge
             status={executionStatus}
             hasError={!!parseError || !!currentState.error}
+            isDark={isDark}
           />
         </div>
       </header>
 
       {/* ── Timeline ─────────────────────────────────────────────────────────── */}
       {steps.length > 0 && (
-        <div className="px-4 py-2 border-b border-zinc-800 bg-zinc-900/50 shrink-0">
+        <div className={`px-4 py-1.5 border-b ${timelineBg} shrink-0`}>
           <StepTimeline
             steps={steps}
             currentStepIndex={currentStepIndex}
             onJump={jumpToStep}
+            isDark={isDark}
           />
         </div>
       )}
 
       {/* ── Explanation bar ───────────────────────────────────────────────────── */}
-      <div className="px-4 py-2 border-b border-zinc-800 bg-zinc-900/30 shrink-0">
+      <div className={`px-4 py-1.5 border-b ${explanationBg} shrink-0`}>
         <ExplanationPanel
           explanation={
             parseError
@@ -188,22 +245,30 @@ export const CodeFlowPage: React.FC = () => {
           currentEvent={currentEvent}
           currentStepIndex={currentStepIndex}
           totalSteps={totalSteps}
+          isDark={isDark}
         />
       </div>
 
       {/* ── Main 3-panel area ─────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-hidden">
         <PanelGroup direction="horizontal" className="h-full">
-          {/* ── LEFT: Code Editor (PRD §4) ──────────────────────────────────── */}
-          <Panel defaultSize={33} minSize={20} className="flex flex-col">
-            <PanelHeader label="CODE EDITOR" sublabel="JavaScript" />
-            <div className="flex-1 overflow-hidden relative">
+
+          {/* ── LEFT: Code Editor ───────────────────────────────────────────── */}
+          <Panel defaultSize={33} minSize={20} className="flex flex-col min-h-0">
+            <PanelHeader
+              label="CODE EDITOR"
+              sublabel={langConfig.name}
+              bgClass={panelHeaderBg}
+              textClass={panelHeaderText}
+              subClass={panelHeaderSub}
+            />
+            <div className="flex-1 overflow-hidden relative min-h-0">
               <Editor
-                language="javascript"
+                language={langConfig.monacoLanguage}
                 value={code}
                 onChange={(val) => setCode(val ?? '')}
                 onMount={handleEditorMount}
-                theme="vs-dark"
+                theme={monacoTheme}
                 options={{
                   fontSize: 13,
                   fontFamily: '"Cascadia Code", "Fira Code", "JetBrains Mono", monospace',
@@ -217,81 +282,84 @@ export const CodeFlowPage: React.FC = () => {
                   glyphMargin: true,
                   folding: false,
                   lineDecorationsWidth: 4,
-                  renderLineHighlight: 'none', // we do it via decorations
+                  renderLineHighlight: 'none',
                   scrollbar: { verticalScrollbarSize: 6 },
                   suggest: { showWords: false },
                 }}
               />
-              {/* Monaco line highlight CSS injected globally */}
-              <style>{`
-                .codeflow-current-line {
-                  background: rgba(234, 179, 8, 0.12) !important;
-                  border-left: 3px solid #eab308 !important;
-                }
-                .codeflow-error-line {
-                  background: rgba(239, 68, 68, 0.12) !important;
-                  border-left: 3px solid #ef4444 !important;
-                }
-              `}</style>
             </div>
           </Panel>
 
-          <PanelResizeHandle className="w-1 bg-zinc-800 hover:bg-zinc-600 transition-colors cursor-col-resize" />
+          <PanelResizeHandle className={`w-1 ${resizeHandle} transition-colors cursor-col-resize`} />
 
-          {/* ── MIDDLE: Execution Visualizer (PRD §7) ───────────────────────── */}
-          <Panel defaultSize={37} minSize={24} className="flex flex-col">
-            <PanelHeader label="EXECUTION VISUALIZER" sublabel="Runtime Environment" />
-            <div className="flex-1 overflow-hidden p-2">
+          {/* ── MIDDLE: Execution Visualizer ────────────────────────────────── */}
+          <Panel defaultSize={37} minSize={24} className="flex flex-col min-h-0">
+            <PanelHeader
+              label="EXECUTION VISUALIZER"
+              sublabel="Runtime Environment"
+              bgClass={panelHeaderBg}
+              textClass={panelHeaderText}
+              subClass={panelHeaderSub}
+            />
+            <div className="flex-1 overflow-hidden min-h-0 p-2">
               <PanelGroup direction="vertical" className="h-full">
                 {/* Global Context + Call Stack (top) */}
-                <Panel defaultSize={55} minSize={30} className="overflow-hidden">
+                <Panel defaultSize={55} minSize={30} className="overflow-hidden min-h-0">
                   <PanelGroup direction="horizontal" className="h-full">
-                    <Panel defaultSize={55} className="flex flex-col pr-1 overflow-hidden">
-                      <SectionHeader label="Global Context / Variables" />
-                      <div className="flex-1 overflow-y-auto">
+                    <Panel defaultSize={55} className="flex flex-col pr-1 overflow-hidden min-h-0">
+                      <SectionHeader label="Global Context / Variables" textClass={sectionHeaderText} />
+                      <div className="flex-1 overflow-y-auto min-h-0">
                         <VariablePanel
                           scopes={currentState.scopes}
                           currentStepIndex={currentStepIndex}
+                          isDark={isDark}
                         />
                       </div>
                     </Panel>
-                    <PanelResizeHandle className="w-px bg-zinc-800 hover:bg-zinc-600 cursor-col-resize" />
-                    <Panel defaultSize={45} className="flex flex-col pl-1 overflow-hidden">
-                      <SectionHeader label="Call Stack" />
-                      <div className="flex-1 overflow-y-auto">
-                        <CallStackPanel callStack={currentState.callStack} />
+                    <PanelResizeHandle className={`w-px ${resizeHandleV} cursor-col-resize`} />
+                    <Panel defaultSize={45} className="flex flex-col pl-1 overflow-hidden min-h-0">
+                      <SectionHeader label="Call Stack" textClass={sectionHeaderText} />
+                      <div className="flex-1 overflow-y-auto min-h-0">
+                        <CallStackPanel callStack={currentState.callStack} isDark={isDark} />
                       </div>
                     </Panel>
                   </PanelGroup>
                 </Panel>
 
-                <PanelResizeHandle className="h-px bg-zinc-800 hover:bg-zinc-600 cursor-row-resize my-0.5" />
+                <PanelResizeHandle className={`h-px ${resizeHandleV} cursor-row-resize my-0.5`} />
 
                 {/* Async runtime (bottom) */}
-                <Panel defaultSize={45} minSize={20} className="overflow-y-auto">
-                  <SectionHeader label="Async Runtime" />
+                <Panel defaultSize={45} minSize={20} className="overflow-y-auto min-h-0">
+                  <SectionHeader label="Async Runtime" textClass={sectionHeaderText} />
                   <AsyncRuntimePanel
                     webApis={currentState.webApis}
                     microtaskQueue={currentState.microtaskQueue}
                     taskQueue={currentState.taskQueue}
                     eventLoopPhase={currentState.eventLoopPhase}
+                    isDark={isDark}
                   />
                 </Panel>
               </PanelGroup>
             </div>
           </Panel>
 
-          <PanelResizeHandle className="w-1 bg-zinc-800 hover:bg-zinc-600 transition-colors cursor-col-resize" />
+          <PanelResizeHandle className={`w-1 ${resizeHandle} transition-colors cursor-col-resize`} />
 
-          {/* ── RIGHT: Output (PRD §12 / §3) ────────────────────────────────── */}
-          <Panel defaultSize={30} minSize={18} className="flex flex-col">
-            <PanelHeader label="OUTPUT" />
-            <div className="flex-1 overflow-hidden p-2 flex flex-col gap-2">
+          {/* ── RIGHT: Output ────────────────────────────────────────────────── */}
+          <Panel defaultSize={30} minSize={18} className="flex flex-col min-h-0">
+            <PanelHeader
+              label="OUTPUT"
+              bgClass={panelHeaderBg}
+              textClass={panelHeaderText}
+              subClass={panelHeaderSub}
+            />
+            <div className="flex-1 overflow-hidden min-h-0 p-2 flex flex-col gap-2">
               {/* Console — takes most space */}
-              <div className="flex-1 overflow-hidden">
+              <div className="flex-1 overflow-hidden min-h-0">
                 <ConsolePanel
                   entries={currentState.consoleOutput}
                   currentStepIndex={currentStepIndex}
+                  isDark={isDark}
                 />
               </div>
 
@@ -304,10 +372,12 @@ export const CodeFlowPage: React.FC = () => {
                   currentStep={currentStepIndex + 1}
                   totalSteps={totalSteps}
                   currentLine={currentState.currentLine}
+                  isDark={isDark}
                 />
               </div>
             </div>
           </Panel>
+
         </PanelGroup>
       </div>
     </div>
@@ -316,45 +386,53 @@ export const CodeFlowPage: React.FC = () => {
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
-const PanelHeader: React.FC<{ label: string; sublabel?: string }> = ({ label, sublabel }) => (
-  <div className="flex items-center gap-2 px-3 py-2 border-b border-zinc-800 bg-zinc-900 shrink-0">
-    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{label}</span>
+interface PanelHeaderProps {
+  label: string;
+  sublabel?: string;
+  bgClass: string;
+  textClass: string;
+  subClass: string;
+}
+const PanelHeader: React.FC<PanelHeaderProps> = ({ label, sublabel, bgClass, textClass, subClass }) => (
+  <div className={`flex items-center gap-2 px-3 py-1.5 border-b ${bgClass} shrink-0`}>
+    <span className={`text-[10px] font-bold uppercase tracking-widest ${textClass}`}>{label}</span>
     {sublabel && (
-      <span className="text-[9px] text-zinc-600 font-mono">{sublabel}</span>
+      <span className={`text-[9px] font-mono ${subClass}`}>{sublabel}</span>
     )}
   </div>
 );
 
-const SectionHeader: React.FC<{ label: string }> = ({ label }) => (
-  <div className="text-[9px] uppercase tracking-widest text-zinc-600 font-semibold px-1 py-1 mb-1">
+const SectionHeader: React.FC<{ label: string; textClass: string }> = ({ label, textClass }) => (
+  <div className={`text-[9px] uppercase tracking-widest font-semibold px-1 py-1 mb-1 ${textClass}`}>
     {label}
   </div>
 );
 
-const StatusBadge: React.FC<{ status: string; hasError: boolean }> = ({ status, hasError }) => {
+const StatusBadge: React.FC<{ status: string; hasError: boolean; isDark: boolean }> = ({ status, hasError, isDark }) => {
+  const dim = isDark ? 'text-zinc-500' : 'text-slate-400';
   if (hasError) return (
     <div className="flex items-center gap-1 text-red-400 text-xs">
       <AlertTriangle size={12} /> Error
     </div>
   );
   if (status === 'loading') return (
-    <div className="flex items-center gap-1 text-yellow-400 text-xs">
+    <div className="flex items-center gap-1 text-yellow-500 text-xs">
       <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" /> Parsing…
     </div>
   );
   if (status === 'ready' || status === 'paused') return (
-    <div className="flex items-center gap-1 text-blue-400 text-xs">
+    <div className="flex items-center gap-1 text-blue-500 text-xs">
       <CheckCircle2 size={12} /> Ready
     </div>
   );
   if (status === 'playing') return (
-    <div className="flex items-center gap-1 text-emerald-400 text-xs">
+    <div className="flex items-center gap-1 text-emerald-500 text-xs">
       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" /> Playing
     </div>
   );
   return (
-    <div className="flex items-center gap-1 text-zinc-500 text-xs">
-      <span className="w-2 h-2 rounded-full bg-zinc-600" /> Idle
+    <div className={`flex items-center gap-1 text-xs ${dim}`}>
+      <span className="w-2 h-2 rounded-full bg-current opacity-50" /> Idle
     </div>
   );
 };
@@ -366,37 +444,49 @@ const StatusBlock: React.FC<{
   currentStep: number;
   totalSteps: number;
   currentLine: number;
-}> = ({ executionStatus, error, parseError, currentStep, totalSteps, currentLine }) => (
-  <div className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-[10px] font-mono">
-    <div className="text-zinc-500 uppercase tracking-widest mb-1.5 text-[9px] font-semibold">Status</div>
-    <div className="flex flex-col gap-1">
-      <Row label="Status" value={
-        error || parseError ? '⛔ Error' :
-        executionStatus === 'completed' ? '✓ Complete' :
-        executionStatus === 'running' || executionStatus === 'playing' ? '▶ Running' :
-        executionStatus === 'paused' || executionStatus === 'ready' ? '⏸ Paused' :
-        '○ Idle'
-      } />
-      {totalSteps > 0 && (
-        <Row label="Step" value={`${currentStep} / ${totalSteps}`} />
-      )}
-      {currentLine > 0 && (
-        <Row label="Line" value={String(currentLine)} />
-      )}
-      {(error || parseError) && (
-        <div className="mt-1 text-red-400 text-[9px] break-all leading-relaxed">
-          {error ? `${error.type}: ${error.message}` : parseError}
-        </div>
-      )}
-    </div>
-  </div>
-);
+  isDark: boolean;
+}> = ({ executionStatus, error, parseError, currentStep, totalSteps, currentLine, isDark }) => {
+  const blockClass = isDark
+    ? 'border-zinc-800 bg-zinc-900'
+    : 'border-slate-200 bg-slate-50';
+  const labelClass = isDark ? 'text-zinc-500' : 'text-slate-400';
+  const valueClass = isDark ? 'text-zinc-300' : 'text-slate-700';
+  const headingClass = isDark ? 'text-zinc-500' : 'text-slate-400';
 
-const Row: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="flex justify-between">
-    <span className="text-zinc-600">{label}</span>
-    <span className="text-zinc-300">{value}</span>
-  </div>
-);
+  return (
+    <div className={`rounded-lg border ${blockClass} px-3 py-2 text-[10px] font-mono`}>
+      <div className={`uppercase tracking-widest mb-1.5 text-[9px] font-semibold ${headingClass}`}>Status</div>
+      <div className="flex flex-col gap-1">
+        <div className="flex justify-between">
+          <span className={labelClass}>Status</span>
+          <span className={valueClass}>
+            {error || parseError ? '⛔ Error' :
+              executionStatus === 'completed' ? '✓ Complete' :
+              executionStatus === 'running' || executionStatus === 'playing' ? '▶ Running' :
+              executionStatus === 'paused' || executionStatus === 'ready' ? '⏸ Paused' :
+              '○ Idle'}
+          </span>
+        </div>
+        {totalSteps > 0 && (
+          <div className="flex justify-between">
+            <span className={labelClass}>Step</span>
+            <span className={valueClass}>{currentStep} / {totalSteps}</span>
+          </div>
+        )}
+        {currentLine > 0 && (
+          <div className="flex justify-between">
+            <span className={labelClass}>Line</span>
+            <span className={valueClass}>{currentLine}</span>
+          </div>
+        )}
+        {(error || parseError) && (
+          <div className="mt-1 text-red-400 text-[9px] break-all leading-relaxed">
+            {error ? `${error.type}: ${error.message}` : parseError}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export default CodeFlowPage;
