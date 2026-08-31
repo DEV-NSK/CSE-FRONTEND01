@@ -91,6 +91,11 @@ const mainNavItems: NavItem[] = [
     icon: Code2,
     subItems: codingSubItems,
   },
+  {
+    label: "CodeFlow",
+    href: "/dashboard/codeflow",
+    icon: Zap,
+  },
 ];
 
 const comingSoonItems: NavItem[] = [

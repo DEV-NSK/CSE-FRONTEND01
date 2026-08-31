@@ -139,6 +139,13 @@ import StudentLearningDashboardPage from "@/student/features/learning/pages/Stud
 import StudentLearningRoadmapPage from "@/student/features/learning/pages/StudentLearningRoadmapPage";
 import StudentLearningDetailPage from "@/student/features/learning/pages/StudentLearningDetailPage";
 
+// ── Pages - CODEFLOW ─────────────────────────────────────────────────────────
+const CodeFlowPage = lazy(() =>
+  import("@/student/features/codeflow/pages/CodeFlowPage").then((m) => ({
+    default: m.CodeFlowPage,
+  })),
+);
+
 // ── Pages - Coding ────────────────────────────────────────────────────────────
 import { CodingHomePage } from "@/student/features/coding/pages/CodingHomePage";
 import { ProblemsListPage } from "@/student/features/coding/pages/ProblemsListPage";
@@ -254,8 +261,7 @@ export const router = createBrowserRouter([
       { path: "learning/:id", element: <StudentLearningDetailPage /> },
 
       // Coding
-      { path: "coding", element: <CodingHomePage /> },
-      { path: "coding/problems", element: <ProblemsListPage /> },
+      { path: "coding", element: <CodingHomePage /> },      { path: "coding/problems", element: <ProblemsListPage /> },
       { path: "coding/problems/:slug", element: <ProblemDetailPage /> },
       { path: "coding/problems/:id/discussions", element: <DiscussionsPage /> },
       { path: "coding/submissions", element: <SubmissionHistoryPage /> },
@@ -273,6 +279,16 @@ export const router = createBrowserRouter([
       { path: "coding/contests", element: <ContestsPage /> },
       // Legacy /coding/problems route still works — ProblemsListPage is the advanced filter view
       // DiscussionsPage also routed from problem detail page link
+
+      // CODEFLOW — JavaScript Execution Visualizer (PRD-CODEFLOW-01)
+      {
+        path: "codeflow",
+        element: (
+          <LazyPage>
+            <CodeFlowPage />
+          </LazyPage>
+        ),
+      },
 
       // ── FPRD-13: Non-MVP modules redirect to Launching Soon ─────────────────
       // Projects → /launching-soon/projects
