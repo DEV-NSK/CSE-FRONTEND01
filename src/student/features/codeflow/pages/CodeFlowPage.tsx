@@ -234,7 +234,7 @@ export const CodeFlowPage: React.FC = () => {
       )}
 
       {/* ── Explanation bar ───────────────────────────────────────────────────── */}
-      <div className={`px-4 py-1.5 border-b ${explanationBg} shrink-0`}>
+      <div className={`px-4 py-2 border-b ${explanationBg} shrink-0`}>
         <ExplanationPanel
           explanation={
             parseError
@@ -330,17 +330,19 @@ export const CodeFlowPage: React.FC = () => {
                 <PanelResizeHandle className={`h-px ${resizeHandleV} cursor-row-resize my-0.5`} />
 
                 {/* Async runtime (bottom) — JS only; other languages show their runtime model */}
-                <Panel defaultSize={45} minSize={20} className="overflow-y-auto min-h-0">
+                <Panel defaultSize={45} minSize={20} className="overflow-hidden min-h-0 flex flex-col">
                   {language === 'javascript' ? (
                     <>
                       <SectionHeader label="Async Runtime" textClass={sectionHeaderText} />
-                      <AsyncRuntimePanel
-                        webApis={currentState.webApis}
-                        microtaskQueue={currentState.microtaskQueue}
-                        taskQueue={currentState.taskQueue}
-                        eventLoopPhase={currentState.eventLoopPhase}
-                        isDark={isDark}
-                      />
+                      <div className="flex-1 min-h-0 overflow-hidden">
+                        <AsyncRuntimePanel
+                          webApis={currentState.webApis}
+                          microtaskQueue={currentState.microtaskQueue}
+                          taskQueue={currentState.taskQueue}
+                          eventLoopPhase={currentState.eventLoopPhase}
+                          isDark={isDark}
+                        />
+                      </div>
                     </>
                   ) : (
                     <>

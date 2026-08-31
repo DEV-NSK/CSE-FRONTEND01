@@ -2,6 +2,9 @@
  * CODEFLOW — Execution Controls
  * Run | Reset | Previous | Step | Play | Pause | Stop | Speed
  * PRD §5 — Execution Controls
+ *
+ * All buttons use semantic light-theme-compatible colors that work
+ * on both dark and light themes.
  */
 
 import React from 'react';
@@ -43,65 +46,65 @@ export const ExecutionControls: React.FC<Props> = ({
   const atEnd = currentStepIndex >= totalSteps - 1;
   const atStart = currentStepIndex <= -1;
 
-  const btnBase = isDark
-    ? 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-zinc-300 hover:text-white'
-    : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700 hover:text-slate-900';
-
   const dividerCls = isDark ? 'bg-zinc-700' : 'bg-slate-300';
 
-  const speedActiveCls = isDark ? 'bg-zinc-600 text-white' : 'bg-slate-700 text-white';
-  const speedInactiveCls = isDark ? 'text-zinc-500 hover:text-zinc-300' : 'text-slate-500 hover:text-slate-800';
+  // Speed button classes
+  const speedActiveCls = 'bg-violet-600 text-white border-violet-500 shadow-sm';
+  const speedInactiveCls = isDark
+    ? 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'
+    : 'bg-white border-slate-300 text-slate-500 hover:bg-slate-100 hover:text-slate-800';
 
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
-      {/* Run */}
+    <div className="flex items-center gap-1 flex-wrap">
+
+      {/* ── Run ── green */}
       <ControlBtn
         onClick={onRun}
         disabled={isLoading || !hasCode}
-        title="Run — generate all execution steps"
-        className="bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-700"
-        baseClass={btnBase}
+        title="Run — generate all execution steps (Ctrl+Enter)"
+        colorCls="bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-white border-emerald-600"
       >
         {isLoading ? (
           <Loader2 size={13} className="animate-spin" />
         ) : (
           <ChevronRight size={13} />
         )}
-        <span className="text-[11px] font-semibold">Run</span>
+        <span className="text-[11px] font-bold">Run</span>
       </ControlBtn>
 
-      <div className={`w-px h-4 ${dividerCls}`} />
+      <div className={`w-px h-4 mx-0.5 ${dividerCls}`} />
 
-      {/* Previous Step */}
+      {/* ── Step Back ── slate/neutral */}
       <ControlBtn
         onClick={onStepBackward}
         disabled={!hasSteps || atStart}
         title="Previous step"
-        baseClass={btnBase}
+        colorCls={isDark
+          ? 'bg-zinc-700 hover:bg-zinc-600 border-zinc-600 text-zinc-200'
+          : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700'}
       >
         <SkipBack size={12} />
       </ControlBtn>
 
-      {/* Step Forward */}
+      {/* ── Step Forward ── blue */}
       <ControlBtn
         onClick={onStepForward}
         disabled={!hasSteps || atEnd}
-        title="Step — one meaningful execution event"
-        baseClass={btnBase}
+        title="Step forward — one execution event"
+        colorCls="bg-blue-500 hover:bg-blue-400 active:bg-blue-600 text-white border-blue-600"
       >
         <SkipForward size={12} />
       </ControlBtn>
 
-      <div className={`w-px h-4 ${dividerCls}`} />
+      <div className={`w-px h-4 mx-0.5 ${dividerCls}`} />
 
-      {/* Play / Pause */}
+      {/* ── Play / Pause ── indigo / amber */}
       {!isPlaying ? (
         <ControlBtn
           onClick={onPlay}
           disabled={!hasSteps || atEnd}
-          title="Play — auto-execute steps"
-          className="text-blue-500 hover:text-blue-400"
-          baseClass={btnBase}
+          title="Play — auto-step through execution"
+          colorCls="bg-indigo-500 hover:bg-indigo-400 active:bg-indigo-600 text-white border-indigo-600"
         >
           <Play size={13} />
         </ControlBtn>
@@ -109,44 +112,43 @@ export const ExecutionControls: React.FC<Props> = ({
         <ControlBtn
           onClick={onPause}
           title="Pause"
-          className="text-yellow-500 hover:text-yellow-400"
-          baseClass={btnBase}
+          colorCls="bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white border-amber-600"
         >
           <Pause size={13} />
         </ControlBtn>
       )}
 
-      {/* Stop */}
+      {/* ── Stop ── red */}
       <ControlBtn
         onClick={onStop}
         disabled={!hasSteps}
         title="Stop — return to beginning"
-        className="text-red-400 hover:text-red-300"
-        baseClass={btnBase}
+        colorCls="bg-red-500 hover:bg-red-400 active:bg-red-600 text-white border-red-600"
       >
         <Square size={12} />
       </ControlBtn>
 
-      {/* Reset */}
+      {/* ── Reset ── slate/neutral */}
       <ControlBtn
         onClick={onReset}
         title="Reset — clear all steps"
-        className={isDark ? 'text-zinc-400 hover:text-zinc-200' : 'text-slate-600 hover:text-slate-900'}
-        baseClass={btnBase}
+        colorCls={isDark
+          ? 'bg-zinc-700 hover:bg-zinc-600 border-zinc-600 text-zinc-300 hover:text-white'
+          : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-600 hover:text-slate-900'}
       >
         <RotateCcw size={12} />
       </ControlBtn>
 
-      <div className={`w-px h-4 ${dividerCls}`} />
+      <div className={`w-px h-4 mx-0.5 ${dividerCls}`} />
 
-      {/* Speed selector */}
+      {/* ── Speed selector ── violet accent */}
       <div className="flex items-center gap-0.5">
         {SPEEDS.map((s) => (
           <button
             key={s}
             onClick={() => onSpeedChange(s)}
             className={`
-              text-[10px] px-1.5 py-0.5 rounded font-mono font-semibold transition-colors
+              text-[10px] px-1.5 py-1 rounded border font-mono font-bold transition-colors
               ${speed === s ? speedActiveCls : speedInactiveCls}
             `}
           >
@@ -162,18 +164,17 @@ export const ExecutionControls: React.FC<Props> = ({
 
 interface BtnProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
-  className?: string;
-  baseClass?: string;
+  colorCls?: string;
 }
 
-const ControlBtn: React.FC<BtnProps> = ({ children, className = '', baseClass = '', disabled, ...rest }) => (
+const ControlBtn: React.FC<BtnProps> = ({ children, colorCls = '', disabled, ...rest }) => (
   <button
     {...rest}
     disabled={disabled}
     className={`
-      flex items-center gap-1 px-2 py-1.5 rounded border transition-colors
+      flex items-center gap-1 px-2 py-1.5 rounded border font-medium transition-all
       disabled:opacity-30 disabled:cursor-not-allowed
-      ${baseClass} ${className}
+      ${colorCls}
     `}
   >
     {children}
