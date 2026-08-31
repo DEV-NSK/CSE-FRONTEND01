@@ -505,86 +505,217 @@ export default CodeFlowPage;
 
 // ── Language Runtime Info Panel ────────────────────────────────────────────────
 // Shown in the "Async Runtime" slot for non-JS languages.
+// Renders a 2-column snake-path roadmap — no internal scrolling.
 
 interface RuntimeStage {
   icon: string;
   label: string;
   description: string;
+  color: 'source' | 'compile' | 'link' | 'runtime' | 'memory';
 }
 
 const RUNTIME_STAGES: Record<string, RuntimeStage[]> = {
   python: [
-    { icon: '📄', label: 'Source Code', description: '.py file' },
-    { icon: '⚙️', label: 'Compilation', description: 'CPython compiler' },
-    { icon: '💾', label: 'Bytecode', description: '.pyc / __pycache__' },
-    { icon: '🐍', label: 'Python VM', description: 'CPython interpreter' },
-    { icon: '📦', label: 'Execution Frames', description: 'Call stack frames' },
-    { icon: '🗂️', label: 'Variables / Objects', description: 'Heap & namespace dicts' },
+    { icon: '📄', label: 'Source Code',       description: '.py file',               color: 'source'  },
+    { icon: '⚙️', label: 'Compilation',        description: 'CPython compiler',       color: 'compile' },
+    { icon: '💾', label: 'Bytecode',           description: '.pyc / __pycache__',     color: 'compile' },
+    { icon: '🐍', label: 'Python VM',          description: 'CPython interpreter',    color: 'runtime' },
+    { icon: '📦', label: 'Execution Frames',   description: 'Call stack frames',      color: 'runtime' },
+    { icon: '🗂️', label: 'Variables / Objects', description: 'Heap & namespace dicts', color: 'memory'  },
   ],
   c: [
-    { icon: '📄', label: 'Source (.c)', description: 'C source file' },
-    { icon: '🔧', label: 'Preprocessor', description: '#include, #define' },
-    { icon: '⚙️', label: 'Compiler (gcc/clang)', description: 'Generates assembly' },
-    { icon: '📋', label: 'Object Code (.o)', description: 'Compiled object file' },
-    { icon: '🔗', label: 'Linker', description: 'Links libraries' },
-    { icon: '▶️', label: 'Executable', description: 'Native binary' },
-    { icon: '🏃', label: 'Runtime', description: 'Stack & Heap' },
+    { icon: '📄', label: 'Source (.c)',          description: 'C source file',         color: 'source'  },
+    { icon: '🔧', label: 'Preprocessor',         description: '#include, #define',     color: 'compile' },
+    { icon: '⚙️', label: 'Compiler (gcc/clang)', description: 'Generates assembly',    color: 'compile' },
+    { icon: '📋', label: 'Object Code (.o)',      description: 'Compiled object file',  color: 'link'    },
+    { icon: '🔗', label: 'Linker',               description: 'Links libraries',       color: 'link'    },
+    { icon: '▶️', label: 'Executable',            description: 'Native binary',         color: 'runtime' },
+    { icon: '🏃', label: 'Runtime',              description: 'Stack & Heap',          color: 'memory'  },
   ],
   cpp: [
-    { icon: '📄', label: 'Source (.cpp)', description: 'C++ source file' },
-    { icon: '🔧', label: 'Preprocessor', description: '#include, templates' },
-    { icon: '⚙️', label: 'Compiler (g++/clang++)', description: 'Assembly + objects' },
-    { icon: '🔗', label: 'Linker', description: 'Links std & libs' },
-    { icon: '▶️', label: 'Executable', description: 'Native binary' },
-    { icon: '🏃', label: 'Runtime', description: 'Stack, Heap, Objects' },
-    { icon: '📌', label: 'References/Pointers', description: 'Manual memory' },
+    { icon: '📄', label: 'Source (.cpp)',            description: 'C++ source file',     color: 'source'  },
+    { icon: '🔧', label: 'Preprocessor',             description: '#include, templates', color: 'compile' },
+    { icon: '⚙️', label: 'Compiler (g++/clang++)',   description: 'Assembly + objects',  color: 'compile' },
+    { icon: '🔗', label: 'Linker',                   description: 'Links std & libs',    color: 'link'    },
+    { icon: '▶️', label: 'Executable',               description: 'Native binary',       color: 'runtime' },
+    { icon: '🏃', label: 'Runtime',                  description: 'Stack, Heap, Objects', color: 'runtime' },
+    { icon: '📌', label: 'References/Pointers',      description: 'Manual memory',       color: 'memory'  },
   ],
   csharp: [
-    { icon: '📄', label: 'Source (.cs)', description: 'C# source file' },
-    { icon: '⚙️', label: 'Roslyn Compiler', description: 'Microsoft C# compiler' },
-    { icon: '💾', label: 'MSIL / CIL', description: 'Intermediate Language' },
-    { icon: '🔧', label: 'CLR', description: 'Common Language Runtime' },
-    { icon: '⚡', label: 'JIT Compiler', description: 'Just-In-Time compilation' },
-    { icon: '▶️', label: 'Native Execution', description: 'Managed code runs' },
-    { icon: '🗂️', label: 'Managed Heap', description: 'GC-managed objects' },
+    { icon: '📄', label: 'Source (.cs)',      description: 'C# source file',           color: 'source'  },
+    { icon: '⚙️', label: 'Roslyn Compiler',  description: 'Microsoft C# compiler',    color: 'compile' },
+    { icon: '💾', label: 'MSIL / CIL',       description: 'Intermediate Language',    color: 'compile' },
+    { icon: '🔧', label: 'CLR',              description: 'Common Language Runtime',  color: 'link'    },
+    { icon: '⚡', label: 'JIT Compiler',     description: 'Just-In-Time compilation', color: 'runtime' },
+    { icon: '▶️', label: 'Native Execution', description: 'Managed code runs',        color: 'runtime' },
+    { icon: '🗂️', label: 'Managed Heap',    description: 'GC-managed objects',        color: 'memory'  },
   ],
   java: [
-    { icon: '📄', label: 'Source (.java)', description: 'Java source file' },
-    { icon: '⚙️', label: 'javac', description: 'Java compiler' },
-    { icon: '💾', label: 'Bytecode (.class)', description: 'Platform-neutral' },
-    { icon: '☕', label: 'JVM', description: 'Java Virtual Machine' },
-    { icon: '⚡', label: 'JIT Compiler', description: 'Hotspot optimization' },
-    { icon: '📦', label: 'Stack Frames', description: 'Method call frames' },
-    { icon: '🗂️', label: 'Heap / Objects', description: 'GC-managed objects' },
+    { icon: '📄', label: 'Source (.java)',   description: 'Java source file',        color: 'source'  },
+    { icon: '⚙️', label: 'javac',           description: 'Java compiler',           color: 'compile' },
+    { icon: '💾', label: 'Bytecode (.class)', description: 'Platform-neutral',      color: 'compile' },
+    { icon: '☕', label: 'JVM',             description: 'Java Virtual Machine',    color: 'link'    },
+    { icon: '⚡', label: 'JIT Compiler',    description: 'Hotspot optimization',    color: 'runtime' },
+    { icon: '📦', label: 'Stack Frames',    description: 'Method call frames',      color: 'runtime' },
+    { icon: '🗂️', label: 'Heap / Objects',  description: 'GC-managed objects',     color: 'memory'  },
   ],
+};
+
+// Per-category color tokens — work on both dark and light themes
+const STAGE_COLORS: Record<RuntimeStage['color'], {
+  dark:  { bg: string; border: string; icon: string; label: string; desc: string };
+  light: { bg: string; border: string; icon: string; label: string; desc: string };
+}> = {
+  source: {
+    dark:  { bg: 'bg-sky-950/60',     border: 'border-sky-600/50',    icon: 'text-sky-300',    label: 'text-sky-200',    desc: 'text-sky-400/70'    },
+    light: { bg: 'bg-sky-50',         border: 'border-sky-300',       icon: 'text-sky-600',    label: 'text-sky-800',    desc: 'text-sky-500'       },
+  },
+  compile: {
+    dark:  { bg: 'bg-violet-950/60',  border: 'border-violet-600/50', icon: 'text-violet-300', label: 'text-violet-200', desc: 'text-violet-400/70' },
+    light: { bg: 'bg-violet-50',      border: 'border-violet-300',    icon: 'text-violet-600', label: 'text-violet-800', desc: 'text-violet-500'    },
+  },
+  link: {
+    dark:  { bg: 'bg-amber-950/50',   border: 'border-amber-600/50',  icon: 'text-amber-300',  label: 'text-amber-200',  desc: 'text-amber-400/70'  },
+    light: { bg: 'bg-amber-50',       border: 'border-amber-300',     icon: 'text-amber-600',  label: 'text-amber-800',  desc: 'text-amber-500'     },
+  },
+  runtime: {
+    dark:  { bg: 'bg-emerald-950/50', border: 'border-emerald-600/50',icon: 'text-emerald-300',label: 'text-emerald-200',desc: 'text-emerald-400/70'},
+    light: { bg: 'bg-emerald-50',     border: 'border-emerald-300',   icon: 'text-emerald-600',label: 'text-emerald-800',desc: 'text-emerald-500'   },
+  },
+  memory: {
+    dark:  { bg: 'bg-rose-950/50',    border: 'border-rose-600/50',   icon: 'text-rose-300',   label: 'text-rose-200',   desc: 'text-rose-400/70'   },
+    light: { bg: 'bg-rose-50',        border: 'border-rose-300',      icon: 'text-rose-600',   label: 'text-rose-800',   desc: 'text-rose-500'      },
+  },
 };
 
 const LanguageRuntimeInfo: React.FC<{ language: string; isDark: boolean }> = ({ language, isDark }) => {
   const stages = RUNTIME_STAGES[language] ?? [];
   if (stages.length === 0) return null;
 
-  const containerBg = isDark ? 'bg-zinc-900/40' : 'bg-slate-50';
-  const cardBg = isDark ? 'bg-zinc-800/60 border-zinc-700/50' : 'bg-white border-slate-200';
-  const labelText = isDark ? 'text-zinc-200' : 'text-slate-700';
-  const descText = isDark ? 'text-zinc-500' : 'text-slate-400';
-  const arrowColor = isDark ? 'text-zinc-600' : 'text-slate-300';
+  // Split into two columns — snake layout: col A top→down, col B bottom→up
+  const half = Math.ceil(stages.length / 2);
+  const colA = stages.slice(0, half);          // left column, flows downward
+  const colB = stages.slice(half);             // right column, flows upward (reversed visually)
+  const colBDisplay = [...colB].reverse();     // display bottom-to-top so the path snakes naturally
+
+  const theme = isDark ? 'dark' : 'light';
+  const connectorColor = isDark ? 'border-zinc-700' : 'border-slate-300';
+  const containerBg = isDark ? 'bg-zinc-900/30' : 'bg-slate-100/60';
+  const stepNumColor = isDark ? 'text-zinc-600' : 'text-slate-400';
+
+  // Connector arrow between columns (the horizontal bridge at the bottom)
+  const bridgeArrow = isDark ? 'text-zinc-500' : 'text-slate-400';
 
   return (
-    <div className={`rounded-lg ${containerBg} p-2 flex flex-col gap-1 overflow-y-auto`}>
-      {stages.map((stage, idx) => (
-        <React.Fragment key={stage.label}>
-          <div className={`flex items-center gap-2 rounded border px-2 py-1.5 ${cardBg}`}>
-            <span className="text-sm shrink-0">{stage.icon}</span>
-            <div className="min-w-0">
-              <div className={`text-[10px] font-semibold font-mono ${labelText}`}>{stage.label}</div>
-              <div className={`text-[9px] ${descText}`}>{stage.description}</div>
+    <div className={`h-full rounded-lg ${containerBg} p-2 flex flex-col`} style={{ overflow: 'hidden' }}>
+      {/* Two-column snake grid */}
+      <div className="flex gap-2 flex-1 min-h-0">
+
+        {/* ── Column A: stages 1…half (top → bottom) */}
+        <div className="flex-1 flex flex-col gap-1.5 min-h-0">
+          {colA.map((stage, idx) => {
+            const c = STAGE_COLORS[stage.color][theme];
+            const stepNum = idx + 1;
+            return (
+              <React.Fragment key={stage.label}>
+                <StageCard
+                  stage={stage}
+                  stepNum={stepNum}
+                  colors={c}
+                  stepNumColor={stepNumColor}
+                />
+                {idx < colA.length - 1 && (
+                  <ConnectorArrow direction="down" color={connectorColor} />
+                )}
+              </React.Fragment>
+            );
+          })}
+
+          {/* Bottom bridge: horizontal arrow pointing right, only if colB exists */}
+          {colB.length > 0 && (
+            <div className={`text-center text-[10px] font-bold leading-none mt-0.5 ${bridgeArrow}`}>
+              ↘
             </div>
-          </div>
-          {idx < stages.length - 1 && (
-            <div className={`text-center text-[10px] leading-none ${arrowColor}`}>↓</div>
           )}
-        </React.Fragment>
-      ))}
+        </div>
+
+        {/* Vertical divider line mimicking the path connection */}
+        {colB.length > 0 && (
+          <div className={`w-px self-stretch border-l border-dashed ${connectorColor} mx-0.5 opacity-40`} />
+        )}
+
+        {/* ── Column B: stages half+1…end (displayed bottom → top to continue the snake) */}
+        {colB.length > 0 && (
+          <div className="flex-1 flex flex-col gap-1.5 min-h-0 justify-end">
+            {/* Top entry arrow pointing into col B from top */}
+            <div className={`text-center text-[10px] font-bold leading-none mb-0.5 ${bridgeArrow}`}>
+              ↗
+            </div>
+            {colBDisplay.map((stage, idx) => {
+              const c = STAGE_COLORS[stage.color][theme];
+              // Actual step number = half + colB.length - idx (because colBDisplay is reversed)
+              const stepNum = half + (colB.length - idx);
+              return (
+                <React.Fragment key={stage.label}>
+                  {idx > 0 && (
+                    <ConnectorArrow direction="up" color={connectorColor} />
+                  )}
+                  <StageCard
+                    stage={stage}
+                    stepNum={stepNum}
+                    colors={c}
+                    stepNumColor={stepNumColor}
+                  />
+                </React.Fragment>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
+
+// ── Stage Card ─────────────────────────────────────────────────────────────────
+
+interface StageCardColors {
+  bg: string; border: string; icon: string; label: string; desc: string;
+}
+
+const StageCard: React.FC<{
+  stage: RuntimeStage;
+  stepNum: number;
+  colors: StageCardColors;
+  stepNumColor: string;
+}> = ({ stage, stepNum, colors, stepNumColor }) => (
+  <div className={`
+    flex items-center gap-2 rounded-lg border px-2.5 py-2 flex-1
+    transition-colors ${colors.bg} ${colors.border}
+  `}>
+    {/* Step number */}
+    <span className={`text-[9px] font-bold font-mono w-3 shrink-0 ${stepNumColor}`}>
+      {stepNum}
+    </span>
+    {/* Emoji icon */}
+    <span className={`text-sm shrink-0 leading-none ${colors.icon}`}>
+      {stage.icon}
+    </span>
+    {/* Label + description */}
+    <div className="min-w-0 flex-1">
+      <div className={`text-[10px] font-bold font-mono leading-tight ${colors.label}`}>
+        {stage.label}
+      </div>
+      <div className={`text-[9px] leading-tight mt-0.5 truncate ${colors.desc}`}>
+        {stage.description}
+      </div>
+    </div>
+  </div>
+);
+
+// ── Connector Arrow ─────────────────────────────────────────────────────────────
+
+const ConnectorArrow: React.FC<{ direction: 'down' | 'up'; color: string }> = ({ direction, color }) => (
+  <div className={`flex items-center justify-center shrink-0 ${color}`}>
+    <div className={`w-px h-2.5 border-l border-dashed ${color} mx-auto opacity-50`} />
+  </div>
+);
