@@ -13,6 +13,21 @@ import type {
 } from '../types/codeflow.types';
 import { createInitialRuntimeState } from '../utils/codeflow.utils';
 
+/** Default starter code shown in the editor */
+const DEFAULT_CODE = `// CODEFLOW — JavaScript Execution Visualizer
+// Press Run to generate all steps, then use Step / Play to walk through them.
+
+let x = 10;
+let y = 20;
+
+function add(a, b) {
+  return a + b;
+}
+
+let result = add(x, y);
+console.log(result);
+`;
+
 type ExecutionStatus = 'idle' | 'loading' | 'ready' | 'playing' | 'paused' | 'error';
 
 interface CodeflowState {
@@ -199,18 +214,3 @@ function getIntervalMs(speed: PlaybackSpeed): number {
   // Base delay 900ms at 1x
   return Math.round(900 / speed);
 }
-
-/** Default starter code shown in the editor */
-const DEFAULT_CODE = `// CODEFLOW — JavaScript Execution Visualizer
-// Press Run to generate all steps, then use Step / Play to walk through them.
-
-let x = 10;
-let y = 20;
-
-function add(a, b) {
-  return a + b;
-}
-
-let result = add(x, y);
-console.log(result);
-`;

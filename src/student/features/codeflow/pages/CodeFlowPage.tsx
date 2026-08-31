@@ -92,7 +92,7 @@ export const CodeFlowPage: React.FC = () => {
 
   // ── Run handler ──────────────────────────────────────────────────────────────
   const handleRun = useCallback(async () => {
-    if (!code.trim()) return;
+    if (!code?.trim()) return;
     setLoading(true);
     try {
       const res = await codeflowService.execute(code);
@@ -147,7 +147,7 @@ export const CodeFlowPage: React.FC = () => {
           executionStatus={executionStatus}
           currentStepIndex={currentStepIndex}
           totalSteps={totalSteps}
-          hasCode={!!code.trim()}
+          hasCode={!!(code?.trim())}
         />
 
         <div className="w-px h-5 bg-zinc-700" />
