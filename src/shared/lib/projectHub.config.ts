@@ -66,7 +66,7 @@ export function getProjectHubShowcaseUrl(slug: string): string {
  * @example
  * getProjectHubCreateUrl() // → "https://projecthub-gilt-zeta.vercel.app/projects/new"
  */
-export const PROJECT_HUB_CREATE_ROUTE = '/projects/new'
+export const PROJECT_HUB_CREATE_ROUTE = '/app/projects/new'
 
 export function getProjectHubCreateUrl(): string {
   return `${PROJECT_HUB_URL}${PROJECT_HUB_CREATE_ROUTE}`
