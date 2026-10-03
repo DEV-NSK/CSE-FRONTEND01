@@ -44,13 +44,13 @@ export function getProjectHubUrl(): string {
  *
  * @example
  * getProjectHubShowcaseUrl('ai-resume-builder')
- * // → "https://projecthub-gilt-zeta.vercel.app/showcase/ai-resume-builder"
+ * // → "https://projecthub-gilt-zeta.vercel.app/app/projects/ai-resume-builder"
  */
 export function getProjectHubShowcaseUrl(slug: string): string {
   if (!slug) return PROJECT_HUB_URL
   // Sanitize: only allow slug-safe characters to prevent open redirect
   const safeSlug = slug.replace(/[^a-zA-Z0-9-_]/g, '')
-  return `${PROJECT_HUB_URL}/showcase/${safeSlug}`
+  return `${PROJECT_HUB_URL}/app/projects/${safeSlug}`
 }
 
 /**
