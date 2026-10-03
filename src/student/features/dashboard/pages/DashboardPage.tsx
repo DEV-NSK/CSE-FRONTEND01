@@ -25,6 +25,7 @@ import { StatisticsCards }       from '../components/StatisticsCards'
 import { LearningProgressCards } from '../components/LearningProgressCards'
 import { QuickAccessCards }      from '../components/QuickAccessCards'
 import { DashboardSearchBar }    from '../components/DashboardSearchBar'
+import { ProjectHubDashboardWidget } from '@/student/components/projectHub/ProjectHubDashboardWidget'
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -138,6 +139,16 @@ export function DashboardPage() {
       <WidgetErrorBoundary label="Quick Access">
         <QuickAccessCards />
       </WidgetErrorBoundary>
+
+      {/* ── ROW 6: Project Hub ────────────────────────────────────────────────
+           WidgetErrorBoundary ensures a Project Hub API failure is fully
+           isolated — no crash, no blank page, just a contained widget error. */}
+      <section aria-label="Project Hub">
+        <div className="mb-3"><SectionLabel>Build</SectionLabel></div>
+        <WidgetErrorBoundary label="Project Hub">
+          <ProjectHubDashboardWidget />
+        </WidgetErrorBoundary>
+      </section>
     </motion.div>
   )
 }

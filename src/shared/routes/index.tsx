@@ -165,10 +165,11 @@ import { ContestsPage } from "@/student/features/coding/pages/ContestsPage";
 // ── Pages - Notifications ─────────────────────────────────────────────────────
 import { NotificationsPage } from "@/student/features/notifications/pages/NotificationsPage";
 
-// ── Pages - Projects (NOT MVP — redirected to LaunchingSoon) ─────────────────
-// These are kept as lazy imports to prevent TypeScript "unused import" errors
-// but are NOT rendered — all /projects/* routes redirect to LaunchingSoon
-// (Removed for FPRD-13: routes now redirect to /launching-soon/projects)
+// ── Pages - Projects (Project Hub integration) ───────────────────────────────
+// /dashboard/projects     → ProjectsDiscoveryPage  (PH public discovery layer)
+// /dashboard/projects/:slug → ProjectHubPreviewPage (lightweight PH project preview)
+import { ProjectsDiscoveryPage } from '@/student/features/projects/pages/ProjectsDiscoveryPage'
+import { ProjectHubPreviewPage } from '@/student/features/projects/pages/ProjectHubPreviewPage'
 
 // ── Pages - Placement (NOT MVP — redirected to LaunchingSoon) ────────────────
 // (Removed for FPRD-13: routes now redirect to /launching-soon/placement)
@@ -290,15 +291,19 @@ export const router = createBrowserRouter([
         ),
       },
 
-      // ── FPRD-13: Non-MVP modules redirect to Launching Soon ─────────────────
-      // Projects → /launching-soon/projects
+      // ── PROJECT HUB INTEGRATION: Project discovery + preview ─────────────────
+      // /dashboard/projects        → CAMPUSRANK discovery layer (external PH public API)
+      // /dashboard/projects/:slug  → Lightweight project preview (links to PH showcase)
+      // NOTE: These are NOT the CAMPUSRANK-internal project pages (ProjectHubHomePage,
+      // ProjectsExplorePage, etc.) — those use the CAMPUSRANK backend /api/projects.
+      // These new routes consume the external Project Hub public API only.
       {
         path: "projects",
-        element: <Navigate to="/dashboard/launching-soon/projects" replace />,
+        element: <ProjectsDiscoveryPage />,
       },
       {
-        path: "projects/*",
-        element: <Navigate to="/dashboard/launching-soon/projects" replace />,
+        path: "projects/:slug",
+        element: <ProjectHubPreviewPage />,
       },
 
       // Placement → /launching-soon/placement

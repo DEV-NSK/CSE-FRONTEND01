@@ -96,15 +96,15 @@ const mainNavItems: NavItem[] = [
     href: "/dashboard/codeflow",
     icon: Zap,
   },
+  // Project Hub integration — now a live navigation item
+  {
+    label: "Projects",
+    href: "/dashboard/projects",
+    icon: FolderKanban,
+  },
 ];
 
 const comingSoonItems: NavItem[] = [
-  {
-    label: "Projects",
-    href: "/dashboard/launching-soon/projects",
-    icon: FolderKanban,
-    launchingSoon: true,
-  },
   {
     label: "Placement",
     href: "/dashboard/launching-soon/placement",

@@ -98,9 +98,11 @@ export const QuickAccessCards = memo(function QuickAccessCards() {
 
       {/* Coming Soon cards */}
       <div role="listitem">
-        <ComingSoonQuickCard
+        <ActiveQuickCard
           icon={<FolderKanban className="h-5 w-5" style={{ color: '#FACC15' }} />}
           title="Projects"
+          description="Discover & build projects"
+          href="/dashboard/projects"
           accentColor="#FACC15"
           delay={0.64}
         />
