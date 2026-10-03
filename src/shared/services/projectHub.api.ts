@@ -58,11 +58,11 @@ projectHubAxios.interceptors.request.use((config) => {
 export async function getPublicProjects(
   params?: PHProjectsQueryParams,
 ): Promise<PHPublicProjectsResponse> {
-  const response = await projectHubAxios.get<PHPublicProjectsResponse>(
+  const response = await projectHubAxios.get<{ success: boolean; data: PHPublicProjectsResponse }>(
     '/public/projects',
     { params },
   )
-  return response.data
+  return response.data.data
 }
 
 /**
@@ -78,10 +78,10 @@ export async function getPublicProjects(
 export async function getPublicProject(
   slug: string,
 ): Promise<PHPublicProjectDetailResponse> {
-  const response = await projectHubAxios.get<PHPublicProjectDetailResponse>(
+  const response = await projectHubAxios.get<{ success: boolean; data: PHPublicProjectDetailResponse }>(
     `/public/projects/${encodeURIComponent(slug)}`,
   )
-  return response.data
+  return response.data.data
 }
 
 /**
@@ -100,11 +100,11 @@ export async function getPublicProjectsByUser(
   username: string,
   params?: Pick<PHProjectsQueryParams, 'page' | 'limit'>,
 ): Promise<PHUserProjectsResponse> {
-  const response = await projectHubAxios.get<PHUserProjectsResponse>(
+  const response = await projectHubAxios.get<{ success: boolean; data: PHUserProjectsResponse }>(
     `/public/users/${encodeURIComponent(username)}/projects`,
     { params },
   )
-  return response.data
+  return response.data.data
 }
 
 export const projectHubApi = {

@@ -32,7 +32,9 @@ export interface PHPublicProject {
   /** Project display name */
   name: string
   /** Short one-line description */
-  shortDescription: string
+  shortDescription: string | null
+  /** Tagline (alias for shortDescription in API response) */
+  tagline?: string
   /** Absolute cover image URL (may be null) */
   imageUrl: string | null
   /**

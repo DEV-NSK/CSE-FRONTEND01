@@ -99,7 +99,7 @@ export const ProjectHubCard = memo(function ProjectHubCard({
               {project.name}
             </p>
             <p className="text-xs text-muted-foreground truncate">
-              {project.shortDescription}
+              {project.shortDescription ?? project.tagline}
             </p>
           </div>
 
@@ -170,9 +170,9 @@ export const ProjectHubCard = memo(function ProjectHubCard({
           </h3>
 
           {/* Description */}
-          {project.shortDescription && (
+          {(project.shortDescription ?? project.tagline) && (
             <p className="text-xs text-muted-foreground line-clamp-2 flex-1 leading-relaxed">
-              {project.shortDescription}
+              {project.shortDescription ?? project.tagline}
             </p>
           )}
 
